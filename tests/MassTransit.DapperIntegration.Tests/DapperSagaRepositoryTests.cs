@@ -58,7 +58,7 @@
 
             await InputQueueSendEndpoint.Send(message);
 
-            Guid? found = await _sagaRepository.Value.ShouldContainSaga(message.CorrelationId, TestTimeout);
+            Guid? found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Version == 1, TestTimeout);
 
             Assert.That(found, Is.EqualTo(sagaId));
 
@@ -66,7 +66,7 @@
 
             await InputQueueSendEndpoint.Send(nextMessage);
 
-            found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Observed, TestTimeout);
+            found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Version == 2 && x.Observed, TestTimeout);
             Assert.That(found, Is.EqualTo(sagaId));
         }
 
@@ -81,13 +81,14 @@
                     CorrelationId uniqueidentifier NOT NULL,
                     CONSTRAINT PK_SimpleSagas_CorrelationId PRIMARY KEY CLUSTERED (CorrelationId),
                     Name nvarchar(max),
+                    Version int,
                     Completed bit,
                     Initiated bit,
                     Observed bit,
                     CorrelateBySomething nvarchar(max)
                 );
             ";
-                connection.Execute(sql);
+                await connection.ExecuteAsync(sql);
             }
         }
 

@@ -11,12 +11,13 @@ namespace MassTransit.DapperIntegration.Tests
         InitiatedBy<InitiateSimpleSaga>,
         Orchestrates<CompleteSimpleSaga>,
         Observes<ObservableSagaMessage, SimpleSaga>,
-        ISaga
+        ISagaVersion
     {
         public bool Completed { get; private set; }
         public bool Initiated { get; private set; }
         public bool Observed { get; private set; }
         public string Name { get; private set; }
+        public int Version { get; set; }
 
         public string CorrelateBySomething { get; set; }
 

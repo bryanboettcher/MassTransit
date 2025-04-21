@@ -24,7 +24,7 @@ namespace MassTransit.DapperIntegration.Tests
             public Using_the_container_integration()
             {
                 _provider = new ServiceCollection()
-                    .AddMassTransit(ConfigureRegistration)
+                    .AddMassTransitTestHarness(ConfigureRegistration)
                     .AddScoped<PublishTestStartedActivity>().BuildServiceProvider();
             }
 
@@ -32,8 +32,8 @@ namespace MassTransit.DapperIntegration.Tests
             [Category("Flaky")]
             public async Task Should_work_as_expected()
             {
-                Task<ConsumeContext<TestStarted>> started = await ConnectPublishHandler<TestStarted>();
-                Task<ConsumeContext<TestUpdated>> updated = await ConnectPublishHandler<TestUpdated>();
+                var started = await ConnectPublishHandler<TestStarted>();
+                var updated = await ConnectPublishHandler<TestUpdated>();
 
                 var correlationId = NewId.NextGuid();
 
@@ -46,7 +46,6 @@ namespace MassTransit.DapperIntegration.Tests
                 await started;
 
                 var repository = _provider.GetRequiredService<ISagaRepository<TestInstance>>();
-
                 var machine = _provider.GetRequiredService<TestStateMachineSaga>();
 
                 Guid? sagaId = await repository.ShouldContainSagaInState(correlationId, machine, x => x.Active, TestTimeout);
@@ -69,13 +68,15 @@ namespace MassTransit.DapperIntegration.Tests
                     var sql = @"
                 if not exists (select * from sysobjects where name='TestInstances' and xtype='U')
                 CREATE TABLE TestInstances (
-                    CorrelationId uniqueidentifier NOT NULL,
+                    CorrelationId uniqueidentifier NOT NULL,                    
                     CONSTRAINT PK_TestInstances_CorrelationId PRIMARY KEY CLUSTERED (CorrelationId),
+
+                    Version INT NOT NULL,
                     [Key] nvarchar(max),
                     CurrentState nvarchar(max)
                 );
             ";
-                    connection.Execute(sql);
+                    await connection.ExecuteAsync(sql);
                 }
             }
 
@@ -86,7 +87,8 @@ namespace MassTransit.DapperIntegration.Tests
                 configurator.AddSagaStateMachine<TestStateMachineSaga, TestInstance>()
                     .DapperRepository(_connectionString);
 
-                configurator.AddBus(provider => BusControl);
+                configurator.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
+                //configurator.AddBus(provider => BusControl);
             }
 
             protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
@@ -98,13 +100,15 @@ namespace MassTransit.DapperIntegration.Tests
 
 
         public class TestInstance :
-            SagaStateMachineInstance
+            SagaStateMachineInstance, ISagaVersion
         {
             public string CurrentState { get; set; }
             public string Key { get; set; }
 
             [ExplicitKey]
             public Guid CorrelationId { get; set; }
+
+            public int Version { get; set; }
         }
 
 
