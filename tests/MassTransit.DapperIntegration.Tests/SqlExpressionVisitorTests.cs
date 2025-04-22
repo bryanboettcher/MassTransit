@@ -22,8 +22,8 @@
             Assert.Multiple(() =>
             {
                 // Assert
-                Assert.That(result.Item1, Is.EqualTo(nameof(SimpleSaga.CorrelateBySomething)));
-                Assert.That(result.Item2, Is.EqualTo("Fiskbullar"));
+                Assert.That(result.Name, Is.EqualTo(nameof(SimpleSaga.CorrelateBySomething)));
+                Assert.That(result.Value, Is.EqualTo("Fiskbullar"));
             });
         }
 
@@ -39,8 +39,8 @@
             Assert.Multiple(() =>
             {
                 // Assert
-                Assert.That(result.Item1, Is.EqualTo(nameof(SimpleSaga.Completed)));
-                Assert.That(result.Item2, Is.True);
+                Assert.That(result.Name, Is.EqualTo(nameof(SimpleSaga.Completed)));
+                Assert.That(result.Value, Is.True);
             });
         }
 
@@ -57,8 +57,8 @@
             Assert.Multiple(() =>
             {
                 // Assert
-                Assert.That(result.Item1, Is.EqualTo(nameof(SimpleSaga.CorrelationId)));
-                Assert.That(result.Item2, Is.EqualTo(sagaId));
+                Assert.That(result.Name, Is.EqualTo(nameof(SimpleSaga.CorrelationId)));
+                Assert.That(result.Value, Is.EqualTo(sagaId));
             });
         }
 
@@ -70,7 +70,7 @@
             Expression<Func<SimpleSaga, bool>> filter = x => x.CorrelationId == sagaId && x.Completed;
 
             // Act
-            List<(string, object)> result = SqlExpressionVisitor.CreateFromExpression(filter);
+            var result = SqlExpressionVisitor.CreateFromExpression(filter);
 
             // Assert
             Assert.That(result, Has.Count.EqualTo(2));
@@ -78,15 +78,61 @@
             var first = result.First();
             Assert.Multiple(() =>
             {
-                Assert.That(first.Item1, Is.EqualTo(nameof(SimpleSaga.CorrelationId)));
-                Assert.That(first.Item2, Is.EqualTo(sagaId));
+                Assert.That(first.Name, Is.EqualTo(nameof(SimpleSaga.CorrelationId)));
+                Assert.That(first.Value, Is.EqualTo(sagaId));
             });
 
             var last = result.Last();
             Assert.Multiple(() =>
             {
-                Assert.That(last.Item1, Is.EqualTo(nameof(SimpleSaga.Completed)));
-                Assert.That(last.Item2, Is.True);
+                Assert.That(last.Name, Is.EqualTo(nameof(SimpleSaga.Completed)));
+                Assert.That(last.Value, Is.True);
+            });
+        }
+
+        [Test]
+        public void CreateFromExpression_CanHandleNotTrue()
+        {
+            // Arrange
+            var sagaId = NewId.NextGuid();
+            Expression<Func<SimpleSaga, bool>> filter = x => x.Completed != true;
+
+            // Act
+            var result = SqlExpressionVisitor.CreateFromExpression(filter);
+
+            // Assert
+            Assert.That(result, Has.Count.EqualTo(1));
+
+            var first = result.First();
+            
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Name, Is.EqualTo(nameof(SimpleSaga.Completed)));
+                Assert.That(first.Operator, Is.EqualTo("<>"));
+                Assert.That(first.Value, Is.True);
+            });
+        }
+
+        [Test]
+        public void CreateFromExpression_CanHandleInvertedBool()
+        {
+            // Arrange
+            var sagaId = NewId.NextGuid();
+            Expression<Func<SimpleSaga, bool>> filter = x => ! x.Completed;
+
+            // Act
+            var result = SqlExpressionVisitor.CreateFromExpression(filter);
+
+            // Assert
+            Assert.That(result, Has.Count.EqualTo(1));
+
+            var first = result.First();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(first.Name, Is.EqualTo(nameof(SimpleSaga.Completed)));
+                Assert.That(first.Operator, Is.EqualTo("="));
+                Assert.That(first.Value, Is.False);
             });
         }
 
@@ -98,7 +144,7 @@
             Expression<Func<SimpleSaga, bool>> filter = x => x.CorrelationId == sagaId && x.Completed && x.CorrelateBySomething == "Kebabsvarv";
 
             // Act
-            List<(string, object)> result = SqlExpressionVisitor.CreateFromExpression(filter);
+            var result = SqlExpressionVisitor.CreateFromExpression(filter);
 
             // Assert
             Assert.That(result, Has.Count.EqualTo(3));
@@ -106,22 +152,22 @@
             var first = result[0];
             Assert.Multiple(() =>
             {
-                Assert.That(first.Item1, Is.EqualTo(nameof(SimpleSaga.CorrelationId)));
-                Assert.That(first.Item2, Is.EqualTo(sagaId));
+                Assert.That(first.Name, Is.EqualTo(nameof(SimpleSaga.CorrelationId)));
+                Assert.That(first.Value, Is.EqualTo(sagaId));
             });
 
             var second = result[1];
             Assert.Multiple(() =>
             {
-                Assert.That(second.Item1, Is.EqualTo(nameof(SimpleSaga.Completed)));
-                Assert.That(second.Item2, Is.True);
+                Assert.That(second.Name, Is.EqualTo(nameof(SimpleSaga.Completed)));
+                Assert.That(second.Value, Is.True);
             });
 
             var third = result[2];
             Assert.Multiple(() =>
             {
-                Assert.That(third.Item1, Is.EqualTo(nameof(SimpleSaga.CorrelateBySomething)));
-                Assert.That(third.Item2, Is.EqualTo("Kebabsvarv"));
+                Assert.That(third.Name, Is.EqualTo(nameof(SimpleSaga.CorrelateBySomething)));
+                Assert.That(third.Value, Is.EqualTo("Kebabsvarv"));
             });
         }
     }

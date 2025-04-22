@@ -1,7 +1,6 @@
 ﻿namespace MassTransit.DapperIntegration.Saga
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Text;
@@ -14,7 +13,7 @@
             Expression<Func<TSaga, bool>> expression)
             where TSaga : class, ISaga
         {
-            List<(string, object)> columnsAndValues = SqlExpressionVisitor.CreateFromExpression(expression);
+            var columnsAndValues = SqlExpressionVisitor.CreateFromExpression(expression);
             var parameters = new DynamicParameters();
 
             if (!columnsAndValues.Any())
@@ -24,14 +23,14 @@
             sb.Append("WHERE");
 
             var i = 0;
-            foreach (var (name, value) in columnsAndValues)
+            foreach (var predicate in columnsAndValues)
             {
                 if (i > 0)
                     sb.Append(" AND");
 
                 var valueName = $"@value{i}";
-                sb.Append($" {name} = {valueName}");
-                parameters.Add(valueName, value);
+                sb.Append($" [{predicate.Name}] {predicate.Operator} {valueName}");
+                parameters.Add(valueName, predicate.Value);
                 i++;
             }
 

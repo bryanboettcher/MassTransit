@@ -19,7 +19,7 @@
             var (whereStatement, dynamicParameters) = WhereStatementHelper.GetWhereStatementAndParametersFromExpression(filter);
 
             // Assert
-            Assert.That(whereStatement, Is.EqualTo("WHERE CorrelationId = @value0"));
+            Assert.That(whereStatement, Is.EqualTo("WHERE [CorrelationId] = @value0"));
             var sagaIdParameter = dynamicParameters.Get<Guid>("value0");
             Assert.That(sagaIdParameter, Is.EqualTo(sagaId));
         }
@@ -35,7 +35,7 @@
             var (whereStatement, dynamicParameters) = WhereStatementHelper.GetWhereStatementAndParametersFromExpression(filter);
 
             // Assert
-            Assert.That(whereStatement, Is.EqualTo("WHERE CorrelationId = @value0 AND Completed = @value1 AND CorrelateBySomething = @value2"));
+            Assert.That(whereStatement, Is.EqualTo("WHERE [CorrelationId] = @value0 AND [Completed] = @value1 AND [CorrelateBySomething] = @value2"));
 
             var sagaIdParameter = dynamicParameters.Get<Guid>("value0");
             Assert.That(sagaIdParameter, Is.EqualTo(sagaId));

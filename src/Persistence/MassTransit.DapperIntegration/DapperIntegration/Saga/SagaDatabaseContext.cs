@@ -24,6 +24,7 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
     readonly string _tableName;
     readonly string _idColumnName;
     readonly string _versionColumnName;
+    readonly bool _isVersioned;
     
     public SagaDatabaseContext(SqlConnection connection, SqlTransaction transaction, string tableName = default, string idColumnName = default)
     {
@@ -33,6 +34,8 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
         _tableName = tableName ?? GetTableName(typeof(TSaga));
         _idColumnName = idColumnName ?? GetIdColumnName(typeof(TSaga));
         _versionColumnName = GetColumnName(typeof(TSaga), nameof(ISagaVersion.Version));
+
+        _isVersioned = typeof(ISagaVersion).IsAssignableFrom(typeof(TSaga));
     }
     
     public Task<TSaga> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
@@ -56,7 +59,12 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
     {
         var sql = BuildInsertSql();
 
+        if (instance is ISagaVersion versioned)
+        {
+            versioned.Version = 1;
+        }
 
+        return _connection.ExecuteAsync(sql, instance, _transaction);
     }
 
     public async Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default)
@@ -64,12 +72,16 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
         var sql = BuildUpdateSql();
         
         var param = new DynamicParameters();
+        param.AddDynamicParams(instance);
         param.Add("correlationId", instance.CorrelationId);
 
         if (instance is ISagaVersion versioned)
+        {
+            versioned.Version++;
             param.Add("version", versioned.Version);
+        }
 
-        var rows = await _connection.ExecuteAsync(sql, instance, _transaction);
+        var rows = await _connection.ExecuteAsync(sql, param, _transaction);
         if ((rows == 0) == (instance is ISagaVersion))
         {
             throw new DapperConcurrencyException("Saga Update failed", typeof(TSaga), instance.CorrelationId);
@@ -84,7 +96,10 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
         param.Add("correlationId", instance.CorrelationId);
 
         if (instance is ISagaVersion versioned)
+        {
+            versioned.Version++;
             param.Add("version", versioned.Version);
+        }
 
         var rows = await _connection.ExecuteAsync(sql, param, _transaction);
         if ((rows == 0) == (instance is ISagaVersion))
@@ -141,54 +156,92 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
         return columnAttribute.Name;
     }
 
-    static string BuildUpdateExpression(Type sagaType)
+    IEnumerable<(string col, string prop)> BuildProperties(Type sagaType)
     {
-        var expressions =
-            from prop in sagaType.GetProperties()
-            let columnName = GetColumnName(sagaType, prop)
-            let propertyName = prop.Name
-            select $"[{columnName}] = @{propertyName}";
+        var forbiddenColumns = new HashSet<string> { _idColumnName };
 
-        return string.Join(',', expressions);
+        if (_isVersioned)
+            forbiddenColumns.Add(_versionColumnName);
+
+        return from prop in sagaType.GetProperties()
+               let columnName = GetColumnName(sagaType, prop)
+               let propertyName = CamelCase(prop.Name)
+               where ! forbiddenColumns.Contains(columnName)
+               select (columnName, propertyName);
+
+        string CamelCase(string name)
+        {
+            var parts = name.Split([' ', '_']);
+            
+            // property name is something like `Name` or `CorrelationId`
+            if (parts.Length == 1)
+                parts[0] = char.ToLowerInvariant(parts[0][0]) + parts[0].Substring(1);
+            else
+                parts[0] = parts[0].ToLowerInvariant();
+
+            if (parts.Length > 1)
+            {
+                for ( var index = 1; index < parts.Length; index++ )
+                {
+                    parts[index] = char.ToUpperInvariant(parts[index][0]) + parts[index].Substring(1).ToLowerInvariant();
+                }
+            }
+
+            return string.Concat(parts);
+        }
     }
 
-    string BuildLoadSql()
+    public string BuildLoadSql()
     {
-        return $"SELECT * FROM {_tableName} WITH (UPDLOCK, ROWLOCK) WHERE {_idColumnName} = @correlationId";
+        return $"SELECT * FROM {_tableName} WITH (UPDLOCK, ROWLOCK) WHERE [{_idColumnName}] = @correlationId";
     }
 
-    string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, out DynamicParameters parameters)
+    public string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, out DynamicParameters parameters)
     {
         (var whereStatement, parameters) = WhereStatementHelper.GetWhereStatementAndParametersFromExpression(filterExpression);
 
         return $"SELECT * FROM {_tableName} WITH (UPDLOCK, ROWLOCK) {whereStatement}";
     }
 
-    string BuildUpdateSql()
+    public string BuildInsertSql()
     {
-        var updateExpression = BuildUpdateExpression(typeof(TSaga));
+        var sagaType = typeof(TSaga);
 
-        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = @correlationId";
+        var properties = BuildProperties(sagaType).ToList();
+        properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "correlationId"));
 
-        if (typeof(ISagaVersion).IsAssignableFrom(typeof(TSaga)))
-            sql += $" AND {_versionColumnName} = @version";
+        if (_isVersioned)
+            properties.Insert(1, (col: GetColumnName(sagaType, nameof(ISagaVersion.Version)), prop: "version"));
+
+        var columns = string.Join(", ", properties.Select(p => $"[{p.col}]"));
+        var values = string.Join(", ", properties.Select(p => $"@{p.prop}"));
+
+        var sql = $"INSERT INTO {_tableName} ({columns}) VALUES ({values})";
+        
+        return sql;
+    }
+
+    public string BuildUpdateSql()
+    {
+        var properties = BuildProperties(typeof(TSaga));
+
+        var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));
+
+        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE [{_idColumnName}] = @correlationId";
+
+        if (_isVersioned)
+            sql += $" AND [{_versionColumnName}] < @version";
 
         return sql;
     }
 
-    string BuildDeleteSql()
+    public string BuildDeleteSql()
     {
-        var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = @correlationId";
+        var sql = $"DELETE FROM {_tableName} WHERE [{_idColumnName}] = @correlationId";
 
-        if (typeof(ISagaVersion).IsAssignableFrom(typeof(TSaga)))
-            sql += $" AND {_versionColumnName} = @version";
+        if (_isVersioned)
+            sql += $" AND [{_versionColumnName}] < @version";
 
         return sql;
     }
-
-}
-
-
-public interface SqlBuilder<TModel> where TModel : class
-{
 }
