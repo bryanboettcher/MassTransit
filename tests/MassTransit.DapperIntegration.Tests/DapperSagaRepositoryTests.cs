@@ -1,6 +1,7 @@
 ﻿namespace MassTransit.DapperIntegration.Tests
 {
     using System;
+    using System.Data;
     using System.Threading.Tasks;
     using Dapper;
     using MassTransit.Tests;
@@ -24,7 +25,7 @@
 
             await InputQueueSendEndpoint.Send(message);
 
-            Guid? foundId = await _sagaRepository.Value.ShouldContainSaga(message.CorrelationId, TestTimeout);
+            var foundId = await _sagaRepository.Value.ShouldContainSaga(message.CorrelationId, TestTimeout);
 
             Assert.That(foundId.HasValue, Is.True);
 
@@ -45,7 +46,7 @@
 
             await InputQueueSendEndpoint.Send(message);
 
-            Guid? foundId = await _sagaRepository.Value.ShouldContainSaga(message.CorrelationId, TestTimeout);
+            var foundId = await _sagaRepository.Value.ShouldContainSaga(message.CorrelationId, TestTimeout);
 
             Assert.That(foundId.HasValue, Is.True);
         }
@@ -58,7 +59,7 @@
 
             await InputQueueSendEndpoint.Send(message);
 
-            Guid? found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Version == 1, TestTimeout);
+            var found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Version == 1, TestTimeout);
 
             Assert.That(found, Is.EqualTo(sagaId));
 
@@ -73,23 +74,21 @@
         [OneTimeSetUp]
         public async Task Setup()
         {
-            using (var connection = new SqlConnection(_connectionString))
-            {
-                var sql = @"
-                if not exists (select * from sysobjects where name='SimpleSagas' and xtype='U')
-                CREATE TABLE SimpleSagas (
-                    CorrelationId uniqueidentifier NOT NULL,
-                    CONSTRAINT PK_SimpleSagas_CorrelationId PRIMARY KEY CLUSTERED (CorrelationId),
-                    Name nvarchar(max),
-                    Version int,
-                    Completed bit,
-                    Initiated bit,
-                    Observed bit,
-                    CorrelateBySomething nvarchar(max)
-                );
-            ";
-                await connection.ExecuteAsync(sql);
-            }
+            await using var connection = new SqlConnection(_connectionString);
+            var sql = @"IF NOT EXISTS (SELECT * FROM SYSOBJECTS WHERE Name='SimpleSagas' AND xtype='U')
+CREATE TABLE SimpleSagas (
+    CorrelationId UNIQUEIDENTIFIER NOT NULL,
+    Name NVARCHAR(MAX),
+    Version INT,
+    Completed BIT,
+    Initiated BIT,
+    Observed BIT,
+    CorrelateBySomething NVARCHAR(MAX),
+
+    CONSTRAINT PK_SimpleSagas_CorrelationId PRIMARY KEY CLUSTERED (CorrelationId)
+);";
+
+            await connection.ExecuteAsync(sql);
         }
 
         readonly Lazy<ISagaRepository<SimpleSaga>> _sagaRepository;
@@ -98,7 +97,7 @@
         public DapperSagaRepositoryTests()
         {
             _connectionString = LocalDbConnectionStringProvider.GetLocalDbConnectionString();
-            _sagaRepository = new Lazy<ISagaRepository<SimpleSaga>>(() => DapperSagaRepository<SimpleSaga>.Create(_connectionString));
+            _sagaRepository = new Lazy<ISagaRepository<SimpleSaga>>(() => DapperSagaRepository<SimpleSaga>.Create(_connectionString, IsolationLevel.Serializable));
         }
 
         protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)

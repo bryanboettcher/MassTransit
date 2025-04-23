@@ -8,7 +8,7 @@ namespace MassTransit
     public static class DapperSagaRepositoryRegistrationExtensions
     {
         /// <summary>
-        /// Adds a Redis saga repository to the registration
+        /// Adds a Dapper saga repository to the registration
         /// </summary>
         /// <param name="configurator"></param>
         /// <param name="connectionString"></param>

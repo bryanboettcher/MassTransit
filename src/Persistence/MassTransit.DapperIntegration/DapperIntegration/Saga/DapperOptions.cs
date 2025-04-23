@@ -14,8 +14,8 @@ namespace MassTransit.DapperIntegration.Saga
             ContextFactory = contextFactory;
         }
 
-        public string ConnectionString { get; }
-        public IsolationLevel IsolationLevel { get; }
-        public DatabaseContextFactory<TSaga>? ContextFactory { get; }
+        public string ConnectionString { get; set; }
+        public IsolationLevel IsolationLevel { get; set; }
+        public DatabaseContextFactory<TSaga>? ContextFactory { get; set; }
     }
 }

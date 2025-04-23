@@ -88,7 +88,6 @@ namespace MassTransit.DapperIntegration.Tests
                     .DapperRepository(_connectionString);
 
                 configurator.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
-                //configurator.AddBus(provider => BusControl);
             }
 
             protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)

@@ -3,6 +3,7 @@ namespace MassTransit.DapperIntegration.Saga;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -18,15 +19,15 @@ using Microsoft.Data.SqlClient;
 public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuilder<TSaga>
     where TSaga : class, ISaga
 {
-    readonly SqlConnection _connection;
-    readonly SqlTransaction _transaction;
+    readonly IDbConnection _connection;
+    readonly IDbTransaction _transaction;
 
     readonly string _tableName;
     readonly string _idColumnName;
     readonly string _versionColumnName;
     readonly bool _isVersioned;
     
-    public SagaDatabaseContext(SqlConnection connection, SqlTransaction transaction, string tableName = default, string idColumnName = default)
+    public SagaDatabaseContext(IDbConnection connection, IDbTransaction transaction, string tableName = default, string idColumnName = default)
     {
         _connection = connection;
         _transaction = transaction;
@@ -141,7 +142,7 @@ public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>, SqlBuil
     static string GetColumnName(Type type, string propertyName)
     {
         var property = type.GetProperty(propertyName);
-        if (property is null) // the hell?
+        if (property is null)
             return propertyName;
 
         return GetColumnName(type, property);
