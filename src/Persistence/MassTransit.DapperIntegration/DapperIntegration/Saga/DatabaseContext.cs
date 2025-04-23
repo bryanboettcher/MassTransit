@@ -11,16 +11,16 @@ namespace MassTransit.DapperIntegration.Saga
         IAsyncDisposable
         where TSaga : class, ISaga
     {
-        Task DeleteAsync(TSaga instance, CancellationToken cancellationToken);
+        Task DeleteAsync(TSaga instance, CancellationToken cancellationToken = default);
 
-        Task<TSaga> LoadAsync(Guid correlationId, CancellationToken cancellationToken);
+        Task<TSaga> LoadAsync(Guid correlationId, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<TSaga>> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken);
+        Task<IEnumerable<TSaga>> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken = default);
 
         Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default);
 
         Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default);
 
-        void Commit();
+        Task CommitAsync(CancellationToken cancellationToken = default);
     }
 }

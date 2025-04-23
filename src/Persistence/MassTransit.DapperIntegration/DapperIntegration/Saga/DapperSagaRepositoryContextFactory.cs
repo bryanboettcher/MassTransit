@@ -1,7 +1,6 @@
 namespace MassTransit.DapperIntegration.Saga
 {
     using System;
-    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
     using MassTransit.Saga;
@@ -43,40 +42,36 @@ namespace MassTransit.DapperIntegration.Saga
         public async Task Send<T>(ConsumeContext<T> context, IPipe<SagaRepositoryContext<TSaga, T>> next)
             where T : class
         {
-            await using DatabaseContext<TSaga> databaseContext = await CreateDatabaseContext(context.CancellationToken).ConfigureAwait(false);
+            await using var databaseContext = await CreateDatabaseContext(context.CancellationToken).ConfigureAwait(false);
 
             var repositoryContext = new DapperSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
 
             await next.Send(repositoryContext).ConfigureAwait(false);
-
-            databaseContext.Commit();
+            await databaseContext.CommitAsync().ConfigureAwait(false);
         }
 
         public async Task SendQuery<T>(ConsumeContext<T> context, ISagaQuery<TSaga> query, IPipe<SagaRepositoryQueryContext<TSaga, T>> next)
             where T : class
         {
-            await using DatabaseContext<TSaga> databaseContext = await CreateDatabaseContext(context.CancellationToken).ConfigureAwait(false);
+            await using var databaseContext = await CreateDatabaseContext(context.CancellationToken).ConfigureAwait(false);
 
-            IEnumerable<TSaga> instances = await databaseContext.QueryAsync(query.FilterExpression, context.CancellationToken).ConfigureAwait(false);
+            var instances = await databaseContext.QueryAsync(query.FilterExpression, context.CancellationToken).ConfigureAwait(false);
 
             var repositoryContext = new DapperSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
-
             var queryContext = new LoadedSagaRepositoryQueryContext<TSaga, T>(repositoryContext, instances);
 
             await next.Send(queryContext).ConfigureAwait(false);
-
-            databaseContext.Commit();
+            await databaseContext.CommitAsync().ConfigureAwait(false);
         }
 
         async Task<T> ExecuteAsyncMethod<T>(Func<DapperSagaRepositoryContext<TSaga>, Task<T>> asyncMethod, CancellationToken cancellationToken)
             where T : class
         {
-            await using DatabaseContext<TSaga> databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
             var sagaRepositoryContext = new DapperSagaRepositoryContext<TSaga>(databaseContext, cancellationToken);
 
             var result = await asyncMethod(sagaRepositoryContext).ConfigureAwait(false);
-
-            databaseContext.Commit();
+            await databaseContext.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             return result;
         }
@@ -97,9 +92,15 @@ namespace MassTransit.DapperIntegration.Saga
             }
             catch (Exception)
             {
+            #if NETSTANDARD2_0 || NET472
                 transaction?.Dispose();
                 connection.Dispose();
+            #else
+                if (transaction is not null)
+                    await transaction.DisposeAsync();
 
+                await connection.DisposeAsync();
+            #endif
                 throw;
             }
         }

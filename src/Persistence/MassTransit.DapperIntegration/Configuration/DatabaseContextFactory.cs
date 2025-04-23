@@ -1,8 +1,7 @@
 namespace MassTransit;
 
-using System.Data;
 using DapperIntegration.Saga;
+using Microsoft.Data.SqlClient;
 
-
-public delegate DatabaseContext<TSaga> DatabaseContextFactory<TSaga>(IDbConnection connection, IDbTransaction transaction)
+public delegate DatabaseContext<TSaga> DatabaseContextFactory<TSaga>(SqlConnection connection, SqlTransaction transaction)
     where TSaga : class, ISaga;

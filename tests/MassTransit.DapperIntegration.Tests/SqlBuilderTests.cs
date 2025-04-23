@@ -2,6 +2,7 @@
 {
     using System;
     using System.ComponentModel.DataAnnotations.Schema;
+    using Dapper.Contrib.Extensions;
     using NUnit.Framework;
     using Saga;
 
@@ -13,9 +14,7 @@
             public class VersionedSaga : ISagaVersion
             {
                 public Guid CorrelationId { get; set; }
-
                 public int Version { get; set; }
-
                 public string Name { get; set; }
                 public int Age { get; set; }
                 public string PhoneNumber { get; set; }
@@ -37,7 +36,7 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET [Name] = @name, [Age] = @age, [PhoneNumber] = @phoneNumber, [Zip_Code] = @zipCode WHERE [CorrelationId] = @correlationId AND [Version] < @version";
+                var expected = "UPDATE VersionedSagas SET [Name] = @name, [Age] = @age, [PhoneNumber] = @phoneNumber, [Zip_Code] = @zipCode, [Version] = @version WHERE [CorrelationId] = @correlationId AND [Version] < @version";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -75,9 +74,7 @@
             public class UnversionedSaga : ISaga
             {
                 public Guid CorrelationId { get; set; }
-
                 public string Name { get; set; }
-
                 [Column("EarthTrips")]
                 public int Age { get; set; }
                 public string PhoneNumber { get; set; }
@@ -134,6 +131,7 @@
         
         public class Complex_SqlBuilder
         {
+            [Dapper.Contrib.Extensions.Table("OverrideTable")]
             public class ComplexSaga : ISaga
             {
                 public Guid CorrelationId { get; set; }
@@ -152,7 +150,7 @@
             {
                 var m = new { Start = new DateTime(2025, 04, 22), End = new DateTime(2025, 05, 22) };
                 var actual = Subject.BuildQuerySql(x => (x.Name == "test" && x.Age <= 99) && (x.StartDate > m.Start && x.EndDate < m.End), out _);
-                var expected = "SELECT * FROM ComplexSagas WITH (UPDLOCK, ROWLOCK) WHERE [Name] = @value0 AND [Age] <= @value1 AND [StartDate] > @value2 AND [EndDate] < @value3";
+                var expected = "SELECT * FROM OverrideTable WITH (UPDLOCK, ROWLOCK) WHERE [Name] = @value0 AND [Age] <= @value1 AND [StartDate] > @value2 AND [EndDate] < @value3";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }

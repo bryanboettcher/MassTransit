@@ -103,7 +103,10 @@ CREATE TABLE VersionedSagas (
         public async Task UpdateMessage_updates_saga()
         {
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId1, Name = "my saga 0" });
+            await BusTestHarness.Consumed.Any<CreateSaga>();
+
             await InputQueueSendEndpoint.Send<UpdateSaga>(new { CorrelationId = SagaId1, Name = "my saga 1" });
+            await BusTestHarness.Consumed.Any<UpdateSaga>();
 
             var found = await _repository.ShouldContainSaga(SagaId1, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId1));
@@ -152,7 +155,10 @@ CREATE TABLE VersionedSagas (
         public async Task UpdateMessage_updates_saga()
         {
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId1, Name = "my saga 0" });
+            await BusTestHarness.Consumed.Any<CreateSaga>();
+
             await InputQueueSendEndpoint.Send<UpdateSaga>(new { CorrelationId = SagaId1, Name = "my saga 1" });
+            await BusTestHarness.Consumed.Any<UpdateSaga>();
 
             var found = await _repository.ShouldContainSaga(SagaId1, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId1));

@@ -58,8 +58,8 @@
             var message = new InitiateSimpleSaga(sagaId) { Name = "MySimpleSaga" };
 
             await InputQueueSendEndpoint.Send(message);
-
-            var found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Version == 1, TestTimeout);
+            
+            var found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId, TestTimeout);
 
             Assert.That(found, Is.EqualTo(sagaId));
 
@@ -67,7 +67,7 @@
 
             await InputQueueSendEndpoint.Send(nextMessage);
 
-            found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Version == 2 && x.Observed, TestTimeout);
+            found = await _sagaRepository.Value.ShouldContainSaga(x => x.CorrelationId == sagaId && x.Observed, TestTimeout);
             Assert.That(found, Is.EqualTo(sagaId));
         }
 

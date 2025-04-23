@@ -58,9 +58,11 @@ namespace MassTransit.DapperIntegration.Saga
             return _connection.QueryAsync<TSaga>(sql, parameters, _transaction);
         }
 
-        public void Commit()
+#if NETFRAMEWORK || NETSTANDARD2_0
+        public Task CommitAsync(CancellationToken token = default)
         {
             _transaction.Commit();
+            return Task.CompletedTask;
         }
 
         public ValueTask DisposeAsync()
@@ -70,7 +72,16 @@ namespace MassTransit.DapperIntegration.Saga
 
             return default;
         }
+#else
+        public Task CommitAsync(CancellationToken token = default) => _transaction.CommitAsync(token);
 
+        public async ValueTask DisposeAsync()
+        {
+            await _transaction.DisposeAsync();
+            await _connection.DisposeAsync();
+        }
+#endif
+        
         static string GetTableName()
         {
             return typeof(TSaga).GetCustomAttribute<TableAttribute>()?.Name ?? $"{typeof(TSaga).Name}s";
