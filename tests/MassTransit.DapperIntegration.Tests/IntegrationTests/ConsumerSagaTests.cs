@@ -15,7 +15,8 @@ public class ConsumerSagaTests : DapperVersionedSagaTests
     {
         _repository = DapperSagaRepository<VersionedConsumerSaga>.Create(ConnectionString, conf =>
         {
-            conf.ContextFactory = (c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new SqlServerBuilder<VersionedConsumerSaga>("VersionedSagas"));
+            conf.UseTableName("VersionedSagas");
+            conf.UseContextFactory((c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new SqlServerBuilder<VersionedConsumerSaga>("VersionedSagas")));
         });
 
         configurator.Saga(_repository);
@@ -26,6 +27,7 @@ public class ConsumerSagaTests : DapperVersionedSagaTests
     public async Task CreateMessage_creates_saga()
     {
         await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
+        await BusTestHarness.Consumed.Any<CreateSaga>();
 
         var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
         Assert.That(found, Is.EqualTo(SagaId));

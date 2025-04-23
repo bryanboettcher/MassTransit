@@ -13,7 +13,10 @@
         {
             var consumeContextFactory = new SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>();
 
-            var options = new DapperOptions<TSaga>(connectionString, isolationLevel, null);
+            var options = new DapperOptions<TSaga>();
+            options.UseSqlServer(connectionString);
+            options.UseIsolationLevel(isolationLevel);
+
             var repositoryContextFactory = new DapperSagaRepositoryContextFactory<TSaga>(options, consumeContextFactory);
 
             return new SagaRepository<TSaga>(repositoryContextFactory, repositoryContextFactory, repositoryContextFactory);
@@ -23,7 +26,10 @@
         {
             var consumeContextFactory = new SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>();
 
-            var options = new DapperOptions<TSaga>(connectionString, IsolationLevel.Serializable, null);
+            var options = new DapperOptions<TSaga>();
+            options.UseSqlServer(connectionString);
+            options.UseIsolationLevel(IsolationLevel.Serializable);
+
             configure?.Invoke(options);
 
             var repositoryContextFactory = new DapperSagaRepositoryContextFactory<TSaga>(options, consumeContextFactory);

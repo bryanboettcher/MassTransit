@@ -2,12 +2,12 @@ namespace MassTransit.DapperIntegration.Saga
 {
     using System;
     using System.Collections.Generic;
+    using System.Data.Common;
     using System.Linq.Expressions;
     using System.Threading;
     using System.Threading.Tasks;
     using Dapper;
     using SqlBuilders;
-    using Microsoft.Data.SqlClient;
 
     /// <summary>
     /// Contains saga-specific logic as well as respecting ISagaVersion
@@ -16,13 +16,13 @@ namespace MassTransit.DapperIntegration.Saga
     public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        readonly SqlConnection _connection;
-        readonly SqlTransaction _transaction;
+        readonly DbConnection _connection;
+        readonly DbTransaction _transaction;
         readonly SqlBuilder<TSaga> _sqlBuilder;
 
         readonly bool _isVersioned;
     
-        public SagaDatabaseContext(SqlConnection connection, SqlTransaction transaction, SqlBuilder<TSaga> sqlBuilder)
+        public SagaDatabaseContext(DbConnection connection, DbTransaction transaction, SqlBuilder<TSaga> sqlBuilder)
         {
             _connection = connection;
             _transaction = transaction;
@@ -94,7 +94,10 @@ namespace MassTransit.DapperIntegration.Saga
             return default;
         }
     #else
-        public Task CommitAsync(CancellationToken token = default) => _transaction.CommitAsync(token);
+        public Task CommitAsync(CancellationToken token = default)
+        {
+            return _transaction.CommitAsync(token);
+        }
 
         public async ValueTask DisposeAsync()
         {

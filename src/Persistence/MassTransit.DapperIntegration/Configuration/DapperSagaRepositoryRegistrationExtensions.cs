@@ -3,6 +3,7 @@ namespace MassTransit
     using System;
     using Configuration;
     using DapperIntegration.Configuration;
+    using DapperIntegration.Saga;
 
 
     public static class DapperSagaRepositoryRegistrationExtensions
@@ -13,21 +14,29 @@ namespace MassTransit
         /// <param name="configurator"></param>
         /// <param name="connectionString"></param>
         /// <param name="configure"></param>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TSaga"></typeparam>
         /// <returns></returns>
-        public static ISagaRegistrationConfigurator<T> DapperRepository<T>(this ISagaRegistrationConfigurator<T> configurator,
-            string connectionString, Action<IDapperSagaRepositoryConfigurator<T>> configure = null)
-            where T : class, ISaga
+        public static ISagaRegistrationConfigurator<TSaga> DapperRepository<TSaga>(this ISagaRegistrationConfigurator<TSaga> configurator,
+            string connectionString, Action<IDapperSagaRepositoryConfigurator<TSaga>> configure = null)
+            where TSaga : class, ISaga
         {
-            var repositoryConfigurator = new DapperSagaRepositoryConfigurator<T>(connectionString);
+            var repositoryConfigurator = new DapperSagaRepositoryConfigurator<TSaga>();
 
             configure?.Invoke(repositoryConfigurator);
 
             repositoryConfigurator.Validate().ThrowIfContainsFailure("The Dapper saga repository configuration is invalid:");
 
-            configurator.Repository(x => repositoryConfigurator.Register(x));
+            configurator.Repository(repositoryConfigurator.Register);
 
             return configurator;
+        }
+
+        public static ISagaRegistrationConfigurator<TSaga> DapperRepository<TSaga>(this ISagaRegistrationConfigurator<TSaga> configurator,
+            Action<DapperOptions<TSaga>> configure = null)
+            where TSaga : class, ISaga
+        {
+            var repositoryConfigurator = new DapperSagaRepositoryConfigurator<TSaga>(string.Empty);
+
         }
 
         /// <summary>

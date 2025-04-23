@@ -2,13 +2,13 @@ namespace MassTransit.DapperIntegration.Saga
 {
     using System;
     using System.Collections.Generic;
+    using System.Data.Common;
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Threading;
     using System.Threading.Tasks;
     using Dapper;
     using Dapper.Contrib.Extensions;
-    using Microsoft.Data.SqlClient;
     using SqlBuilders;
 
 
@@ -16,10 +16,10 @@ namespace MassTransit.DapperIntegration.Saga
         DatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        readonly SqlConnection _connection;
-        readonly SqlTransaction _transaction;
+        readonly DbConnection _connection;
+        readonly DbTransaction _transaction;
 
-        public DapperDatabaseContext(SqlConnection connection, SqlTransaction transaction)
+        public DapperDatabaseContext(DbConnection connection, DbTransaction transaction)
         {
             _connection = connection;
             _transaction = transaction;

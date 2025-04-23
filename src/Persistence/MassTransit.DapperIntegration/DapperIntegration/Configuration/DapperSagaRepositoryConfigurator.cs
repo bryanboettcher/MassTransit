@@ -5,7 +5,7 @@ namespace MassTransit.DapperIntegration.Configuration
     using System.Data;
     using MassTransit.Configuration;
     using MassTransit.Saga;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
+    using Microsoft.Extensions.DependencyInjection;
     using Saga;
 
 
@@ -16,12 +16,13 @@ namespace MassTransit.DapperIntegration.Configuration
     {
         readonly string _connectionString;
 
-        public DapperSagaRepositoryConfigurator(string connectionString, IsolationLevel isolationLevel = IsolationLevel.Serializable)
+        public DapperSagaRepositoryConfigurator(string connectionString = default, IsolationLevel isolationLevel = IsolationLevel.Serializable)
         {
             _connectionString = connectionString;
-
             IsolationLevel = isolationLevel;
         }
+
+        public string ConnectionString { get; private set; }
 
         public IsolationLevel IsolationLevel { get; set; }
 
@@ -35,7 +36,13 @@ namespace MassTransit.DapperIntegration.Configuration
 
         public void Register(ISagaRepositoryRegistrationConfigurator<TSaga> configurator)
         {
-            configurator.TryAddSingleton(new DapperOptions<TSaga>(_connectionString, IsolationLevel, ContextFactory));
+            configurator.AddOptions<DapperOptions<TSaga>>()
+                .Configure(opt =>
+                {
+                    opt.UseSqlServer(_connectionString);
+                    opt.UseIsolationLevel(IsolationLevel);
+                });
+
             configurator.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
             configurator.RegisterQuerySagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
             configurator.RegisterSagaRepository<TSaga, DatabaseContext<TSaga>, SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>,
