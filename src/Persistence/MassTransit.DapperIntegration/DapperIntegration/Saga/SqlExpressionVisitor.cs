@@ -6,8 +6,7 @@
     using System.Linq.Expressions;
     using System.Reflection;
     using Internals;
-
-
+    
     public static class SqlExpressionVisitor
     {
         public static List<SqlPredicate> CreateFromExpression(Expression node)

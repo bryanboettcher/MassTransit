@@ -9,6 +9,7 @@ namespace MassTransit.DapperIntegration.Saga
     using Dapper;
     using Dapper.Contrib.Extensions;
     using Microsoft.Data.SqlClient;
+    using SqlBuilders;
 
 
     public class DapperDatabaseContext<TSaga> :
@@ -52,8 +53,15 @@ namespace MassTransit.DapperIntegration.Saga
         public Task<IEnumerable<TSaga>> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken)
         {
             var tableName = GetTableName();
-            var (whereStatement, parameters) = WhereStatementHelper.GetWhereStatementAndParametersFromExpression(filterExpression);
-            var sql = $"SELECT * FROM {tableName} WITH (UPDLOCK, ROWLOCK) {whereStatement}";
+            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression);
+            var parameters = new DynamicParameters();
+            var queryPredicate = SqlServerBuilder<TSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
+
+            var where = string.IsNullOrWhiteSpace(queryPredicate)
+                ? string.Empty
+                : string.Concat(" WHERE ", queryPredicate);
+
+            var sql = $"SELECT * FROM {tableName} WITH (UPDLOCK, ROWLOCK){where}";
 
             return _connection.QueryAsync<TSaga>(sql, parameters, _transaction);
         }

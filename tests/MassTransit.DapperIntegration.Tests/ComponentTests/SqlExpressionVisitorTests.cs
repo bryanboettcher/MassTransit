@@ -1,9 +1,10 @@
-﻿namespace MassTransit.DapperIntegration.Tests
+﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
+    using MassTransit.DapperIntegration.Tests.Legacy;
     using NUnit.Framework;
     using Saga;
 

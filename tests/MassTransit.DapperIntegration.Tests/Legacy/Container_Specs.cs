@@ -63,21 +63,18 @@ namespace MassTransit.DapperIntegration.Tests
             [OneTimeSetUp]
             public async Task Setup()
             {
-                using (var connection = new SqlConnection(_connectionString))
-                {
-                    var sql = @"
-                if not exists (select * from sysobjects where name='TestInstances' and xtype='U')
-                CREATE TABLE TestInstances (
-                    CorrelationId uniqueidentifier NOT NULL,                    
-                    CONSTRAINT PK_TestInstances_CorrelationId PRIMARY KEY CLUSTERED (CorrelationId),
+                await using var connection = new SqlConnection(_connectionString);
 
-                    Version INT NOT NULL,
-                    [Key] nvarchar(max),
-                    CurrentState nvarchar(max)
-                );
-            ";
-                    await connection.ExecuteAsync(sql);
-                }
+                var sql = @"IF NOT EXISTS (SELECT * FROM SYSOBJECTS WHERE Name='TestInstances' AND xtype='U')
+CREATE TABLE TestInstances (
+    CorrelationId UNIQUEIDENTIFIER NOT NULL,
+    Version INT NOT NULL,
+    [Key] NVARCHAR(MAX),
+    CurrentState NVARCHAR(MAX),
+
+    PRIMARY KEY CLUSTERED (CorrelationId)
+);";
+                await connection.ExecuteAsync(sql);
             }
 
             protected void ConfigureRegistration(IBusRegistrationConfigurator configurator)
@@ -87,12 +84,12 @@ namespace MassTransit.DapperIntegration.Tests
                 configurator.AddSagaStateMachine<TestStateMachineSaga, TestInstance>()
                     .DapperRepository(_connectionString);
 
+                configurator.AddInMemoryInboxOutbox();
                 configurator.UsingInMemory((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
             }
 
             protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
             {
-                configurator.UseInMemoryOutbox();
                 configurator.ConfigureSaga<TestInstance>(_provider.GetRequiredService<IBusRegistrationContext>());
             }
         }
@@ -122,7 +119,7 @@ namespace MassTransit.DapperIntegration.Tests
 
                 Initially(
                     When(Started)
-                        .Then(context => context.Instance.Key = context.Data.TestKey)
+                        .Then(context => context.Saga.Key = context.Message.TestKey)
                         .Activity(x => x.OfInstanceType<PublishTestStartedActivity>())
                         .TransitionTo(Active));
 
@@ -130,8 +127,8 @@ namespace MassTransit.DapperIntegration.Tests
                     When(Updated)
                         .Publish(context => new TestUpdated
                         {
-                            CorrelationId = context.Instance.CorrelationId,
-                            TestKey = context.Instance.Key
+                            CorrelationId = context.Saga.CorrelationId,
+                            TestKey = context.Saga.Key
                         })
                         .TransitionTo(Done)
                         .Finalize());
@@ -178,8 +175,8 @@ namespace MassTransit.DapperIntegration.Tests
             {
                 await _context.Publish(new TestStarted
                 {
-                    CorrelationId = context.Instance.CorrelationId,
-                    TestKey = context.Instance.Key
+                    CorrelationId = context.Saga.CorrelationId,
+                    TestKey = context.Saga.Key
                 }).ConfigureAwait(false);
 
                 await next.Execute(context).ConfigureAwait(false);
@@ -190,8 +187,8 @@ namespace MassTransit.DapperIntegration.Tests
             {
                 await _context.Publish(new TestStarted
                 {
-                    CorrelationId = context.Instance.CorrelationId,
-                    TestKey = context.Instance.Key
+                    CorrelationId = context.Saga.CorrelationId,
+                    TestKey = context.Saga.Key
                 }).ConfigureAwait(false);
 
                 await next.Execute(context).ConfigureAwait(false);

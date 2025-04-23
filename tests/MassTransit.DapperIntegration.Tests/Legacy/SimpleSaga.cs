@@ -1,9 +1,10 @@
-namespace MassTransit.DapperIntegration.Tests
+namespace MassTransit.DapperIntegration.Tests.Legacy
 {
     using System;
     using System.Linq.Expressions;
     using System.Threading.Tasks;
     using Dapper.Contrib.Extensions;
+    using MassTransit;
     using MassTransit.Tests.Saga.Messages;
 
 

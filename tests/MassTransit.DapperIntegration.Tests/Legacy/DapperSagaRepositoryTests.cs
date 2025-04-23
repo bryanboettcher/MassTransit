@@ -1,4 +1,4 @@
-﻿namespace MassTransit.DapperIntegration.Tests
+﻿namespace MassTransit.DapperIntegration.Tests.Legacy
 {
     using System;
     using System.Data;
