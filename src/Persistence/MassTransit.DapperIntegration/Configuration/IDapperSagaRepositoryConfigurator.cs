@@ -8,11 +8,11 @@ using DapperIntegration.SqlBuilders;
 
 public interface IDapperSagaRepositoryConfigurator
 {
-    IsolationLevel IsolationLevel { set; }
-    string ConnectionString { get; set; }
-    string TableName { get; set; }
-    string IdColumnName { get; set; }
-    DapperDatabaseProvider Provider { get; set; }
+    IsolationLevel? IsolationLevel { set; }
+    string? ConnectionString { get; set; }
+    string? TableName { get; set; }
+    string? IdColumnName { get; set; }
+    DapperDatabaseProvider? Provider { get; set; }
 
     IDapperSagaRepositoryConfigurator UseSqlServer(string connectionString);
     IDapperSagaRepositoryConfigurator UsePostgres(string connectionString);

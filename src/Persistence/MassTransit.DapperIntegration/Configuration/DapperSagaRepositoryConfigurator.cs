@@ -4,29 +4,33 @@ namespace MassTransit.Configuration
 {
     using System.Collections.Generic;
     using System.Data;
+    using System.Linq;
     using DapperIntegration.Saga;
     using DapperIntegration.SqlBuilders;
     using Saga;
     using Microsoft.Extensions.DependencyInjection;
-    
+    using Microsoft.Extensions.Options;
+
+
     public class DapperSagaRepositoryConfigurator<TSaga> :
         IDapperSagaRepositoryConfigurator<TSaga>,
         ISpecification
         where TSaga : class, ISaga
     {
-        readonly string _connectionString;
-
-        public DapperSagaRepositoryConfigurator(string connectionString = default, IsolationLevel isolationLevel = IsolationLevel.Serializable)
+        public DapperSagaRepositoryConfigurator(string? connectionString = null, IsolationLevel? isolationLevel = null)
         {
-            _connectionString = connectionString;
-            IsolationLevel = isolationLevel;
+            if (connectionString is not null)
+                ConnectionString = connectionString;
+
+            if (isolationLevel is not null)
+                IsolationLevel = isolationLevel;
         }
 
-        public string ConnectionString { get; set; }
-        public string TableName { get; set; }
-        public string IdColumnName { get; set; }
-        public IsolationLevel IsolationLevel { get; set; }
-        public DapperDatabaseProvider Provider { get; set; }
+        public string? ConnectionString { get; set; }
+        public string? TableName { get; set; }
+        public string? IdColumnName { get; set; }
+        public IsolationLevel? IsolationLevel { get; set; }
+        public DapperDatabaseProvider? Provider { get; set; }
         public SqlBuilder<TSaga>? SqlBuilder { get; set; }
         public DatabaseContextFactory<TSaga>? ContextFactory { get; set; }
         
@@ -84,14 +88,36 @@ namespace MassTransit.Configuration
 
         public IEnumerable<ValidationResult> Validate()
         {
-            if (string.IsNullOrWhiteSpace(_connectionString))
-                yield return this.Failure("ConnectionString", "must be specified");
+            // TODO: handle validation better
+            //
+            // It is entirely possible that the entirety of the configuration could
+            // happen inside a `services.AddOptions<>()` call in the caller's code.
+            // In this case, we (by design) won't have properties here, unless we can
+            // resolve the DapperOptions when building the IDapperSagaRepositoryConfigurator.
+            // If we can do that, then all the properties could be set ahead of time
+            // from the DapperOptions object, and the validation will work fine.
+
+            //if (string.IsNullOrWhiteSpace(_connectionString))
+            //    yield return this.Failure("ConnectionString", "must be specified");
+
+            yield break;
         }
 
         public void Register(ISagaRepositoryRegistrationConfigurator<TSaga> configurator)
         {
-            // TODO: more happens here
-            configurator.AddOptions<DapperOptions<TSaga>>();
+            if (configurator.All(r => r.ServiceType != typeof(IOptions<DapperOptions<TSaga>>)))
+            {
+                configurator.AddOptions<DapperOptions<TSaga>>().Configure(opt =>
+                {
+                    opt.ConnectionString = ConnectionString;
+                    opt.IsolationLevel = IsolationLevel;
+                    opt.Provider = Provider;
+                    opt.IdColumnName = IdColumnName;
+                    opt.TableName = TableName;
+                    opt.SqlBuilder = SqlBuilder;
+                    opt.ContextFactory = ContextFactory;
+                });
+            }
 
             configurator.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
             configurator.RegisterQuerySagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
