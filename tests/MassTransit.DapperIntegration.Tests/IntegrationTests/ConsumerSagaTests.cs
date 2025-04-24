@@ -6,17 +6,17 @@ using Saga;
 using SqlBuilders;
 using Testing;
 
-
 public class ConsumerSagaTests : DapperVersionedSagaTests
 {
     ISagaRepository<VersionedConsumerSaga> _repository;
 
     protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
     {
-        _repository = DapperSagaRepository<VersionedConsumerSaga>.Create(ConnectionString, conf =>
+        _repository = DapperSagaRepository<VersionedConsumerSaga>.Create(conf =>
         {
-            conf.UseTableName("VersionedSagas");
-            conf.UseContextFactory((c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new SqlServerBuilder<VersionedConsumerSaga>("VersionedSagas")));
+            conf.ConnectionString = ConnectionString;
+            conf.TableName = "VersionedSagas";
+            conf.ContextFactory = (c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new SqlServerBuilder<VersionedConsumerSaga>("VersionedSagas"));
         });
 
         configurator.Saga(_repository);

@@ -16,10 +16,11 @@ public class BehaviorSagaTests : DapperVersionedSagaTests
 
     protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
     {
-        _repository = DapperSagaRepository<VersionedBehaviorSaga>.Create(ConnectionString, conf =>
+        _repository = DapperSagaRepository<VersionedBehaviorSaga>.Create(conf =>
         {
-            conf.UseTableName("VersionedSagas");
-            conf.UseContextFactory((c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new SqlServerBuilder<VersionedBehaviorSaga>("VersionedSagas")));
+            conf.ConnectionString = ConnectionString;
+            conf.TableName = "VersionedSagas";
+            conf.ContextFactory = (c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new SqlServerBuilder<VersionedBehaviorSaga>("VersionedSagas"));
         });
 
         configurator.StateMachineSaga(_stateMachine, _repository);

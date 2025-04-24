@@ -1,10 +1,12 @@
 namespace MassTransit.DapperIntegration.Saga
 {
     using System;
+    using System.Data;
     using System.Threading;
     using System.Threading.Tasks;
     using MassTransit.Saga;
     using Microsoft.Data.SqlClient;
+    using Microsoft.Extensions.Options;
 
 
     public class DapperSagaRepositoryContextFactory<TSaga> :
@@ -14,9 +16,9 @@ namespace MassTransit.DapperIntegration.Saga
         where TSaga : class, ISaga
     {
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
-        readonly DapperOptions<TSaga> _options;
+        readonly IOptions<DapperOptions<TSaga>> _options;
 
-        public DapperSagaRepositoryContextFactory(DapperOptions<TSaga> options, ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory)
+        public DapperSagaRepositoryContextFactory(IOptions<DapperOptions<TSaga>> options, ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory)
         {
             _options = options;
             _factory = factory;
@@ -78,17 +80,21 @@ namespace MassTransit.DapperIntegration.Saga
 
         async Task<DatabaseContext<TSaga>> CreateDatabaseContext(CancellationToken cancellationToken)
         {
-            var connection = new SqlConnection(_options.ConnectionString);
+            var options = _options.Value;
+
+            var connection = new SqlConnection(options.ConnectionString);
             SqlTransaction transaction = null;
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                transaction = connection.BeginTransaction(_options.IsolationLevel);
+                // serializable was the default prior to refactor
+                var isolationLevel = options.IsolationLevel ?? IsolationLevel.Serializable;
 
-                return _options.ContextFactory != null
-                    ? _options.ContextFactory(connection, transaction)
-                    : new DapperDatabaseContext<TSaga>(connection, transaction);
+                transaction = connection.BeginTransaction(isolationLevel);
+
+                return options.ContextFactory?.Invoke(connection, transaction) ?? 
+                    new DapperDatabaseContext<TSaga>(connection, transaction);
             }
             catch (Exception)
             {

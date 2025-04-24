@@ -16,11 +16,15 @@
 
             services.AddMassTransit(bus =>
             {
-                bus.AddSaga<VersionedConsumerSaga>().DapperRepository(opt =>
-                {
-                    opt.UseSqlServer("connection string");
-                    opt.UseIsolationLevel(IsolationLevel.ReadCommitted);
-                });
+                //bus.AddSagaStateMachine<VersionedSagaStateMachine, VersionedBehaviorSaga>()
+                //    .DapperRepository(cfg => cfg
+                //        .UseSqlServer("connection string")
+                //        .UseIsolationLevel(IsolationLevel.ReadCommitted)
+                //        .UseTableName("dbo.VersionedSagas")
+                //    );
+
+                bus.AddSagaStateMachine<VersionedSagaStateMachine, VersionedBehaviorSaga>()
+                    .DapperRepository("string");
             });
         }
     }
