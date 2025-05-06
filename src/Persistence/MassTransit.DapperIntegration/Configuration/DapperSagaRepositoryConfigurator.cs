@@ -101,8 +101,8 @@ namespace MassTransit.Configuration
                     var options = sp.GetRequiredService<IOptions<DapperOptions<JobSaga>>>().Value;
                     ISagaSqlFormatter<DbJobModel> formatter = options.Provider switch
                     {
-                        DatabaseProviders.Postgres => new PostgresSagaFormatter<DbJobModel>(options.TableName, options.IdColumnName),
-                        DatabaseProviders.SqlServer => new SqlServerSagaFormatter<DbJobModel>(options.TableName, options.IdColumnName),
+                        DatabaseProviders.Postgres => new PostgresSagaFormatter<DbJobModel>(options.TableName ?? "Jobs", options.IdColumnName),
+                        DatabaseProviders.SqlServer => new SqlServerSagaFormatter<DbJobModel>(options.TableName ?? "Jobs", options.IdColumnName),
                         _ => throw new InvalidOperationException("JobSagas only support SqlServer or Postgres without a custom ContextFactoryProvider")
                     };
                     var context = new SagaDatabaseContext<DbJobModel>(c, t, formatter);
@@ -131,8 +131,8 @@ namespace MassTransit.Configuration
                     var options = sp.GetRequiredService<IOptions<DapperOptions<JobTypeSaga>>>().Value;
                     ISagaSqlFormatter<DbJobTypeModel> formatter = options.Provider switch
                     {
-                        DatabaseProviders.Postgres => new PostgresSagaFormatter<DbJobTypeModel>(options.TableName, options.IdColumnName),
-                        DatabaseProviders.SqlServer => new SqlServerSagaFormatter<DbJobTypeModel>(options.TableName, options.IdColumnName),
+                        DatabaseProviders.Postgres => new PostgresSagaFormatter<DbJobTypeModel>(options.TableName ?? "JobTypes", options.IdColumnName),
+                        DatabaseProviders.SqlServer => new SqlServerSagaFormatter<DbJobTypeModel>(options.TableName ?? "JobTypes", options.IdColumnName),
                         _ => throw new InvalidOperationException("JobSagas only support SqlServer or Postgres without a custom ContextFactoryProvider")
                     };
                     var context = new SagaDatabaseContext<DbJobTypeModel>(c, t, formatter);
@@ -162,8 +162,8 @@ namespace MassTransit.Configuration
                     var options = sp.GetRequiredService<IOptions<DapperOptions<JobAttemptSaga>>>().Value;
                     ISagaSqlFormatter<DbJobAttemptModel> formatter = options.Provider switch
                     {
-                        DatabaseProviders.Postgres => new PostgresSagaFormatter<DbJobAttemptModel>(options.TableName, options.IdColumnName),
-                        DatabaseProviders.SqlServer => new SqlServerSagaFormatter<DbJobAttemptModel>(options.TableName, options.IdColumnName),
+                        DatabaseProviders.Postgres => new PostgresSagaFormatter<DbJobAttemptModel>(options.TableName ?? "JobAttempts", options.IdColumnName),
+                        DatabaseProviders.SqlServer => new SqlServerSagaFormatter<DbJobAttemptModel>(options.TableName ?? "JobAttempts", options.IdColumnName),
                         _ => throw new InvalidOperationException("JobSagas only support SqlServer or Postgres without a custom ContextFactoryProvider")
                     };
                     var context = new SagaDatabaseContext<DbJobAttemptModel>(c, t, formatter);
@@ -191,7 +191,7 @@ namespace MassTransit.Configuration
             IsolationLevel = isolationLevel;
         }
 
-        private void RegisterRepositories<TSaga>(
+        void RegisterRepositories<TSaga>(
             ISagaRepositoryRegistrationConfigurator<TSaga> configurator,
             Action<DapperOptions<TSaga>> configure
         ) where TSaga : class, ISaga
