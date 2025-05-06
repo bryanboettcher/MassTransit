@@ -6,13 +6,18 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using System.Collections.Generic;
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Linq;
+    using System.Linq.Expressions;
     using System.Reflection;
+    using Saga;
+
 
     /// <summary>
     /// Contains overridable members to help build queries
     /// </summary>
-    public abstract class SqlBuilderBase
+    public abstract class SagaFormatterBase
     {
+        protected readonly List<SqlPropertyMapping> Mappings = new();
+        
         protected virtual string GetTableName(Type type)
         {
             var tableAttribute = type.GetCustomAttribute<Dapper.Contrib.Extensions.TableAttribute>();
@@ -87,6 +92,24 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
                 return string.Concat(parts);
             }
+        }
+
+
+        protected void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
+        {
+            if (mappingExpression.NodeType != ExpressionType.Lambda)
+                throw new InvalidOperationException("Expression must be a lambda");
+
+            var body = mappingExpression.Body as MemberExpression;
+            if (body is null)
+                throw new InvalidOperationException("Expression must only be a property (x => x.Foo.Bar)");
+
+            Mappings.Add(new()
+            {
+                Property = body,
+                Name = name ?? body.Member.Name,
+                Exact = exact,
+            });
         }
     }
 }

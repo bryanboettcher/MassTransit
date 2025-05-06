@@ -17,7 +17,7 @@ namespace MassTransit.DapperIntegration.Saga
         public IsolationLevel? IsolationLevel { get; set; }
         public DatabaseProviders Provider { get; internal set; }
 
-        public Func<IServiceProvider, SqlBuilder<TSaga>>? SqlBuilderProvider { get; set; }
+        public Func<IServiceProvider, ISagaSqlFormatter<TSaga>>? SqlBuilderProvider { get; set; }
         public Func<IServiceProvider, DatabaseContextFactory<TSaga>>? ContextFactoryProvider { get; set; }
         
         [Obsolete("Use ContextFactoryProvider instead", true)]

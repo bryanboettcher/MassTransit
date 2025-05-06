@@ -1,3 +1,4 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests;
-
-public interface DeleteSagaByName { string Name { get; } };
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+{
+    public interface DeleteSagaByName { string Name { get; } };
+}

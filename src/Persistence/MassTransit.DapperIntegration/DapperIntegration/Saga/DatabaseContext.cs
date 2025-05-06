@@ -6,8 +6,7 @@ namespace MassTransit.DapperIntegration.Saga
     using System.Linq.Expressions;
     using System.Threading;
     using System.Threading.Tasks;
-
-
+    
     public interface DatabaseContext<TSaga> :
         IAsyncDisposable
         where TSaga : class, ISaga

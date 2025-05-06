@@ -18,13 +18,13 @@ namespace MassTransit.DapperIntegration.Saga
     {
         readonly DbConnection _connection;
         readonly DbTransaction _transaction;
-        readonly SqlBuilder<TSaga> _sqlBuilder;
+        readonly ISagaSqlFormatter<TSaga> _sqlFormatter;
 
-        public SagaDatabaseContext(DbConnection connection, DbTransaction transaction, SqlBuilder<TSaga> sqlBuilder)
+        public SagaDatabaseContext(DbConnection connection, DbTransaction transaction, ISagaSqlFormatter<TSaga> sqlFormatter)
         {
             _connection = connection;
             _transaction = transaction;
-            _sqlBuilder = sqlBuilder;
+            _sqlFormatter = sqlFormatter;
         }
     
         public Task<TSaga> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
@@ -32,7 +32,7 @@ namespace MassTransit.DapperIntegration.Saga
             var param = new DynamicParameters();
             param.Add("correlationId", correlationId);
 
-            var sql = _sqlBuilder.BuildLoadSql();
+            var sql = _sqlFormatter.BuildLoadSql();
 
             return _connection.QueryFirstOrDefaultAsync<TSaga>(sql, param, _transaction);
         }
@@ -40,14 +40,14 @@ namespace MassTransit.DapperIntegration.Saga
         public Task<IEnumerable<TSaga>> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken)
         {
             var parameters = new DynamicParameters();
-            var sql = _sqlBuilder.BuildQuerySql(filterExpression, (k, v) => parameters.Add(k, v));
+            var sql = _sqlFormatter.BuildQuerySql(filterExpression, (k, v) => parameters.Add(k, v));
         
             return _connection.QueryAsync<TSaga>(sql, parameters, _transaction);
         }
     
         public async Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default)
         {
-            var sql = _sqlBuilder.BuildInsertSql();
+            var sql = _sqlFormatter.BuildInsertSql();
 
             var rows = await ExecuteSql(instance, sql, cancellationToken).ConfigureAwait(false);
 
@@ -57,7 +57,7 @@ namespace MassTransit.DapperIntegration.Saga
 
         public async Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default)
         {
-            var sql = _sqlBuilder.BuildUpdateSql();
+            var sql = _sqlFormatter.BuildUpdateSql();
         
             var rows = await ExecuteSql(instance, sql, cancellationToken).ConfigureAwait(false);
 
@@ -67,7 +67,7 @@ namespace MassTransit.DapperIntegration.Saga
 
         public async Task DeleteAsync(TSaga instance, CancellationToken cancellationToken)
         {
-            var sql = _sqlBuilder.BuildDeleteSql();
+            var sql = _sqlFormatter.BuildDeleteSql();
 
             var rows = await ExecuteSql(instance, sql, cancellationToken).ConfigureAwait(false);
 

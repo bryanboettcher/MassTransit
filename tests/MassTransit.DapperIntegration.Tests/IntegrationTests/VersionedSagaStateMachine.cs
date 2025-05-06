@@ -1,32 +1,33 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests;
-
-public class VersionedSagaStateMachine : MassTransitStateMachine<VersionedBehaviorSaga>
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
 {
-    public VersionedSagaStateMachine()
+    public class VersionedSagaStateMachine : MassTransitStateMachine<VersionedBehaviorSaga>
     {
-        InstanceState(c => c.CurrentState);
+        public VersionedSagaStateMachine()
+        {
+            InstanceState(c => c.CurrentState);
 
-        Event(() => OnDelete, e => e.CorrelateBy((s, c) => s.Name == c.Message.Name));
+            Event(() => OnDelete, e => e.CorrelateBy((s, c) => s.Name == c.Message.Name));
 
-        Initially(
-            When(OnCreate)
-                .Then(ctx => ctx.Saga.Name = ctx.Message.Name)
-                .TransitionTo(Ready)
-        );
+            Initially(
+                When(OnCreate)
+                    .Then(ctx => ctx.Saga.Name = ctx.Message.Name)
+                    .TransitionTo(Ready)
+            );
 
-        During(Ready,
-            When(OnUpdate)
-                .Then(ctx => ctx.Saga.Name = ctx.Message.Name),
-            When(OnDelete)
-                .Finalize()
-        );
+            During(Ready,
+                When(OnUpdate)
+                    .Then(ctx => ctx.Saga.Name = ctx.Message.Name),
+                When(OnDelete)
+                    .Finalize()
+            );
 
-        SetCompletedWhenFinalized();
+            SetCompletedWhenFinalized();
+        }
+
+        public State Ready { get; } = null!;
+
+        public Event<CreateSaga> OnCreate { get; } = null!;
+        public Event<UpdateSaga> OnUpdate { get; } = null!;
+        public Event<DeleteSagaByName> OnDelete { get; } = null!;
     }
-
-    public State Ready { get; } = null!;
-
-    public Event<CreateSaga> OnCreate { get; } = null!;
-    public Event<UpdateSaga> OnUpdate { get; } = null!;
-    public Event<DeleteSagaByName> OnDelete { get; } = null!;
 }

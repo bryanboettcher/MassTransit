@@ -136,8 +136,8 @@ namespace MassTransit.DapperIntegration.Saga
 
                 sqlBuilder ??= options.Provider switch
                 {
-                    DatabaseProviders.Postgres => _ => new PostgresBuilder<TSaga>(tableName, idColumnName),
-                    _ => _ => new SqlServerBuilder<TSaga>(tableName, idColumnName),
+                    DatabaseProviders.Postgres => _ => new PostgresSagaFormatter<TSaga>(tableName, idColumnName),
+                    _ => _ => new SqlServerSagaFormatter<TSaga>(tableName, idColumnName),
                 };
 
                 factory = _ => (c, t) => new SagaDatabaseContext<TSaga>(c, t, sqlBuilder(_serviceProvider));

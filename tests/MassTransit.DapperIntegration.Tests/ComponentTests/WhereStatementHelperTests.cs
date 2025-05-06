@@ -21,7 +21,7 @@
 
             // Act
             var predicates = SqlExpressionVisitor.CreateFromExpression(filter);
-            var whereStatement = SqlServerBuilder<SimpleSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
+            var whereStatement = SqlServerSagaFormatter<SimpleSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
 
             // Assert
             Assert.That(whereStatement, Is.EqualTo("[CorrelationId] = @value0"));
@@ -39,7 +39,7 @@
 
             // Act
             var predicates = SqlExpressionVisitor.CreateFromExpression(filter);
-            var whereStatement = SqlServerBuilder<SimpleSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
+            var whereStatement = SqlServerSagaFormatter<SimpleSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
 
             // Assert
             Assert.That(whereStatement, Is.EqualTo("[CorrelationId] = @value0 AND [Completed] = @value1 AND [CorrelateBySomething] = @value2"));

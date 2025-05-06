@@ -55,7 +55,7 @@ namespace MassTransit.DapperIntegration.Saga
             var tableName = GetTableName();
             var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression);
             var parameters = new DynamicParameters();
-            var queryPredicate = SqlServerBuilder<TSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
+            var queryPredicate = SqlServerSagaFormatter<TSaga>.BuildQueryPredicate(predicates, (k, v) => parameters.Add(k, v));
 
             var where = string.IsNullOrWhiteSpace(queryPredicate)
                 ? string.Empty

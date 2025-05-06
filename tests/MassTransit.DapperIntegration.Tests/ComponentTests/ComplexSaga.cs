@@ -1,15 +1,16 @@
-﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests;
-
-using System;
-
-
-[Dapper.Contrib.Extensions.Table("OverrideTable")]
-public class ComplexSaga : ISaga
+﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
 {
-    public Guid CorrelationId { get; set; }
-    public string Name { get; set; }
-    public int Age { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public bool IsActive { get; set; }
+    using System;
+
+
+    [Dapper.Contrib.Extensions.Table("OverrideTable")]
+    public class ComplexSaga : ISaga
+    {
+        public Guid CorrelationId { get; set; }
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
+        public bool IsActive { get; set; }
+    }
 }

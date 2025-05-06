@@ -5,16 +5,15 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using System.Linq;
     using System.Linq.Expressions;
     using Saga;
-
-
-    public class PostgresBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
+    
+    public class SqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
         where TModel : class
     {
         readonly string _tableName;
         readonly string _idColumnName;
         readonly string _versionColumnName;
-
-        public PostgresBuilder(string tableName = default, string idColumnName = default)
+        
+        public SqlServerSagaFormatter(string tableName = default, string idColumnName = default)
         {
             _tableName = tableName ?? GetTableName(typeof(TModel));
             _idColumnName = idColumnName ?? GetIdColumnName(typeof(TModel));
@@ -23,33 +22,32 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
         public string BuildLoadSql()
         {
-            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = $1 FOR UPDATE";
+            return $"SELECT * FROM {_tableName} WITH (UPDLOCK, ROWLOCK) WHERE [{_idColumnName}] = @correlationId";
         }
 
         public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object> parameterCallback)
         {
-            var sqlRoot = $"SELECT * FROM {_tableName}";
-            var sqlLock = " FOR UPDATE";
+            var sqlRoot = $"SELECT * FROM {_tableName} WITH (UPDLOCK, ROWLOCK)";
 
-            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression);
-
+            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+            
             if (predicates.Count == 0) // good luck...
-                return string.Concat(sqlRoot, sqlLock);
+                return sqlRoot;
 
             var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
-            return string.Concat(sqlRoot, " WHERE ", queryPredicate, sqlLock);
+            return string.Concat(sqlRoot, " WHERE ", queryPredicate);
         }
 
         public static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object> parameterCallback)
         {
             var queryPredicates = new List<string>();
-
-            foreach (var p in predicates)
+            
+            foreach(var p in predicates)
             {
-                var paramName = $"${queryPredicates.Count + 1}";
-                queryPredicates.Add($"{p.Name} {p.Operator} {paramName}");
+                var paramName = $"value{queryPredicates.Count}";
+                queryPredicates.Add($"[{p.Name}] {p.Operator} @{paramName}");
                 parameterCallback?.Invoke(paramName, p.Value);
-            }
+            };
 
             return string.Join(" AND ", queryPredicates);
         }
@@ -60,13 +58,13 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
             var forbidden = new HashSet<string> { _idColumnName, _versionColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
-            properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "$1"));
+            properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "correlationId"));
 
             if (_versionColumnName != null)
-                properties.Insert(1, (col: _versionColumnName, prop: "$2"));
+                properties.Insert(1, (col: _versionColumnName, prop: "version"));
 
-            var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
-            var values = string.Join(", ", properties.Select((p, i) => $"${i + 1}"));
+            var columns = string.Join(", ", properties.Select(p => $"[{p.col}]"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.prop}"));
 
             var sql = $"INSERT INTO {_tableName} ({columns}) VALUES ({values})";
 
@@ -81,27 +79,32 @@ namespace MassTransit.DapperIntegration.SqlBuilders
             var properties = BuildProperties(sagaType, forbidden).ToList();
 
             if (_versionColumnName != null)
-                properties.Insert(0, (col: _versionColumnName, prop: string.Empty));
+                properties.Add((col: _versionColumnName, prop: "version"));
 
-            // "i + 2" is to leave room for correlationId + version
-            var updateExpression = string.Join(", ", properties.Select((p, i) => $"{p.col} = ${i + 2}"));
+            var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));
 
-            var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = $1";
+            var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE [{_idColumnName}] = @correlationId";
 
             if (_versionColumnName != null)
-                sql += $" AND {_versionColumnName} < $2";
+                sql += $" AND [{_versionColumnName}] < @version";
 
             return sql;
         }
 
         public string BuildDeleteSql()
         {
-            var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = $1";
+            var sql = $"DELETE FROM {_tableName} WHERE [{_idColumnName}] = @correlationId";
 
             if (_versionColumnName != null)
-                sql += $" AND {_versionColumnName} < $2";
+                sql += $" AND [{_versionColumnName}] < @version";
 
             return sql;
         }
+
+        public void MapPrefix<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string prefixName = null)
+            => MapCore(mappingExpression, prefixName, false);
+
+        public void MapProperty<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string targetName)
+            => MapCore(mappingExpression, targetName, true);
     }
 }

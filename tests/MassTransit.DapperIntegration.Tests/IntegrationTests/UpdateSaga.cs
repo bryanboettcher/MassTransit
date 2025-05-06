@@ -1,6 +1,7 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests;
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+{
+    using System;
 
-using System;
 
-
-public interface UpdateSaga : CorrelatedBy<Guid> { string Name { get; } }
+    public interface UpdateSaga : CorrelatedBy<Guid> { string Name { get; } }
+}
