@@ -6,7 +6,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using System.Linq.Expressions;
     using Saga;
     
-    public sealed class SqlServerBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
+    public class SqlServerBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
         where TModel : class
     {
         readonly string _tableName;

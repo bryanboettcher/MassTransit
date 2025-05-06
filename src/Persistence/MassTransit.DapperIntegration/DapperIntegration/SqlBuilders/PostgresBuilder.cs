@@ -4,11 +4,10 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
-    using Dapper;
     using Saga;
 
 
-    public sealed class PostgresBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
+    public class PostgresBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
         where TModel : class
     {
         readonly string _tableName;

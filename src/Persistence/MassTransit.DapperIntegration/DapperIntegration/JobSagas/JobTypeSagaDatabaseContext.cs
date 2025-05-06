@@ -6,7 +6,7 @@ namespace MassTransit.DapperIntegration.JobSagas
     using System;
     using Saga;
 
-    public sealed class JobTypeSagaDatabaseContext : JobSagaBaseContext<JobTypeSaga, DbJobTypeModel>, DatabaseContext<JobTypeSaga>
+    public class JobTypeSagaDatabaseContext : JobSagaBaseContext<JobTypeSaga, DbJobTypeModel>, DatabaseContext<JobTypeSaga>
     {
         public JobTypeSagaDatabaseContext(
             DatabaseContext<DbJobTypeModel> databaseContext,
