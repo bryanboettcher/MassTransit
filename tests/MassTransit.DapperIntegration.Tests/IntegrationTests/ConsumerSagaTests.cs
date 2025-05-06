@@ -16,7 +16,7 @@ public class ConsumerSagaTests : DapperVersionedSagaTests
         {
             conf.ConnectionString = ConnectionString;
             conf.TableName = "VersionedSagas";
-            conf.ContextFactory = (c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new SqlServerBuilder<VersionedConsumerSaga>("VersionedSagas"));
+            conf.ContextFactoryProvider = _ => (c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new SqlServerBuilder<VersionedConsumerSaga>("VersionedSagas"));
         });
 
         configurator.Saga(_repository);

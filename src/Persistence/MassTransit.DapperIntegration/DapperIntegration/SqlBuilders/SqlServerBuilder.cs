@@ -4,10 +4,9 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
-    using Dapper;
     using Saga;
     
-    public class SqlServerBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
+    public sealed class SqlServerBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
         where TModel : class
     {
         readonly string _tableName;

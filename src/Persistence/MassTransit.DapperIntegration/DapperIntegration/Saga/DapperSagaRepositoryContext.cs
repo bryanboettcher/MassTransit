@@ -42,7 +42,7 @@ namespace MassTransit.DapperIntegration.Saga
         public async Task<SagaConsumeContext<TSaga, TMessage>> Insert(TSaga instance)
         {
             await _context.InsertAsync(instance, CancellationToken).ConfigureAwait(false);
-
+            
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Insert).ConfigureAwait(false);
         }
 

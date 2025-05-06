@@ -97,7 +97,10 @@ CREATE TABLE SimpleSagas (
         public DapperSagaRepositoryTests()
         {
             _connectionString = LocalDbConnectionStringProvider.GetLocalDbConnectionString();
-            _sagaRepository = new Lazy<ISagaRepository<SimpleSaga>>(() => DapperSagaRepository<SimpleSaga>.Create(_connectionString, IsolationLevel.Serializable));
+            _sagaRepository = new Lazy<ISagaRepository<SimpleSaga>>(() => DapperSagaRepository<SimpleSaga>.Create(opt =>
+            {
+                opt.ConnectionString = _connectionString;
+            }));
         }
 
         protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)

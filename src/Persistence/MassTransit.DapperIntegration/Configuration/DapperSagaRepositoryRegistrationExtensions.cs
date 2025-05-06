@@ -26,8 +26,9 @@ namespace MassTransit
         {
             var repositoryConfigurator = new DapperSagaRepositoryConfigurator<TSaga>();
 
+            // connection string will only be set from existing code, since it's now Obsolete
             if (!string.IsNullOrEmpty(connectionString))
-                repositoryConfigurator.ConnectionString = connectionString;
+                repositoryConfigurator.UseSqlServer(connectionString);
 
             configure?.Invoke(repositoryConfigurator);
 
@@ -42,13 +43,19 @@ namespace MassTransit
         /// <summary>
         /// Use the Dapper saga repository for sagas configured by type (without a specific generic call to AddSaga/AddSagaStateMachine)
         /// </summary>
-        /// <param name="configurator"></param>
-        /// <param name="connectionString"></param>
-        /// <param name="configure"></param>
+        [Obsolete("Configure connection string via the configurator callback", false)]
         public static void SetDapperSagaRepositoryProvider(this IRegistrationConfigurator configurator, string connectionString,
             Action<IDapperSagaRepositoryConfigurator> configure)
         {
             configurator.SetSagaRepositoryProvider(new DapperSagaRepositoryRegistrationProvider(connectionString, configure));
+        }
+
+        /// <summary>
+        /// Use the Dapper saga repository for sagas configured by type (without a specific generic call to AddSaga/AddSagaStateMachine)
+        /// </summary>
+        public static void SetDapperSagaRepositoryProvider(this IRegistrationConfigurator configurator, Action<IDapperSagaRepositoryConfigurator> configure)
+        {
+            configurator.SetSagaRepositoryProvider(new DapperSagaRepositoryRegistrationProvider(configure));
         }
     }
 }

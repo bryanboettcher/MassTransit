@@ -1,28 +1,26 @@
 #nullable enable
+using System;
+
 namespace MassTransit;
 
 using System.Data;
-using DapperIntegration.Saga;
 using DapperIntegration.SqlBuilders;
 
+public interface IDapperJobSagaRepositoryConfigurator
+{
+    void UseJobContextFactory(Func<IServiceProvider, DatabaseContextFactory<JobSaga>> factoryFunc);
+    void UseJobTypeContextFactory(Func<IServiceProvider, DatabaseContextFactory<JobTypeSaga>> factoryFunc);
+    void UseJobAttemptContextFactory(Func<IServiceProvider, DatabaseContextFactory<JobAttemptSaga>> factoryFunc);
+    void UseSqlServer(string connectionString);
+    void UsePostgres(string connectionString);
+    void UseIsolationLevel(IsolationLevel isolationLevel);
+}
 
 public interface IDapperSagaRepositoryConfigurator
 {
-    IsolationLevel? IsolationLevel { set; }
-    string? ConnectionString { get; set; }
-    string? TableName { get; set; }
-    string? IdColumnName { get; set; }
-    DapperDatabaseProvider? Provider { get; set; }
-
-    IDapperSagaRepositoryConfigurator UseSqlServer(string connectionString);
-    IDapperSagaRepositoryConfigurator UsePostgres(string connectionString);
-    IDapperSagaRepositoryConfigurator UseIsolationLevel(IsolationLevel isolationLevel);
-    IDapperSagaRepositoryConfigurator UseTableName(string tableName);
-    IDapperSagaRepositoryConfigurator UseIdColumnName(string idColumnName);
-    IDapperSagaRepositoryConfigurator UseProvider(DapperDatabaseProvider provider);
-
+    void UseTableName(string tableName);
+    void UseIdColumnName(string idColumnName);
 }
-
 
 public interface IDapperSagaRepositoryConfigurator<TSaga> :
     IDapperSagaRepositoryConfigurator
@@ -31,10 +29,12 @@ public interface IDapperSagaRepositoryConfigurator<TSaga> :
     /// <summary>
     /// Set the database context factory to allow customization of the Dapper interaction/queries
     /// </summary>
-    DatabaseContextFactory<TSaga> ContextFactory { set; }
-    SqlBuilder<TSaga>? SqlBuilder { get; set; }
-    
-    IDapperSagaRepositoryConfigurator<TSaga> UseSqlBuilder(SqlBuilder<TSaga> sqlBuilder);
-    IDapperSagaRepositoryConfigurator<TSaga> UseContextFactory(DatabaseContextFactory<TSaga> contextFactory);
+    [Obsolete("Use UseContextFactory() instead", true)]
+    DatabaseContextFactory<TSaga> ContextFactory { get; set; }
+
+    void UseSqlBuilder(Func<IServiceProvider, SqlBuilder<TSaga>> factory);
+    void UseContextFactory(Func<IServiceProvider, DatabaseContextFactory<TSaga>> factory);
 }
+
+
 #nullable restore

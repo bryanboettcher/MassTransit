@@ -13,22 +13,18 @@ namespace MassTransit.DapperIntegration.Saga
     /// Contains saga-specific logic as well as respecting ISagaVersion
     /// </summary>
     /// <typeparam name="TSaga"></typeparam>
-    public sealed class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>
+    public class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
         readonly DbConnection _connection;
         readonly DbTransaction _transaction;
         readonly SqlBuilder<TSaga> _sqlBuilder;
 
-        readonly bool _isVersioned;
-    
         public SagaDatabaseContext(DbConnection connection, DbTransaction transaction, SqlBuilder<TSaga> sqlBuilder)
         {
             _connection = connection;
             _transaction = transaction;
             _sqlBuilder = sqlBuilder;
-
-            _isVersioned = typeof(ISagaVersion).IsAssignableFrom(typeof(TSaga));
         }
     
         public Task<TSaga> LoadAsync(Guid correlationId, CancellationToken cancellationToken)

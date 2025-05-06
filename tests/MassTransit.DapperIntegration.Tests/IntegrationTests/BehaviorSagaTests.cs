@@ -20,7 +20,7 @@ public class BehaviorSagaTests : DapperVersionedSagaTests
         {
             conf.ConnectionString = ConnectionString;
             conf.TableName = "VersionedSagas";
-            conf.ContextFactory = (c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new SqlServerBuilder<VersionedBehaviorSaga>("VersionedSagas"));
+            conf.ContextFactoryProvider = _ => (c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new SqlServerBuilder<VersionedBehaviorSaga>("VersionedSagas"));
         });
 
         configurator.StateMachineSaga(_stateMachine, _repository);

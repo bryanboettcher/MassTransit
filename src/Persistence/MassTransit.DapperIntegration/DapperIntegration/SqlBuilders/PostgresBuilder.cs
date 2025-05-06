@@ -8,7 +8,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using Saga;
 
 
-    public class PostgresBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
+    public sealed class PostgresBuilder<TModel> : SqlBuilderBase, SqlBuilder<TModel>
         where TModel : class
     {
         readonly string _tableName;

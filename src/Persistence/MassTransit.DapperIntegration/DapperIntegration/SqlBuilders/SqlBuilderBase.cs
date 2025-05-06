@@ -1,3 +1,5 @@
+using Dapper.Contrib.Extensions;
+
 namespace MassTransit.DapperIntegration.SqlBuilders
 {
     using System;
@@ -22,7 +24,18 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
         protected virtual string GetIdColumnName(Type type)
         {
-            if (type.GetProperties().Any(p => p.Name == "CorrelationId"))
+            var properties = type.GetProperties();
+
+            // support the Dapper.Contrib manual-mapping of keys or non-identity keys
+            var keyColumn = properties.FirstOrDefault(p => p.GetCustomAttribute<KeyAttribute>() is not null);
+            if (keyColumn is not null)
+                return keyColumn.Name;
+
+            var explicitKeyColumn = properties.FirstOrDefault(p => p.GetCustomAttribute<ExplicitKeyAttribute>() is not null);
+            if (explicitKeyColumn is not null)
+                return explicitKeyColumn.Name;
+
+            if (properties.Any(p => p.Name == "CorrelationId"))
                 return "CorrelationId";
 
             throw new InvalidOperationException("Only CorrelationId can be auto-detected as the key column.  Use constructor if necessary to override.");

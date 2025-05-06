@@ -1,7 +1,10 @@
 #nullable enable
+using System;
+
 namespace MassTransit.DapperIntegration.Saga
 {
     using System.Data;
+    using Configuration;
     using SqlBuilders;
 
 
@@ -12,15 +15,12 @@ namespace MassTransit.DapperIntegration.Saga
         public string? TableName { get; set; }
         public string? IdColumnName { get; set; }
         public IsolationLevel? IsolationLevel { get; set; }
-        public DapperDatabaseProvider? Provider { get; set; }
-        public SqlBuilder<TSaga>? SqlBuilder { get; set; }
-        public DatabaseContextFactory<TSaga>? ContextFactory { get; set; }
-    }
+        public DatabaseProviders Provider { get; internal set; }
 
-    public enum DapperDatabaseProvider
-    {
-        Default,
-        SqlServer,
-        Postgres,
+        public Func<IServiceProvider, SqlBuilder<TSaga>>? SqlBuilderProvider { get; set; }
+        public Func<IServiceProvider, DatabaseContextFactory<TSaga>>? ContextFactoryProvider { get; set; }
+        
+        [Obsolete("Use ContextFactoryProvider instead", true)]
+        public DatabaseContextFactory<TSaga>? ContextFactory { get; set; }
     }
 }
