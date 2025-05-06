@@ -17,6 +17,9 @@ namespace MassTransit
 
     public interface IDapperSagaRepositoryConfigurator
     {
+        void UseSqlServer(string connectionString);
+        void UsePostgres(string connectionString);
+        void UseIsolationLevel(IsolationLevel isolationLevel);
         void UseTableName(string tableName);
         void UseIdColumnName(string idColumnName);
     }
