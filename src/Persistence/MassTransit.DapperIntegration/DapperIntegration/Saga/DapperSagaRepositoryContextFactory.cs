@@ -97,7 +97,10 @@ namespace MassTransit.DapperIntegration.Saga
             DbTransaction transaction = null;
             try
             {
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                if (connection.State != ConnectionState.Open)
+                {
+                    await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                }
 
                 // serializable was the default prior to refactor
                 var isolationLevel = options.IsolationLevel.GetValueOrDefault(IsolationLevel.Serializable);
