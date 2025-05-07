@@ -1,7 +1,7 @@
 ﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
 {
+    using MassTransit;
     using System;
-    using System.Collections.Generic;
 
 
     public class PrefixedSaga : ISaga

@@ -74,7 +74,7 @@ namespace MassTransit.DapperIntegration.Saga
             await databaseContext.CommitAsync().ConfigureAwait(false);
         }
 
-        async Task<T> ExecuteAsyncMethod<T>(Func<DapperSagaRepositoryContext<TSaga>, Task<T>> asyncMethod, CancellationToken cancellationToken)
+        internal async Task<T> ExecuteAsyncMethod<T>(Func<DapperSagaRepositoryContext<TSaga>, Task<T>> asyncMethod, CancellationToken cancellationToken)
             where T : class
         {
             await using var databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
@@ -86,26 +86,28 @@ namespace MassTransit.DapperIntegration.Saga
             return result;
         }
 
-        async Task<DatabaseContext<TSaga>> CreateDatabaseContext(CancellationToken cancellationToken)
+        internal async Task<DatabaseContext<TSaga>> CreateDatabaseContext(CancellationToken cancellationToken)
         {
             var options = _options.Value;
             var factory = CreateContextFactory(options);
 
-            var connection = new SqlConnection(options.ConnectionString);
+            var connection = options.DbConnectionProvider?.Invoke(_serviceProvider)
+                ?? new SqlConnection(options.ConnectionString);
+            
             DbTransaction transaction = null;
             try
             {
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
                 // serializable was the default prior to refactor
-                var isolationLevel = options.IsolationLevel ?? IsolationLevel.Serializable;
+                var isolationLevel = options.IsolationLevel.GetValueOrDefault(IsolationLevel.Serializable);
 
             #if NETSTANDARD2_0 || NET472
                 transaction = connection.BeginTransaction(isolationLevel);
             #else
                 transaction = await connection.BeginTransactionAsync(isolationLevel, cancellationToken);
             #endif
-
+                
                 var contextFactory = factory(_serviceProvider);
                 return contextFactory(connection, transaction);
             }
@@ -128,22 +130,27 @@ namespace MassTransit.DapperIntegration.Saga
         {
             var factory = options.ContextFactoryProvider;
 
-            if (factory is null)
+            if (factory is not null)
+                return factory;
+
+            var sqlBuilder = options.SqlBuilderProvider;
+            var tableName = options.TableName;
+            var idColumnName = options.IdColumnName;
+
+            if (options.Provider == DatabaseProviders.Unspecified)
             {
-                var sqlBuilder = options.SqlBuilderProvider;
-                var tableName = options.TableName;
-                var idColumnName = options.IdColumnName;
-
-                sqlBuilder ??= options.Provider switch
-                {
-                    DatabaseProviders.Postgres => _ => new PostgresSagaFormatter<TSaga>(tableName, idColumnName),
-                    _ => _ => new SqlServerSagaFormatter<TSaga>(tableName, idColumnName),
-                };
-
-                factory = _ => (c, t) => new SagaDatabaseContext<TSaga>(c, t, sqlBuilder(_serviceProvider));
+                // legacy implementation path, which does not use a Formatter at all
+                return _ => (c, t) => new DapperDatabaseContext<TSaga>(c, t);
             }
 
-            return factory;
+            sqlBuilder ??= options.Provider switch
+            {
+                DatabaseProviders.Postgres => _ => new PostgresSagaFormatter<TSaga>(tableName, idColumnName),
+                DatabaseProviders.SqlServer => _ => new SqlServerSagaFormatter<TSaga>(tableName, idColumnName),
+                _ => throw new InvalidOperationException($"Invalid Provider, expecting Postgres or SqlServer, instead got {options.Provider:G}")
+            };
+
+            return _ => (c, t) => new SagaDatabaseContext<TSaga>(c, t, sqlBuilder(_serviceProvider));
         }
     }
 }

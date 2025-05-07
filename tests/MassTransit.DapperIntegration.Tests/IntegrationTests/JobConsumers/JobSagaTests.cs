@@ -12,6 +12,7 @@
     using TestFramework;
     using Testing;
 
+
     namespace JobConsumerTests
     {
         using System;

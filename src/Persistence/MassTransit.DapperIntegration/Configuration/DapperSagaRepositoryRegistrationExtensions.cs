@@ -31,10 +31,7 @@ namespace MassTransit
                 repositoryConfigurator.UseSqlServer(connectionString);
 
             configure?.Invoke(repositoryConfigurator);
-
-            repositoryConfigurator.Validate()
-                .ThrowIfContainsFailure("The Dapper saga repository configuration is invalid:");
-
+            
             configurator.Repository(s => repositoryConfigurator.Register(s));
 
             return configurator;

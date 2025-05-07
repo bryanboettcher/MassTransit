@@ -4,7 +4,6 @@ namespace MassTransit.DapperIntegration.Tests.Legacy
     using System.Linq.Expressions;
     using System.Threading.Tasks;
     using Dapper.Contrib.Extensions;
-    using MassTransit;
     using MassTransit.Tests.Saga.Messages;
 
 

@@ -1,7 +1,8 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.ConsumerSagas
 {
     using System;
     using System.Threading.Tasks;
+    using Common;
 
 
     public class VersionedConsumerSaga : ISagaVersion,

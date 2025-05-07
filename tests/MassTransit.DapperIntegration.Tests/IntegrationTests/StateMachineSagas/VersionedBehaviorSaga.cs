@@ -1,4 +1,4 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.StateMachines
 {
     using System;
 

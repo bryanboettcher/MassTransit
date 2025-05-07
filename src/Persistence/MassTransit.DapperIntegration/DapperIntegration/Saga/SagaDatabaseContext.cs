@@ -117,5 +117,7 @@ namespace MassTransit.DapperIntegration.Saga
             var rows = await _connection.ExecuteAsync(sql, param, _transaction).ConfigureAwait(false);
             return rows;
         }
+
+        internal ISagaSqlFormatter<TSaga> SqlFormatter => _sqlFormatter;
     }
 }

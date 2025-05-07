@@ -4,12 +4,12 @@
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using Dapper;
-    using MassTransit;
     using MassTransit.Tests;
     using Microsoft.Data.SqlClient;
     using NUnit.Framework;
     using TestFramework;
-    
+
+
     public abstract class DapperVersionedSagaTests : InMemoryTestFixture
     {
         protected readonly string ConnectionString;

@@ -8,10 +8,14 @@ namespace MassTransit.Configuration
     using DapperIntegration.SqlBuilders;
     using Saga;
     using System;
+    using System.Data.Common;
     using DapperIntegration.JobSagas;
+    using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Options;
+    using Npgsql;
+
 
     public class DapperSagaRepositoryConfigurator : IDapperSagaRepositoryConfigurator, ISpecification
     {
@@ -21,6 +25,7 @@ namespace MassTransit.Configuration
         protected string? TableName { get; set; }
         protected string? IdColumnName { get; set; }
         protected IsolationLevel? IsolationLevel { get; set; }
+        protected Func<IServiceProvider, DbConnection>? DbConnectionProvider { get; set; }
         
         public void UseSqlServer(string connectionString)
         {
@@ -35,24 +40,38 @@ namespace MassTransit.Configuration
         }
 
         public void UseIsolationLevel(IsolationLevel isolationLevel)
-        {
-            IsolationLevel = isolationLevel;
-        }
+            => IsolationLevel = isolationLevel;
 
         public void UseTableName(string tableName)
-        {
-            TableName = tableName;
-        }
+            => TableName = tableName;
 
         public void UseIdColumnName(string idColumnName)
-        {
-            IdColumnName = idColumnName;
-        }
+            => IdColumnName = idColumnName;
+
+        public void UseDbConnectionProvider(Func<IServiceProvider, DbConnection> factory)
+            => DbConnectionProvider = factory;
 
         public IEnumerable<ValidationResult> Validate()
         {
-            if (string.IsNullOrWhiteSpace(ConnectionString))
-                yield return this.Failure("ConnectionString", "must be specified");
+            // validation has to be choosy because it is possible to configure
+            // everything entirely with IOptions<DapperOptions<TSaga>>, so there would
+            // be nothing to validate here.
+            //
+            // any remaining validation can happen as an IValidateOptions<DapperOptions<TSaga>>
+
+            if (AnythingChanged())
+            {
+                if (string.IsNullOrWhiteSpace(ConnectionString) && DbConnectionProvider is null)
+                    yield return this.Failure("ConnectionString", "must be specified");
+            }
+
+            yield break;
+
+            bool AnythingChanged() =>
+                Provider != DatabaseProviders.Unspecified
+                || IsolationLevel is not null
+                || !string.IsNullOrEmpty(TableName)
+                || !string.IsNullOrEmpty(IdColumnName);
         }
     }
     
@@ -91,7 +110,7 @@ namespace MassTransit.Configuration
             configurator.TryAddScoped<DatabaseContext<DbJobModel>, SagaDatabaseContext<DbJobModel>>();
             configurator.TryAddScoped<DapperSagaSerializer<JobSaga, DbJobModel>, JobSerializer>();
 
-            RegisterRepositories(cfg, conf => conf.ContextFactoryProvider ??= BuildContext());
+            RegisterRepositories(cfg, conf => conf.ContextFactoryProvider ??= _jobContextFactory ?? BuildContext());
             return;
 
             Func<IServiceProvider, DatabaseContextFactory<JobSaga>> BuildContext()
@@ -121,7 +140,7 @@ namespace MassTransit.Configuration
             configurator.TryAddScoped<DatabaseContext<DbJobTypeModel>, SagaDatabaseContext<DbJobTypeModel>>();
             configurator.TryAddScoped<DapperSagaSerializer<JobTypeSaga, DbJobTypeModel>, JobTypeSerializer>();
             
-            RegisterRepositories(cfg, conf => conf.ContextFactoryProvider ??= BuildContext());
+            RegisterRepositories(cfg, conf => conf.ContextFactoryProvider ??= _jobTypeContextFactory ?? BuildContext());
             return;
 
             Func<IServiceProvider, DatabaseContextFactory<JobTypeSaga>> BuildContext()
@@ -152,7 +171,7 @@ namespace MassTransit.Configuration
             configurator.TryAddScoped<DapperSagaSerializer<JobAttemptSaga, DbJobAttemptModel>, JobAttemptSerializer>();
             configurator.TryAddScoped<ISagaSqlFormatter<DbJobAttemptModel>, SqlServerSagaFormatter<DbJobAttemptModel>>();
 
-            RegisterRepositories(cfg, conf => conf.ContextFactoryProvider ??= BuildContext());
+            RegisterRepositories(cfg, conf => conf.ContextFactoryProvider ??= _jobAttemptContextFactory ?? BuildContext());
             return;
 
             Func<IServiceProvider, DatabaseContextFactory<JobAttemptSaga>> BuildContext()
@@ -215,15 +234,13 @@ namespace MassTransit.Configuration
         IDapperSagaRepositoryConfigurator<TSaga>
         where TSaga : class, ISaga
     {
-        // only used to construct inline ContextProvider funcs
-        DatabaseContextFactory<TSaga>? _contextFactory;
-
         public DapperSagaRepositoryConfigurator()
         {
             ContextFactoryProvider = null;
             SqlBuilderProvider = null;
         }
 
+        [Obsolete("Configure the repository via UseXXX() methods", false)]
         public DapperSagaRepositoryConfigurator(string? connectionString = null, IsolationLevel? isolationLevel = null) : this()
         {
             if (connectionString is not null)
@@ -236,19 +253,10 @@ namespace MassTransit.Configuration
         protected Func<IServiceProvider, ISagaSqlFormatter<TSaga>>? SqlBuilderProvider { get; set; }
         protected Func<IServiceProvider, DatabaseContextFactory<TSaga>>? ContextFactoryProvider { get; set; }
 
-        public DatabaseContextFactory<TSaga>? ContextFactory
-        {
-            get => _contextFactory!;
-            set
-            {
-                _contextFactory = value;
+        [Obsolete("Configure the ContextFactory via UseContextFactory()", false)]
+        public DatabaseContextFactory<TSaga>? ContextFactory { get; set; }
 
-                if (value is not null)
-                    ContextFactoryProvider = _ => value;
-            }
-        }
-
-        public void UseSqlBuilder(Func<IServiceProvider, ISagaSqlFormatter<TSaga>> factory)
+        public void UseSqlFormatter(Func<IServiceProvider, ISagaSqlFormatter<TSaga>> factory)
             => SqlBuilderProvider = factory;
 
         public void UseContextFactory(Func<IServiceProvider, DatabaseContextFactory<TSaga>> factory)
@@ -265,16 +273,21 @@ namespace MassTransit.Configuration
             // This is accounted for in BuildContextFactory below, and
             // DapperSagaRepositoryContextFactory:CreateDatabaseContext.
             var contextFactory = BuildContextFactory();
+            var connectionFactory = BuildConnectionFactory();
             
             configurator.AddOptions<DapperOptions<TSaga>>().Configure(opt =>
             {
+                if (Provider != DatabaseProviders.Unspecified && opt.Provider != Provider)
+                    opt.Provider = Provider;
+
                 opt.ConnectionString ??= ConnectionString;
                 opt.IsolationLevel ??= IsolationLevel;
                 opt.IdColumnName ??= IdColumnName;
                 opt.TableName ??= TableName;
-                opt.Provider = Provider;
+
                 opt.SqlBuilderProvider ??= SqlBuilderProvider;
                 opt.ContextFactoryProvider ??= contextFactory;
+                opt.DbConnectionProvider ??= connectionFactory;
             });
 
             configurator.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
@@ -283,24 +296,43 @@ namespace MassTransit.Configuration
                 DapperSagaRepositoryContextFactory<TSaga>>();
         }
         
-        private Func<IServiceProvider, DatabaseContextFactory<TSaga>>? BuildContextFactory()
+        Func<IServiceProvider, DatabaseContextFactory<TSaga>>? BuildContextFactory()
         {
             // someone made it easy for us again
             if (ContextFactoryProvider is not null)
                 return ContextFactoryProvider;
 
             // legacy setting override
+            #pragma warning disable CS0618 // Type or member is obsolete
             if (ContextFactory is not null)
                 return _ => ContextFactory;
-
-            // the Provider is set when calling UseSqlServer or UsePostgres, so if
-            // it's not set here, then we'll have to resort to the legacy context.
-            if (Provider == DatabaseProviders.Unspecified)
-                return _ => (c, t) => new DapperDatabaseContext<TSaga>(c, t);
-
+            #pragma warning restore CS0618 // Type or member is obsolete
+   
             // null is a special case here, causing resolution with the new
             // SagaDatabaseContext<T> in the RepositoryContextFactory
             return null;
+        }
+
+        Func<IServiceProvider, DbConnection> BuildConnectionFactory()
+        {
+            if (DbConnectionProvider is not null)
+                return DbConnectionProvider;
+
+            return Provider == DatabaseProviders.Postgres
+                ? Postgres()
+                : SqlServer();
+
+            static Func<IServiceProvider, DbConnection> SqlServer() => sp =>
+            {
+                var options = sp.GetRequiredService<IOptions<DapperOptions<TSaga>>>().Value;
+                return new SqlConnection(options.ConnectionString);
+            };
+
+            static Func<IServiceProvider, DbConnection> Postgres() => sp =>
+            {
+                var options = sp.GetRequiredService<IOptions<DapperOptions<TSaga>>>().Value;
+                return new NpgsqlConnection(options.ConnectionString);
+            };
         }
     }
 }

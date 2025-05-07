@@ -1,7 +1,6 @@
 ﻿namespace MassTransit.DapperIntegration.Tests.Legacy
 {
     using System;
-    using System.Data;
     using System.Threading.Tasks;
     using Dapper;
     using MassTransit.Tests;

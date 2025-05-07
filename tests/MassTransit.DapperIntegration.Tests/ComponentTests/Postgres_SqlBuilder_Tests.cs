@@ -1,6 +1,9 @@
 ﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
 {
     using System;
+    using Common;
+    using MassTransit.DapperIntegration.Tests.IntegrationTests.ConsumerSagas;
+    using MassTransit.DapperIntegration.Tests.IntegrationTests.StateMachineSagas;
     using NUnit.Framework;
     using SqlBuilders;
 

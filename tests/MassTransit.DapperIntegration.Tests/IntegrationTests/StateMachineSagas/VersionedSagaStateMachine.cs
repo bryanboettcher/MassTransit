@@ -1,5 +1,8 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.StateMachines
 {
+    using Common;
+
+
     public class VersionedSagaStateMachine : MassTransitStateMachine<VersionedBehaviorSaga>
     {
         public VersionedSagaStateMachine()

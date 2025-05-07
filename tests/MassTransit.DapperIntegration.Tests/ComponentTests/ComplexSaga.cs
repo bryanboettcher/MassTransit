@@ -1,9 +1,10 @@
 ﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
 {
     using System;
+    using Dapper.Contrib.Extensions;
 
 
-    [Dapper.Contrib.Extensions.Table("OverrideTable")]
+    [Table("OverrideTable")]
     public class ComplexSaga : ISaga
     {
         public Guid CorrelationId { get; set; }

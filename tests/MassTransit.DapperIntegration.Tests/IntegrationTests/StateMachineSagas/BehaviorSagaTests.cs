@@ -1,6 +1,8 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.StateMachines
 {
     using System.Threading.Tasks;
+    using Common;
+    using ConsumerSagas;
     using NUnit.Framework;
     using Saga;
     using SqlBuilders;

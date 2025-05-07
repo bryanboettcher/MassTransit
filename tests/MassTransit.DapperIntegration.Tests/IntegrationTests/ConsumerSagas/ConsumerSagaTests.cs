@@ -1,10 +1,12 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.ConsumerSagas
 {
     using System.Threading.Tasks;
+    using Common;
     using NUnit.Framework;
     using Saga;
     using SqlBuilders;
     using Testing;
+
 
     public class ConsumerSagaTests : DapperVersionedSagaTests
     {

@@ -3,6 +3,7 @@ namespace MassTransit
 {
     using System;
     using System.Data;
+    using System.Data.Common;
     using DapperIntegration.SqlBuilders;
 
     public interface IDapperJobSagaRepositoryConfigurator
@@ -22,6 +23,7 @@ namespace MassTransit
         void UseIsolationLevel(IsolationLevel isolationLevel);
         void UseTableName(string tableName);
         void UseIdColumnName(string idColumnName);
+        void UseDbConnectionProvider(Func<IServiceProvider, DbConnection> factory);
     }
 
     public interface IDapperSagaRepositoryConfigurator<TSaga> :
@@ -34,7 +36,7 @@ namespace MassTransit
         [Obsolete("Use UseContextFactory() instead", true)]
         DatabaseContextFactory<TSaga> ContextFactory { get; set; }
 
-        void UseSqlBuilder(Func<IServiceProvider, ISagaSqlFormatter<TSaga>> factory);
+        void UseSqlFormatter(Func<IServiceProvider, ISagaSqlFormatter<TSaga>> factory);
         void UseContextFactory(Func<IServiceProvider, DatabaseContextFactory<TSaga>> factory);
     }
     #nullable restore
