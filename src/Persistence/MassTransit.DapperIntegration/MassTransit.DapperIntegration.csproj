@@ -17,6 +17,7 @@
     <Title>MassTransit.DapperIntegration</Title>
     <PackageTags>MassTransit;Dapper</PackageTags>
     <Description>MassTransit Dapper persistence support; $(Description)</Description>
+    <Authors>Chris Patterson, Bryan Boettcher</Authors>
   </PropertyGroup>
 
   <ItemGroup>

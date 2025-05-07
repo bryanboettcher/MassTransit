@@ -2,6 +2,7 @@
 {
     using System;
     using System.Threading.Tasks;
+    using Configuration;
     using Contracts.JobService;
     using MassTransit.Tests;
     using MassTransit.Tests.JobConsumerTests;
@@ -18,13 +19,11 @@
         using System;
         using System.Threading.Tasks;
         using Contracts.JobService;
-
-
+        
         public interface OddJob
         {
             TimeSpan Duration { get; }
         }
-
 
         public class OddJobConsumer : IJobConsumer<OddJob>
         {
@@ -65,10 +64,7 @@
             configurator.SetJobConsumerOptions(options => options.HeartbeatInterval = TimeSpan.FromSeconds(10)).Endpoint(e => e.PrefetchCount = 100);
 
             configurator.AddJobSagaStateMachines()
-                .DapperRepository(opt =>
-                {
-                    opt.UseSqlServer(_connectionString);
-                });
+                .DapperRepository(conf => conf.UseSqlServer(_connectionString));
             
             configurator.UsingInMemory((ctx, cfg) =>
             {
@@ -81,10 +77,6 @@
         public async Task Starting_job_will_start_job()
         {
             var services = new ServiceCollection();
-
-            services.AddOptions<DapperOptions<JobTypeSaga>>().Configure(c => c.TableName = "dbo.JobTypes");
-            services.AddOptions<DapperOptions<JobSaga>>().Configure(c => c.TableName = "dbo.Jobs");
-            services.AddOptions<DapperOptions<JobAttemptSaga>>().Configure(c => c.TableName = "dbo.JobAttempts");
 
             await using var provider = services
                 .AddMassTransitTestHarness(ConfigureRegistration)

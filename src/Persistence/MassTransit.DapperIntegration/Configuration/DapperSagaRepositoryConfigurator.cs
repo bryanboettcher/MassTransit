@@ -215,12 +215,15 @@ namespace MassTransit.Configuration
             Action<DapperOptions<TSaga>> configure
         ) where TSaga : class, ISaga
         {
+            // TODO: Consolidate with DapperSagaRepositoryConfigurator!
             configurator.AddOptions<DapperOptions<TSaga>>().Configure(opt =>
             {
+                if (Provider != DatabaseProviders.Unspecified && opt.Provider != Provider)
+                    opt.Provider = Provider;
+
                 opt.ConnectionString ??= ConnectionString;
                 opt.IsolationLevel ??= IsolationLevel;
                 opt.TableName ??= TableName;
-                opt.Provider = Provider;
             }).Configure(configure);
 
             configurator.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();

@@ -12,6 +12,7 @@
     using Microsoft.Extensions.Options;
     using NUnit.Framework;
     using Saga;
+    using SqlBuilders;
 
 
     [TestFixture]
@@ -74,7 +75,7 @@
                 .Build());
 
             services.AddOptions<DapperOptions<VersionedBehaviorSaga>>().BindConfiguration("VersionedSagaOptions");
-
+            
             services.AddMassTransit(bus =>
             {
                 bus.AddSagaStateMachine<VersionedSagaStateMachine, VersionedBehaviorSaga>()
