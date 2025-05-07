@@ -220,6 +220,8 @@ services.AddMassTransit(bus =>
 
 ```
 
+### 
+
 ### Caveats
 
  * The included implementations for JobConsumers will store some properties as JSON.  
@@ -227,7 +229,9 @@ services.AddMassTransit(bus =>
 
 ## Upgrading from previous versions
 
-Any code which uses `.DapperRepository(_connectionString)` with no additional setup or configuration should behave the same as before, using the legacy `DapperDatabaseContext<TSaga>` (as opposed to the new `SagaDatabaseContext<TSaga>`).  Convert old implementations by calling `UseSqlServer()` with the same connection string -- no further changes are required:
+Any code which uses `.DapperRepository(_connectionString)` with no additional setup or configuration should behave the same as before, using `DapperDatabaseContext<TSaga>`.  All newer code will use `SagaDatabaseContext<TSaga>` by default.
+
+Convert old implementations by calling `UseSqlServer()` with the same connection string -- no further changes are required:
 
 ```csharp
 services.AddMassTransit(bus =>
