@@ -25,7 +25,6 @@
         [OneTimeSetUp]
         public async Task Initialize()
         {
-            await using var connection = new SqlConnection(ConnectionString);
             var sql = @"DROP TABLE IF EXISTS VersionedSagas;
 
 CREATE TABLE VersionedSagas (
@@ -37,23 +36,37 @@ CREATE TABLE VersionedSagas (
     
     PRIMARY KEY CLUSTERED (CorrelationId)
 );";
+            try
+            {
+                await ExecuteSql(sql);
+            }
+            catch ( SqlException e )
+            {
+                var builder = new SqlConnectionStringBuilder(ConnectionString);
+                builder.Password = "********";
+                var sanitized = builder.ToString();
 
-            await connection.ExecuteAsync(sql);
+                throw new Exception($"Failure initializing test: {e.Message}, ConnectionString: {sanitized}", e);
+            }
         }
 
         [OneTimeTearDown]
         public async Task Teardown()
         {
-            await using var connection = new SqlConnection(ConnectionString);
             var sql = @"DROP TABLE IF EXISTS VersionedSagas;";
-            await connection.ExecuteAsync(sql);
+            await ExecuteSql(sql);
         }
 
         [SetUp]
         public async Task Setup()
         {
-            await using var connection = new SqlConnection(ConnectionString);
             var sql = @"TRUNCATE TABLE VersionedSagas;";
+            await ExecuteSql(sql);
+        }
+
+        protected async Task ExecuteSql(string sql)
+        {
+            await using var connection = new SqlConnection(ConnectionString);
             await connection.ExecuteAsync(sql);
         }
 

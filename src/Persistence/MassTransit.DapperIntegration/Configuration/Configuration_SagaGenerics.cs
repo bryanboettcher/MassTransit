@@ -1,4 +1,5 @@
-﻿namespace MassTransit
+﻿#nullable enable
+namespace MassTransit
 {
     using System;
     using System.Data;
@@ -67,8 +68,8 @@
 
         /// <summary>
         /// Use a custom SQL formatter to build INSERT/UPDATE/DELETE/SELECT statements for this saga.  If set,
-        /// this formatter will be used for the default <see cref="ContextFactoryProvider"/>.   It has no effect
-        /// if <see cref="ContextFactoryProvider"/> is overridden.
+        /// this formatter will be used for the default context factory, implemented by <see cref="SagaDatabaseContext{TSaga}"/>.
+        /// It is not necessary if a fully custom context factory is provided via <see cref="UseContextFactory"/>.
         /// </summary>
         /// <param name="factory">The factory for the formatter</param>
         void UseSqlFormatter(Func<IServiceProvider, ISagaSqlFormatter<TSaga>> factory);
@@ -190,3 +191,4 @@
         }
     }
 }
+#nullable restore

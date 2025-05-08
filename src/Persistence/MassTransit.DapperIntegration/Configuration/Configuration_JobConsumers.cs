@@ -1,4 +1,5 @@
-﻿namespace MassTransit.Configuration
+﻿#nullable enable
+namespace MassTransit.Configuration
 {
     using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.DependencyInjection;
@@ -257,3 +258,4 @@
         }
     }
 }
+#nullable restore
