@@ -8,6 +8,8 @@
     using Testing;
 
 
+    [Category("Integration")]
+    [TestFixture]
     public class ConsumerSagaTests : DapperVersionedSagaTests
     {
         ISagaRepository<VersionedConsumerSaga> _repository;

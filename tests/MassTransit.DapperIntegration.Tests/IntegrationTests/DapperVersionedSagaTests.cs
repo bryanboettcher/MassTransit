@@ -9,7 +9,6 @@
     using NUnit.Framework;
     using TestFramework;
 
-
     public abstract class DapperVersionedSagaTests : InMemoryTestFixture
     {
         protected readonly string ConnectionString;

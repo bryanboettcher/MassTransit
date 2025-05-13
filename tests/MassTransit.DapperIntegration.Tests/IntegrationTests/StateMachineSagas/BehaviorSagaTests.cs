@@ -8,7 +8,8 @@
     using SqlBuilders;
     using Testing;
 
-
+    [Category("Integration")]
+    [TestFixture]
     public class BehaviorSagaTests : DapperVersionedSagaTests
     {
         readonly VersionedSagaStateMachine _stateMachine;

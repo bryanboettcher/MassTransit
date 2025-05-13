@@ -44,6 +44,7 @@
         }
     }
 
+    [Category("Integration")]
     [TestFixture]
     public class JobSagaTests : InMemoryTestFixture
     {
