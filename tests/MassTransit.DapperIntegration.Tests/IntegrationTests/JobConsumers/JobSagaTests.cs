@@ -8,8 +8,8 @@
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.DependencyInjection;
+    using Npgsql;
     using NUnit.Framework;
-    using Saga;
     using TestFramework;
     using Testing;
 
@@ -45,14 +45,16 @@
     }
 
     [Category("Integration")]
-    [TestFixture]
-    public class JobSagaTests : InMemoryTestFixture
+    [TestFixture(typeof(SqlServerConnector))]
+    [TestFixture(typeof(PostgresConnector), Explicit = true)]
+    public class JobSagaTests<TConnector> : InMemoryTestFixture
+        where TConnector : TestConnector, new()
     {
-        readonly string _connectionString;
+        readonly TestConnector _connector;
 
         public JobSagaTests()
         {
-            _connectionString = LocalDbConnectionStringProvider.GetLocalDbConnectionString();
+            _connector = new TConnector();
         }
 
         void ConfigureRegistration(IBusRegistrationConfigurator configurator)
@@ -65,7 +67,7 @@
             configurator.SetJobConsumerOptions(options => options.HeartbeatInterval = TimeSpan.FromSeconds(10)).Endpoint(e => e.PrefetchCount = 100);
 
             configurator.AddJobSagaStateMachines()
-                .DapperRepository(conf => conf.UseSqlServer(_connectionString));
+                .DapperRepository(conf => _connector.Connect(conf));
             
             configurator.UsingInMemory((ctx, cfg) =>
             {
@@ -116,25 +118,85 @@
         }
 
         [OneTimeSetUp]
-        public async Task Arrange()
-        {
-            await RunSql(Sql.DropJobTables);
-            await RunSql(Sql.CreateJobTables);
-        }
+        public Task Setup() => _connector.Setup();
 
         [TearDown]
-        public async Task Reset()
-        {
-            await RunSql(Sql.ResetJobTables);
-        }
+        public Task Reset() => _connector.Reset();
 
         [OneTimeTearDown]
-        public async Task TearDown()
+        public Task TearDown() => _connector.Teardown();
+
+    }
+
+
+    public class PostgresConnector : TestConnector
+    {
+        readonly string _connectionString;
+
+        public PostgresConnector()
         {
-            await RunSql(Sql.DropJobTables);
+            _connectionString = "Host=localhost; Username=postgres; Password=Password12!; Database=masstransit";
         }
 
-        protected async Task RunSql(string sql)
+        public async Task Setup()
+        {
+            await RunSql(Sql.Postgres_DropJobTables);
+            await RunSql(Sql.Postgres_CreateJobTables);
+        }
+
+        public Task Reset() => RunSql(Sql.Postgres_ResetJobTables);
+
+        public Task Teardown() => RunSql(Sql.Postgres_DropJobTables);
+
+        public void Connect(IDapperJobSagaRepositoryConfigurator conf)
+        {
+            conf.UsePostgres(_connectionString);
+        }
+
+        async Task RunSql(string sql)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            await command.ExecuteNonQueryAsync();
+        }
+    }
+
+
+    public class SqlServerConnector : TestConnector
+    {
+        readonly string _connectionString;
+
+        public SqlServerConnector()
+        {
+            _connectionString = LocalDbConnectionStringProvider.GetLocalDbConnectionString();
+        }
+
+        public async Task Setup()
+        {
+            await RunSql(Sql.SqlServer_DropJobTables);
+            await RunSql(Sql.SqlServer_CreateJobTables);
+        }
+
+        public Task Reset()
+        {
+            return RunSql(Sql.SqlServer_ResetJobTables);
+        }
+
+        public Task Teardown()
+        {
+            return RunSql(Sql.SqlServer_DropJobTables);
+        }
+
+        public void Connect(IDapperJobSagaRepositoryConfigurator conf)
+        {
+            conf.UseSqlServer(_connectionString);
+        }
+
+        async Task RunSql(string sql)
         {
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
@@ -144,5 +206,13 @@
 
             await command.ExecuteNonQueryAsync();
         }
+    }
+    
+    public interface TestConnector
+    {
+        Task Setup();
+        Task Reset();
+        Task Teardown();
+        void Connect(IDapperJobSagaRepositoryConfigurator conf);
     }
 }

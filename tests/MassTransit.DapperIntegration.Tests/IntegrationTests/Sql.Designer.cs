@@ -9,15 +9,9 @@
 //------------------------------------------------------------------------------
 
 namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
-    using System.CodeDom.Compiler;
-    using System.ComponentModel;
-    using System.Diagnostics;
-    using System.Diagnostics.CodeAnalysis;
-    using System.Globalization;
-    using System.Resources;
-    using System.Runtime.CompilerServices;
-
-
+    using System;
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -25,27 +19,27 @@ namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [GeneratedCode("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
-    [DebuggerNonUserCode()]
-    [CompilerGenerated()]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Sql {
         
-        private static ResourceManager resourceMan;
+        private static global::System.Resources.ResourceManager resourceMan;
         
-        private static CultureInfo resourceCulture;
+        private static global::System.Globalization.CultureInfo resourceCulture;
         
-        [SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Sql() {
         }
         
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        internal static ResourceManager ResourceManager {
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Resources.ResourceManager ResourceManager {
             get {
-                if (ReferenceEquals(resourceMan, null)) {
-                    ResourceManager temp = new ResourceManager("MassTransit.DapperIntegration.Tests.IntegrationTests.Sql", typeof(Sql).Assembly);
+                if (object.ReferenceEquals(resourceMan, null)) {
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MassTransit.DapperIntegration.Tests.IntegrationTests.Sql", typeof(Sql).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -56,13 +50,54 @@ namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        internal static CultureInfo Culture {
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE Jobs (
+        ///    CorrelationId UUID NOT NULL,
+        ///    CurrentState INT NOT NULL,    
+        ///    Completed TIMESTAMP NULL,
+        ///    Faulted TIMESTAMP NULL,
+        ///    Started TIMESTAMP NULL,
+        ///    Submitted TIMESTAMP NULL,    
+        ///    EndDate TIMESTAMP WITH TIME ZONE NULL,
+        ///    NextStartDate TIMESTAMP WITH TIME ZONE NULL,
+        ///    StartDate TIMESTAMP WITH TIME ZONE NULL,    
+        ///    AttemptId UUID NOT NULL,
+        ///    JobTypeId UUID NOT NULL,
+        ///    JobRetryDelayToken UUID NULL,
+        ///    JobSlotWaitToken UUID NULL,    
+        ///    RetryAttempt INT  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Postgres_CreateJobTables {
+            get {
+                return ResourceManager.GetString("Postgres_CreateJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS Jobs, JobAttempts, JobTypes;.
+        /// </summary>
+        internal static string Postgres_DropJobTables {
+            get {
+                return ResourceManager.GetString("Postgres_DropJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TRUNCATE TABLE Jobs, JobAttempts, JobTypes;.
+        /// </summary>
+        internal static string Postgres_ResetJobTables {
+            get {
+                return ResourceManager.GetString("Postgres_ResetJobTables", resourceCulture);
             }
         }
         
@@ -82,9 +117,9 @@ namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
         ///    [JobRetryDelayToken] UNIQUEIDENTIFIER NULL,
         ///    [JobSlot [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string CreateJobTables {
+        internal static string SqlServer_CreateJobTables {
             get {
-                return ResourceManager.GetString("CreateJobTables", resourceCulture);
+                return ResourceManager.GetString("SqlServer_CreateJobTables", resourceCulture);
             }
         }
         
@@ -93,9 +128,9 @@ namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
         ///DROP TABLE IF EXISTS [dbo].[JobAttempts];
         ///DROP TABLE IF EXISTS [dbo].[JobTypes];.
         /// </summary>
-        internal static string DropJobTables {
+        internal static string SqlServer_DropJobTables {
             get {
-                return ResourceManager.GetString("DropJobTables", resourceCulture);
+                return ResourceManager.GetString("SqlServer_DropJobTables", resourceCulture);
             }
         }
         
@@ -104,9 +139,9 @@ namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
         ///TRUNCATE TABLE [dbo].[JobAttempts];
         ///TRUNCATE TABLE [dbo].[JobTypes];.
         /// </summary>
-        internal static string ResetJobTables {
+        internal static string SqlServer_ResetJobTables {
             get {
-                return ResourceManager.GetString("ResetJobTables", resourceCulture);
+                return ResourceManager.GetString("SqlServer_ResetJobTables", resourceCulture);
             }
         }
     }

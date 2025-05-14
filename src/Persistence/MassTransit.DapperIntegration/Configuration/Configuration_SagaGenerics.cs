@@ -128,6 +128,7 @@ namespace MassTransit
             var contextFactory = BuildContextFactory();
             var connectionFactory = BuildConnectionFactory();
 
+            // TODO: Consolidate with DapperJobSagaRepositoryConfigurator!
             configurator.AddOptions<DapperOptions<TSaga>>().Configure(opt =>
             {
                 if (Provider != DatabaseProviders.Unspecified && opt.Provider != Provider)
