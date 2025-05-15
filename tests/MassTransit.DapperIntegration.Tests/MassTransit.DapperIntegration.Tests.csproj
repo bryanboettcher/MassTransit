@@ -35,4 +35,8 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="IntegrationTests\ClaimChecks\" />
+  </ItemGroup>
+
 </Project>
