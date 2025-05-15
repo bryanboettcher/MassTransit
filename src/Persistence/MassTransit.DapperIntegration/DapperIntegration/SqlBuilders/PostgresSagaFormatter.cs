@@ -23,7 +23,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
         public string BuildLoadSql()
         {
-            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = $1 FOR UPDATE";
+            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid FOR UPDATE";
         }
 
         public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object> parameterCallback)
@@ -46,9 +46,10 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
             foreach (var p in predicates)
             {
-                var paramName = $"${queryPredicates.Count + 1}";
-                queryPredicates.Add($"{p.Name} {p.Operator} {paramName}");
-                parameterCallback?.Invoke(paramName, p.Value);
+                var paramName = p.Name.ToLowerInvariant();
+
+                queryPredicates.Add($"{p.Name} {p.Operator} @{paramName}");
+                parameterCallback?.Invoke($"@{paramName}", p.Value);
             }
 
             return string.Join(" AND ", queryPredicates);
@@ -60,13 +61,13 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
             var forbidden = new HashSet<string> { _idColumnName, _versionColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
-            properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "$1"));
+            properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "correlationid"));
 
             if (_versionColumnName != null)
-                properties.Insert(1, (col: _versionColumnName, prop: "$2"));
+                properties.Insert(1, (col: _versionColumnName, prop: "version"));
 
             var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
-            var values = string.Join(", ", properties.Select((p, i) => $"${i + 1}"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
 
             var sql = $"INSERT INTO {_tableName} ({columns}) VALUES ({values})";
 
@@ -81,25 +82,24 @@ namespace MassTransit.DapperIntegration.SqlBuilders
             var properties = BuildProperties(sagaType, forbidden).ToList();
 
             if (_versionColumnName != null)
-                properties.Insert(0, (col: _versionColumnName, prop: string.Empty));
+                properties.Insert(0, (col: _versionColumnName, prop: "version"));
 
-            // "i + 2" is to leave room for correlationId + version
-            var updateExpression = string.Join(", ", properties.Select((p, i) => $"{p.col} = ${i + 2}"));
+            var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
 
-            var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = $1";
+            var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = @correlationid";
 
             if (_versionColumnName != null)
-                sql += $" AND {_versionColumnName} < $2";
+                sql += $" AND {_versionColumnName} < @version";
 
             return sql;
         }
 
         public string BuildDeleteSql()
         {
-            var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = $1";
+            var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = @correlationid";
 
             if (_versionColumnName != null)
-                sql += $" AND {_versionColumnName} < $2";
+                sql += $" AND {_versionColumnName} < @version";
 
             return sql;
         }

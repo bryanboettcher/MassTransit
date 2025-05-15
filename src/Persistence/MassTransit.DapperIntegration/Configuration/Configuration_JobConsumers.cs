@@ -6,11 +6,15 @@ namespace MassTransit.Configuration
     using Microsoft.Extensions.Options;
     using System;
     using System.Data;
+    using System.Data.Common;
     using DapperIntegration.JobSagas;
     using DapperIntegration.Saga;
     using DapperIntegration.SqlBuilders;
     using Saga;
     using Internals;
+    using Microsoft.Data.SqlClient;
+    using Npgsql;
+
 
     public static class DapperJobSagaRepositoryRegistrationExtensions
     {
@@ -212,12 +216,35 @@ namespace MassTransit.Configuration
                 opt.ConnectionString ??= ConnectionString;
                 opt.IsolationLevel ??= IsolationLevel;
                 opt.TableName ??= TableName;
+                opt.DbConnectionProvider ??= BuildConnectionFactory<TSaga>();
             }).Configure(configure);
 
             configurator.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
             configurator.RegisterQuerySagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
             configurator.RegisterSagaRepository<TSaga, DatabaseContext<TSaga>, SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>,
                 DapperSagaRepositoryContextFactory<TSaga>>();
+        }
+
+        Func<IServiceProvider, DbConnection> BuildConnectionFactory<TSaga>()
+            where TSaga : class, ISaga
+        {
+            return Provider == DatabaseProviders.Postgres
+                ? Postgres()
+                : SqlServer();
+
+            static Func<IServiceProvider, DbConnection> SqlServer() =>
+                sp =>
+                {
+                    var options = sp.GetRequiredService<IOptions<DapperOptions<TSaga>>>().Value;
+                    return new SqlConnection(options.ConnectionString);
+                };
+
+            static Func<IServiceProvider, DbConnection> Postgres() =>
+                sp =>
+                {
+                    var options = sp.GetRequiredService<IOptions<DapperOptions<TSaga>>>().Value;
+                    return new NpgsqlConnection(options.ConnectionString);
+                };
         }
     }
 

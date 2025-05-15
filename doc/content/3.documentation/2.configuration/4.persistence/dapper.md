@@ -246,6 +246,137 @@ services.AddMassTransit(bus =>
 });
 ```
 
+## SQL scripts
+
+The included components (such as the JobConsumer support) are built for specific tables.  While you can override everything and use your own schema, it's far easier to create the tables the components are expecting.  
+
+::code-group
+
+    ```sql [SQL Server]
+
+CREATE TABLE [dbo].[Jobs] (
+    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+    [CurrentState] INT NOT NULL,
+    [Completed] DATETIME NULL,
+    [Faulted] DATETIME NULL,
+    [Started] DATETIME NULL,
+    [Submitted] DATETIME NULL,
+    [EndDate] DATETIMEOFFSET NULL,
+    [NextStartDate] DATETIMEOFFSET NULL,
+    [StartDate] DATETIMEOFFSET NULL,
+    [AttemptId] UNIQUEIDENTIFIER NOT NULL,
+    [JobTypeId] UNIQUEIDENTIFIER NOT NULL,
+    [JobRetryDelayToken] UNIQUEIDENTIFIER NULL,
+    [JobSlotWaitToken] UNIQUEIDENTIFIER NULL,
+    [RetryAttempt] INT NOT NULL,
+    [LastProgressLimit] BIGINT NULL,
+    [LastProgressSequenceNumber] BIGINT NULL,
+    [LastProgressValue] BIGINT NULL,
+    [CronExpression] NVARCHAR(255) NULL,
+    [Reason] NVARCHAR(MAX) NULL,
+    [TimeZoneId] NVARCHAR(100) NULL,
+    [Duration] TIME NULL,
+    [JobTimeout] TIME NULL,
+    [ServiceAddress] NVARCHAR(1000) NULL,
+    [IncompleteAttempts] VARCHAR(MAX) NULL,
+    [Job] VARCHAR(MAX) NULL,
+    [JobProperties] VARCHAR(MAX) NULL,
+    [JobState] VARCHAR(MAX) NULL,
+    PRIMARY KEY CLUSTERED ([CorrelationId] ASC)
+);
+
+CREATE TABLE [dbo].[JobAttempts] (
+    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+    [CurrentState] INT NOT NULL,
+    [JobId] UNIQUEIDENTIFIER NOT NULL,
+    [Started] DATETIME NULL,
+    [Faulted] DATETIME NULL,
+    [StatusCheckTokenId] UNIQUEIDENTIFIER NULL,
+    [RetryAttempt] INT NOT NULL,
+    [ServiceAddress] NVARCHAR(1000) NULL,
+    [InstanceAddress] NVARCHAR(1000) NULL,
+    PRIMARY KEY CLUSTERED ([CorrelationId] ASC)
+);
+
+CREATE TABLE [dbo].[JobTypes] (
+    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+    [Name] NVARCHAR(255) NOT NULL,
+    [CurrentState] INT NOT NULL,
+    [ActiveJobCount] INT NOT NULL,
+    [ConcurrentJobLimit] INT NOT NULL,
+    [OverrideJobLimit] INT NULL,
+    [OverrideLimitExpiration] DATETIME NULL,
+    [GlobalConcurrentJobLimit] INT NULL,
+    [ActiveJobs] VARCHAR(MAX) NULL,
+    [Instances] VARCHAR(MAX) NULL,
+    [Properties] VARCHAR(MAX) NULL,
+    PRIMARY KEY CLUSTERED ([CorrelationId] ASC)
+);
+    ```
+
+    ```sql [PostgreSQL]
+    
+CREATE TABLE Jobs (
+    CorrelationId UUID NOT NULL,
+    CurrentState INT NOT NULL,
+    Completed TIMESTAMP NULL,
+    Faulted TIMESTAMP NULL,
+    Started TIMESTAMP NULL,
+    Submitted TIMESTAMP NULL,
+    EndDate TIMESTAMP WITH TIME ZONE NULL,
+    NextStartDate TIMESTAMP WITH TIME ZONE NULL,
+    StartDate TIMESTAMP WITH TIME ZONE NULL,
+    AttemptId UUID NOT NULL,
+    JobTypeId UUID NOT NULL,
+    JobRetryDelayToken UUID NULL,
+    JobSlotWaitToken UUID NULL,
+    RetryAttempt INT NOT NULL,
+    LastProgressLimit BIGINT NULL,
+    LastProgressSequenceNumber BIGINT NULL,
+    LastProgressValue BIGINT NULL,
+    CronExpression VARCHAR(255) NULL,
+    Reason TEXT NULL,
+    TimeZoneId VARCHAR(100) NULL,
+    Duration TIME NULL,
+    JobTimeout TIME NULL,
+    ServiceAddress VARCHAR(1000) NULL,
+    IncompleteAttempts TEXT NULL,
+    Job TEXT NULL,
+    JobProperties TEXT NULL,
+    JobState TEXT NULL,
+    PRIMARY KEY (CorrelationId)
+);
+
+CREATE TABLE JobAttempts (
+    CorrelationId UUID NOT NULL,
+    CurrentState INT NOT NULL,
+    JobId UUID NOT NULL,
+    Started TIMESTAMP NULL,
+    Faulted TIMESTAMP NULL,
+    StatusCheckTokenId UUID NULL,
+    RetryAttempt INT NOT NULL,
+    ServiceAddress VARCHAR(1000) NULL,
+    InstanceAddress VARCHAR(1000) NULL,
+    PRIMARY KEY (CorrelationId)
+);
+
+CREATE TABLE JobTypes (
+    CorrelationId UUID NOT NULL,
+    Name VARCHAR(255) NOT NULL,
+    CurrentState INT NOT NULL,
+    ActiveJobCount INT NOT NULL,
+    ConcurrentJobLimit INT NOT NULL,
+    OverrideJobLimit INT NULL,
+    OverrideLimitExpiration TIMESTAMP NULL,
+    GlobalConcurrentJobLimit INT NULL,
+    ActiveJobs TEXT NULL,
+    Instances TEXT NULL,
+    Properties TEXT NULL,
+    PRIMARY KEY (CorrelationId)
+);
+    ```
+::
+
 The legacy configuration may be removed in later versions.  It is recommended to migrate to the newer API when practical.
 
 [1]: https://dapper-tutorial.net/

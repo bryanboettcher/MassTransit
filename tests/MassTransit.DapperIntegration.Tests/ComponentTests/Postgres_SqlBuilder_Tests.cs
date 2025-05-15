@@ -2,8 +2,6 @@
 {
     using System;
     using Common;
-    using MassTransit.DapperIntegration.Tests.IntegrationTests.ConsumerSagas;
-    using MassTransit.DapperIntegration.Tests.IntegrationTests.StateMachineSagas;
     using NUnit.Framework;
     using SqlBuilders;
 
@@ -19,7 +17,7 @@
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO VersionedSagas (CorrelationId, Version, Name, Age, PhoneNumber, Zip_Code) VALUES ($1, $2, $3, $4, $5, $6)";
+                var expected = "INSERT INTO VersionedSagas (CorrelationId, Version, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @version, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -28,7 +26,7 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET Version = $2, Name = $3, Age = $4, PhoneNumber = $5, Zip_Code = $6 WHERE CorrelationId = $1 AND Version < $2";
+                var expected = "UPDATE VersionedSagas SET Version = @version, Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND Version < @version";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -37,7 +35,7 @@
             public void Delete_builds_correct_sql()
             {
                 var actual = Subject.BuildDeleteSql();
-                var expected = "DELETE FROM VersionedSagas WHERE CorrelationId = $1 AND Version < $2";
+                var expected = "DELETE FROM VersionedSagas WHERE CorrelationId = @correlationid AND Version < @version";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -46,7 +44,7 @@
             public void Load_builds_correct_sql()
             {
                 var actual = Subject.BuildLoadSql();
-                var expected = "SELECT * FROM VersionedSagas WHERE CorrelationId = $1 FOR UPDATE";
+                var expected = "SELECT * FROM VersionedSagas WHERE CorrelationId = @correlationid FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -55,7 +53,7 @@
             public void Query_builds_correct_sql()
             {
                 var actual = Subject.BuildQuerySql(x => x.Name == "test", null);
-                var expected = "SELECT * FROM VersionedSagas WHERE Name = $1 FOR UPDATE";
+                var expected = "SELECT * FROM VersionedSagas WHERE Name = @name FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -69,7 +67,7 @@
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO UnversionedSagas (CorrelationId, Name, EarthTrips, PhoneNumber, Zip_Code) VALUES ($1, $2, $3, $4, $5)";
+                var expected = "INSERT INTO UnversionedSagas (CorrelationId, Name, EarthTrips, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -78,7 +76,7 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE UnversionedSagas SET Name = $2, EarthTrips = $3, PhoneNumber = $4, Zip_Code = $5 WHERE CorrelationId = $1";
+                var expected = "UPDATE UnversionedSagas SET Name = @name, EarthTrips = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -87,7 +85,7 @@
             public void Delete_builds_correct_sql()
             {
                 var actual = Subject.BuildDeleteSql();
-                var expected = "DELETE FROM UnversionedSagas WHERE CorrelationId = $1";
+                var expected = "DELETE FROM UnversionedSagas WHERE CorrelationId = @correlationid";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -96,7 +94,7 @@
             public void Load_builds_correct_sql()
             {
                 var actual = Subject.BuildLoadSql();
-                var expected = "SELECT * FROM UnversionedSagas WHERE CorrelationId = $1 FOR UPDATE";
+                var expected = "SELECT * FROM UnversionedSagas WHERE CorrelationId = @correlationid FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -105,7 +103,7 @@
             public void Query_builds_correct_sql()
             {
                 var actual = Subject.BuildQuerySql(x => x.Name == "test" && x.Age < 99, null);
-                var expected = "SELECT * FROM UnversionedSagas WHERE Name = $1 AND EarthTrips < $2 FOR UPDATE";
+                var expected = "SELECT * FROM UnversionedSagas WHERE Name = @name AND EarthTrips < @earthtrips FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -121,7 +119,7 @@
             {
                 var m = new { Start = new DateTime(2025, 04, 22), End = new DateTime(2025, 05, 22) };
                 var actual = Subject.BuildQuerySql(x => x.Name == "test" && x.Age <= 99 && x.StartDate > m.Start && x.EndDate < m.End, null);
-                var expected = "SELECT * FROM OverrideTable WHERE Name = $1 AND Age <= $2 AND StartDate > $3 AND EndDate < $4 FOR UPDATE";
+                var expected = "SELECT * FROM OverrideTable WHERE Name = @name AND Age <= @age AND StartDate > @startdate AND EndDate < @enddate FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -143,7 +141,7 @@
                 Subject.MapPrefix(m => m.Nested);
 
                 var actual = Subject.BuildQuerySql(x => x.Nested.Id == 10, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE NestedId = $1 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE NestedId = @nestedid FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -154,7 +152,7 @@
                 Subject.MapPrefix(m => m.Nested, "nst_");
 
                 var actual = Subject.BuildQuerySql(x => x.Nested.Id == 10, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE nst_Id = $1 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE nst_Id = @nst_id FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -165,7 +163,7 @@
                 Subject.MapPrefix(m => m.Nested);
 
                 var actual = Subject.BuildQuerySql(x => x.Id == 10, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE Id = $1 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE Id = @id FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -176,7 +174,7 @@
                 Subject.MapProperty(m => m.Nested.Id, "MyId");
 
                 var actual = Subject.BuildQuerySql(x => x.Nested.Id == 10, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE MyId = $1 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE MyId = @myid FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -187,7 +185,7 @@
                 Subject.MapProperty(m => m.Nested.Id, "MyId");
 
                 var actual = Subject.BuildQuerySql(x => x.Id == 10, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE Id = $1 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE Id = @id FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -199,7 +197,7 @@
                 Subject.MapPrefix(m => m.Optional);
 
                 var actual = Subject.BuildQuerySql(x => x.Id == 10 && x.Nested.Id == 11 && x.Optional.Id == 12, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE Id = $1 AND NestedId = $2 AND OptionalId = $3 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE Id = @id AND NestedId = @nestedid AND OptionalId = @optionalid FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -211,7 +209,7 @@
                 Subject.MapProperty(m => m.Nested.Id, "id1");
 
                 var actual = Subject.BuildQuerySql(x => x.Nested.Id == 11 && x.Optional.Id == 12, null);
-                var expected = "SELECT * FROM PrefixedSagas WHERE id1 = $1 AND id2 = $2 FOR UPDATE";
+                var expected = "SELECT * FROM PrefixedSagas WHERE id1 = @id1 AND id2 = @id2 FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
