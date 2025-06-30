@@ -11,7 +11,7 @@ using Saga;
 
 
 public class DapperSagaRepositoryConfigurator<TSaga> : DapperSagaRepositoryConfigurator,
-    IDapperSagaRepositoryConfigurator<TSaga>
+    IDapperRepositoryConfigurator<TSaga>
     where TSaga : class, ISaga
 {
     public DapperSagaRepositoryConfigurator()

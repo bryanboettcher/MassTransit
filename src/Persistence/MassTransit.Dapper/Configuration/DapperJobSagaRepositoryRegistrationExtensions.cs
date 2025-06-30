@@ -3,7 +3,6 @@ namespace MassTransit.Configuration
 {
     using System;
 
-
     public static class DapperJobSagaRepositoryRegistrationExtensions
     {
         /// <summary>

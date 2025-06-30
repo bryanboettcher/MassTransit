@@ -4,7 +4,7 @@ using DapperIntegration.Saga;
 using DapperIntegration.SqlBuilders;
 
 
-public interface IDapperSagaRepositoryConfigurator<TSaga> :
+public interface IDapperRepositoryConfigurator<TSaga> :
     IDapperSagaRepositoryConfigurator
     where TSaga : class, ISaga
 {

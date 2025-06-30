@@ -41,11 +41,7 @@ CREATE TABLE VersionedSagas (
             }
             catch ( SqlException e )
             {
-                var builder = new SqlConnectionStringBuilder(ConnectionString);
-                builder.Password = "********";
-                var sanitized = builder.ToString();
-
-                throw new Exception($"Failure initializing test: {e.Message}, ConnectionString: {sanitized}", e);
+                throw new Exception($"Failure initializing test: {e.Message}", e);
             }
         }
 

@@ -2,7 +2,6 @@
 
 using Internals;
 
-
 public class DapperJobSagaRepositoryRegistrationProvider :
     ISagaRepositoryRegistrationProvider
 {

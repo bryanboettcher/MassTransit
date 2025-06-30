@@ -12,7 +12,7 @@ namespace MassTransit
         /// <param name="configurator">The saga registration configurator</param>
         /// <param name="configure">The saga registration callback</param>
         public static ISagaRegistrationConfigurator<TSaga> DapperRepository<TSaga>(this ISagaRegistrationConfigurator<TSaga> configurator,
-            Action<IDapperSagaRepositoryConfigurator<TSaga>> configure = null)
+            Action<IDapperRepositoryConfigurator<TSaga>> configure = null)
             where TSaga : class, ISaga
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -29,7 +29,7 @@ namespace MassTransit
         /// <param name="configure">The saga registration callback</param>
         [Obsolete("DapperRepository should use the configure-only method", false)]
         public static ISagaRegistrationConfigurator<TSaga> DapperRepository<TSaga>(this ISagaRegistrationConfigurator<TSaga> configurator,
-            string connectionString, Action<IDapperSagaRepositoryConfigurator<TSaga>> configure = null)
+            string connectionString, Action<IDapperRepositoryConfigurator<TSaga>> configure = null)
             where TSaga : class, ISaga
         {
             var repositoryConfigurator = new DapperSagaRepositoryConfigurator<TSaga>();

@@ -28,7 +28,7 @@
             services.AddMassTransit(bus =>
             {
                 bus.AddSagaStateMachine<VersionedSagaStateMachine, VersionedBehaviorSaga>()
-                    .DapperRepository();
+                    .DapperRepository(conf => conf);
             });
 
             var provider = services.BuildServiceProvider();
