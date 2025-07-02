@@ -23,7 +23,7 @@
             {
                 conf.ConnectionString = ConnectionString;
                 conf.TableName = "VersionedSagas";
-                conf.ContextFactoryProvider = _ => (c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new SqlServerSagaFormatter<VersionedBehaviorSaga>("VersionedSagas"));
+                conf.ContextFactoryProvider = _ => (c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new PessimisticSqlServerSagaFormatter<VersionedBehaviorSaga>("VersionedSagas"));
             });
 
             configurator.StateMachineSaga(_stateMachine, _repository);

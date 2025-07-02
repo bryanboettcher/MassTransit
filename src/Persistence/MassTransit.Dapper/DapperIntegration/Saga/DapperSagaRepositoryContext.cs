@@ -5,6 +5,7 @@ namespace MassTransit.DapperIntegration.Saga
     using System.Threading;
     using System.Threading.Tasks;
     using Context;
+    using Internals;
     using MassTransit.Saga;
     using Middleware;
 
@@ -56,29 +57,19 @@ namespace MassTransit.DapperIntegration.Saga
         }
 
         public Task Save(SagaConsumeContext<TSaga> context)
-        {
-            return _context.InsertAsync(context.Saga, CancellationToken);
-        }
+            => _context.InsertAsync(context.Saga, CancellationToken);
 
         public Task Update(SagaConsumeContext<TSaga> context)
-        {
-            return _context.UpdateAsync(context.Saga, CancellationToken);
-        }
+            => _context.UpdateAsync(context.Saga, CancellationToken);
 
         public Task Delete(SagaConsumeContext<TSaga> context)
-        {
-            return _context.DeleteAsync(context.Saga, CancellationToken);
-        }
+            => _context.DeleteAsync(context.Saga, CancellationToken);
 
         public Task Discard(SagaConsumeContext<TSaga> context)
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
 
         public Task Undo(SagaConsumeContext<TSaga> context)
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
     }
 
 
@@ -98,12 +89,13 @@ namespace MassTransit.DapperIntegration.Saga
 
         public Task<TSaga> Load(Guid correlationId)
         {
-            return _context.LoadAsync(correlationId, CancellationToken);
+            return _context.LoadAsync(correlationId, CancellationToken)!;
         }
 
         public async Task<SagaRepositoryQueryContext<TSaga>> Query(ISagaQuery<TSaga> query, CancellationToken cancellationToken = default)
         {
-            IEnumerable<TSaga> instances = await _context.QueryAsync(query.FilterExpression, cancellationToken).ConfigureAwait(false);
+            var instances = await (_context.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken))
+                .ConfigureAwait(false);
 
             return new LoadedSagaRepositoryQueryContext<TSaga>(this, instances);
         }

@@ -1,5 +1,3 @@
-using Dapper.Contrib.Extensions;
-
 namespace MassTransit.DapperIntegration.SqlBuilders
 {
     using System;
@@ -9,8 +7,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
     using System.Linq.Expressions;
     using System.Reflection;
     using Saga;
-
-
+    
     /// <summary>
     /// Contains overridable members to help build queries
     /// </summary>
@@ -20,9 +17,9 @@ namespace MassTransit.DapperIntegration.SqlBuilders
         
         protected virtual string GetTableName(Type type)
         {
-            var tableAttribute = type.GetCustomAttribute<Dapper.Contrib.Extensions.TableAttribute>();
-            if (tableAttribute is not null)
-                return tableAttribute.Name;
+            var tableName = AttributeValue(type, "TableAttribute", "Name");
+            if (!string.IsNullOrEmpty(tableName))
+                return tableName;
 
             return type.Name + "s";
         }
@@ -32,21 +29,31 @@ namespace MassTransit.DapperIntegration.SqlBuilders
             var properties = type.GetProperties();
 
             // support the Dapper.Contrib manual-mapping of keys or non-identity keys
-            var keyColumn = properties.FirstOrDefault(p => p.GetCustomAttribute<KeyAttribute>() is not null);
-            if (keyColumn is not null)
-                return keyColumn.Name;
+            var keyColumn = AttributeValue(type, "KeyAttribute", "Name");
+            if (!string.IsNullOrEmpty(keyColumn))
+                return keyColumn;
 
-            var explicitKeyColumn = properties.FirstOrDefault(p => p.GetCustomAttribute<ExplicitKeyAttribute>() is not null);
-            if (explicitKeyColumn is not null)
-                return explicitKeyColumn.Name;
+            var explicitKeyColumn = AttributeValue(type, "ExplicitKeyAttribute", "Name");
+            if (!string.IsNullOrEmpty(explicitKeyColumn))
+                return explicitKeyColumn;
 
             if (properties.Any(p => p.Name == "CorrelationId"))
                 return "CorrelationId";
 
             throw new InvalidOperationException("Only CorrelationId can be auto-detected as the key column.  Use constructor if necessary to override.");
         }
+        
+        protected virtual string? GetVersionColumnName(Type type)
+        {
+            var candidate = type.GetProperties()
+                .FirstOrDefault(p => p.Name.Equals("rowversion", StringComparison.OrdinalIgnoreCase));
 
-        protected virtual string GetColumnName(Type type, string propertyName)
+            return candidate is not null && candidate.PropertyType == typeof(byte[])
+                    ? candidate.Name
+                    : null;
+        }
+
+        protected virtual string? GetColumnName(Type type, string propertyName)
         {
             var property = type.GetProperty(propertyName);
             if (property is null)
@@ -64,7 +71,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
             return columnAttribute.Name;
         }
 
-        protected virtual IEnumerable<(string col, string prop)> BuildProperties(Type sagaType, HashSet<string> forbiddenColumns)
+        protected virtual IEnumerable<(string col, string prop)> BuildProperties(Type sagaType, HashSet<string?> forbiddenColumns)
         {
             return from prop in sagaType.GetProperties()
                 let columnName = GetColumnName(sagaType, prop)
@@ -93,8 +100,6 @@ namespace MassTransit.DapperIntegration.SqlBuilders
                 return string.Concat(parts);
             }
         }
-
-
         protected void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
         {
             if (mappingExpression.NodeType != ExpressionType.Lambda)
@@ -110,6 +115,22 @@ namespace MassTransit.DapperIntegration.SqlBuilders
                 Name = name ?? body.Member.Name,
                 Exact = exact,
             });
+        }
+
+        static string? AttributeValue(Type type, string attributeName, string propertyName)
+        {
+            var tableAttribute = type.GetCustomAttributes()
+                .FirstOrDefault(a => a.GetType().Name.StartsWith(attributeName, StringComparison.OrdinalIgnoreCase));
+
+            var nameProperty = tableAttribute?.GetType().GetProperty(propertyName);
+            if (nameProperty is null)
+                return null;
+
+            var nameValue = (string?)nameProperty.GetValue(tableAttribute);
+
+            return !string.IsNullOrEmpty(nameValue)
+                ? nameValue
+                : null;
         }
     }
 }

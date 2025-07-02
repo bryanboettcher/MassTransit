@@ -11,7 +11,7 @@ namespace MassTransit.DapperIntegration.JobSagas
     using System.Threading.Tasks;
 
     public interface DapperSagaSerializer<TSaga, TModel>
-        where TSaga : class, ISaga
+        where TSaga : class
         where TModel : class, ISaga
     {
         TModel FromSaga(TSaga instance);
@@ -19,7 +19,7 @@ namespace MassTransit.DapperIntegration.JobSagas
     }
 
     public abstract class SystemTextJsonSagaSerializerBase<TSaga, TModel> : DapperSagaSerializer<TSaga, TModel>
-        where TSaga : class, ISaga
+        where TSaga : class
         where TModel : class, ISaga
     {
 

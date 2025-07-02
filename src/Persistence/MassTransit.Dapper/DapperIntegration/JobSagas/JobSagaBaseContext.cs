@@ -9,7 +9,7 @@ namespace MassTransit.DapperIntegration.JobSagas
     using Saga;
 
     public abstract class JobSagaBaseContext<TSaga, TModel>
-        where TSaga : class, ISaga
+        where TSaga : class
         where TModel : class, ISaga
     {
         readonly DatabaseContext<TModel> _databaseContext;

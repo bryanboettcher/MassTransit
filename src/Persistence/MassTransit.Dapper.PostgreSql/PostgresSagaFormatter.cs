@@ -8,7 +8,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
 
 
     public class PostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
-        where TModel : class
+        where TModel : class, ISaga
     {
         readonly string _tableName;
         readonly string _idColumnName;
@@ -26,7 +26,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
             return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid FOR UPDATE";
         }
 
-        public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object> parameterCallback)
+        public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)
         {
             var sqlRoot = $"SELECT * FROM {_tableName}";
             var sqlLock = " FOR UPDATE";
@@ -40,7 +40,7 @@ namespace MassTransit.DapperIntegration.SqlBuilders
             return string.Concat(sqlRoot, " WHERE ", queryPredicate, sqlLock);
         }
 
-        public static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object> parameterCallback)
+        public static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object?> parameterCallback)
         {
             var queryPredicates = new List<string>();
 

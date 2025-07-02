@@ -2,7 +2,6 @@
 {
     using System;
 
-
     public class VersionedSaga : ISaga
     {
         public Guid CorrelationId { get; set; }

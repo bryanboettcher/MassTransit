@@ -7,17 +7,17 @@
 
 
     [TestFixture]
-    public class SqlServer_SqlBuilder_Tests
+    public class SqlServer_PessimisticSqlBuilder_Tests
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected ISagaSqlFormatter<VersionedSaga> Subject = new SqlServerSagaFormatter<VersionedSaga>();
+            protected ISagaSqlFormatter<VersionedSaga> Subject = new PessimisticSqlServerSagaFormatter<VersionedSaga>();
             
             [Test]
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO VersionedSagas ([CorrelationId], [Version], [Name], [Age], [PhoneNumber], [Zip_Code]) VALUES (@correlationId, @version, @name, @age, @phoneNumber, @zipCode)";
+                var expected = "INSERT INTO VersionedSagas ([CorrelationId], [RowVersion], [Name], [Age], [PhoneNumber], [Zip_Code]) VALUES (@correlationId, @rowversion, @name, @age, @phoneNumber, @zipCode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -26,7 +26,7 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET [Name] = @name, [Age] = @age, [PhoneNumber] = @phoneNumber, [Zip_Code] = @zipCode, [Version] = @version WHERE [CorrelationId] = @correlationId AND [Version] < @version";
+                var expected = "UPDATE VersionedSagas SET [Name] = @name, [Age] = @age, [PhoneNumber] = @phoneNumber, [Zip_Code] = @zipCode, [RowVersion] = @rowversion WHERE [CorrelationId] = @correlationId";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -35,7 +35,7 @@
             public void Delete_builds_correct_sql()
             {
                 var actual = Subject.BuildDeleteSql();
-                var expected = "DELETE FROM VersionedSagas WHERE [CorrelationId] = @correlationId AND [Version] < @version";
+                var expected = "DELETE FROM VersionedSagas WHERE [CorrelationId] = @correlationId";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -61,7 +61,7 @@
 
         public class UnversionedSaga_SqlBuilder
         {
-            protected ISagaSqlFormatter<UnversionedSaga> Subject = new SqlServerSagaFormatter<UnversionedSaga>();
+            protected ISagaSqlFormatter<UnversionedSaga> Subject = new PessimisticSqlServerSagaFormatter<UnversionedSaga>();
 
             [Test]
             public void Insert_builds_correct_sql()
@@ -111,7 +111,7 @@
         
         public class Complex_SqlBuilder
         {
-            protected ISagaSqlFormatter<ComplexSaga> Subject = new SqlServerSagaFormatter<ComplexSaga>();
+            protected ISagaSqlFormatter<ComplexSaga> Subject = new PessimisticSqlServerSagaFormatter<ComplexSaga>();
 
 
             [Test]
@@ -132,7 +132,7 @@
             [SetUp]
             public void Prepare()
             {
-                Subject = new SqlServerSagaFormatter<PrefixedSaga>();
+                Subject = new PessimisticSqlServerSagaFormatter<PrefixedSaga>();
             }
 
             [Test]

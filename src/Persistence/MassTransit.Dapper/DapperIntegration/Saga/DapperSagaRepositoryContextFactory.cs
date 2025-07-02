@@ -6,8 +6,6 @@ namespace MassTransit.DapperIntegration.Saga
     using System.Threading;
     using System.Threading.Tasks;
     using MassTransit.Saga;
-    using Microsoft.Extensions.Options;
-
 
     public class DapperSagaRepositoryContextFactory<TSaga> :
         ISagaRepositoryContextFactory<TSaga>,
@@ -16,15 +14,12 @@ namespace MassTransit.DapperIntegration.Saga
         where TSaga : class, ISaga
     {
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
-        readonly IOptions<DapperOptions<TSaga>> _options;
         readonly IServiceProvider _serviceProvider;
 
         public DapperSagaRepositoryContextFactory(
-            IOptions<DapperOptions<TSaga>> options, 
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory,
             IServiceProvider serviceProvider)
         {
-            _options = options;
             _factory = factory;
             _serviceProvider = serviceProvider;
         }

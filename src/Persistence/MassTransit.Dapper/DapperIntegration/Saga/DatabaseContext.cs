@@ -1,4 +1,3 @@
-#nullable enable
 namespace MassTransit.DapperIntegration.Saga
 {
     using System;
@@ -9,19 +8,16 @@ namespace MassTransit.DapperIntegration.Saga
     
     public interface DatabaseContext<TSaga> :
         IAsyncDisposable
-        where TSaga : class, ISaga
+        where TSaga : class
     {
         Task DeleteAsync(TSaga instance, CancellationToken cancellationToken = default);
 
         Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<TSaga>> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<TSaga> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken = default);
 
         Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default);
 
         Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default);
-
-        Task CommitAsync(CancellationToken cancellationToken = default);
     }
 }
-#nullable restore
