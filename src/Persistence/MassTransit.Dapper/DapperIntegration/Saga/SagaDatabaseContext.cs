@@ -13,26 +13,22 @@ namespace MassTransit.DapperIntegration.Saga
     /// Contains saga-specific logic as well as respecting ISagaVersion
     /// </summary>
     /// <typeparam name="TSaga"></typeparam>
-    public class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>,
-        IDisposable
-        where TSaga : class
+    public class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>
+        where TSaga : class, ISaga
     {
-        readonly ISagaConnectionProvider<TSaga> _connectionProvider;
-        readonly ISagaSqlFormatter<TSaga> _sqlFormatter;
+        readonly ISagaSqlConnection<TSaga> _connection;
+        readonly ISagaSqlFormatter<TSaga> _formatter;
 
-        public SagaDatabaseContext(ISagaConnectionProvider<TSaga> connectionProvider, ISagaSqlFormatter<TSaga> sqlFormatter)
+        public SagaDatabaseContext(ISagaSqlConnection<TSaga> connection, ISagaSqlFormatter<TSaga> formatter)
         {
-            _connectionProvider = connectionProvider;
-            _sqlFormatter = sqlFormatter;
+            _connection = connection;
+            _formatter = formatter;
         }
     
         public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
         {
-            await using var connection = await _connectionProvider.CreateConnection(cancellationToken)
-                .ConfigureAwait(false);
-
-            var results = connection.ReadAsync(
-                _sqlFormatter.BuildLoadSql(),
+            var results = _connection.ReadAsync(
+                _formatter.BuildLoadSql(),
                 new { correlationId },
                 null,
                 cancellationToken
@@ -48,13 +44,10 @@ namespace MassTransit.DapperIntegration.Saga
 
         public async IAsyncEnumerable<TSaga> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            await using var connection = await _connectionProvider.CreateConnection(cancellationToken)
-                .ConfigureAwait(false);
-
             var parameters = new Dictionary<string, object?>();
-            var sql = _sqlFormatter.BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
+            var sql = _formatter.BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
 
-            var results = connection.ReadAsync(
+            var results = _connection.ReadAsync(
                 sql,
                 parameters,
                 null,
@@ -67,7 +60,7 @@ namespace MassTransit.DapperIntegration.Saga
     
         public async Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default)
         {
-            var sql = _sqlFormatter.BuildInsertSql();
+            var sql = _formatter.BuildInsertSql();
 
             var rows = await ExecuteSql(
                 sql,
@@ -76,12 +69,12 @@ namespace MassTransit.DapperIntegration.Saga
             ).ConfigureAwait(false);
 
             if (rows == 0)
-                throw new SagaConcurrencyException("Saga Insert failed", typeof(TSaga), instance.CorrelationId);
+                throw new SagaConcurrencyException("Saga Insert failed", instance);
         }
 
         public async Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default)
         {
-            var sql = _sqlFormatter.BuildUpdateSql();
+            var sql = _formatter.BuildUpdateSql();
         
             var rows = await ExecuteSql(
                 sql,
@@ -90,12 +83,12 @@ namespace MassTransit.DapperIntegration.Saga
             ).ConfigureAwait(false);
 
             if (rows == 0)
-                throw new SagaConcurrencyException("Saga Update failed", typeof(TSaga), instance.CorrelationId);
+                throw new SagaConcurrencyException("Saga Update failed", instance);
         }
 
         public async Task DeleteAsync(TSaga instance, CancellationToken cancellationToken)
         {
-            var sql = _sqlFormatter.BuildDeleteSql();
+            var sql = _formatter.BuildDeleteSql();
 
             var rows = await ExecuteSql(
                 sql,
@@ -104,7 +97,7 @@ namespace MassTransit.DapperIntegration.Saga
             ).ConfigureAwait(false);
 
             if (rows == 0)
-                throw new SagaConcurrencyException("Saga Delete failed", typeof(TSaga), instance.CorrelationId);
+                throw new SagaConcurrencyException("Saga Delete failed", instance);
         }
 
         public void Dispose() { }
@@ -113,10 +106,7 @@ namespace MassTransit.DapperIntegration.Saga
 
         async Task<int> ExecuteSql(string sql, object parameters, CancellationToken cancellationToken)
         {
-            await using var connection = await _connectionProvider.CreateConnection(cancellationToken)
-                .ConfigureAwait(false);
-
-            var effected = await connection.RunAsync(
+            var effected = await _connection.RunAsync(
                 sql,
                 parameters,
                 cancellationToken

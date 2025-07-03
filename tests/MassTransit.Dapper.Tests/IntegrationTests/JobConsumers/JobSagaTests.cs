@@ -4,6 +4,7 @@
     using System.Threading.Tasks;
     using Configuration;
     using Contracts.JobService;
+    using Dapper.Configuration;
     using MassTransit.Tests;
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Data.SqlClient;
@@ -67,7 +68,8 @@
             configurator.SetJobConsumerOptions(options => options.HeartbeatInterval = TimeSpan.FromSeconds(10)).Endpoint(e => e.PrefetchCount = 100);
 
             configurator.AddJobSagaStateMachines()
-                .DapperRepository(conf => _connector.Connect(conf));
+                .DapperRepository(conf => conf.UsingSqlServer());
+                //.DapperRepository(conf => _connector.Connect(conf));
             
             configurator.UsingInMemory((ctx, cfg) =>
             {
@@ -193,7 +195,7 @@
 
         public void Connect(IDapperJobSagaRepositoryConfigurator conf)
         {
-            conf.UseSqlServer(_connectionString);
+            conf.UsingSqlServer(_connectionString);
         }
 
         async Task RunSql(string sql)

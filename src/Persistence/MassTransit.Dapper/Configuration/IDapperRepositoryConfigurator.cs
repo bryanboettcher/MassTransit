@@ -3,11 +3,11 @@
     using System.Data;
     using DapperIntegration.Saga;
     using DapperIntegration.SqlBuilders;
-    using MassTransit.Configuration;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
-    using Saga;
 
-
+    /// <summary>
+    /// Enables an ADO.NET-based saga repository for neurotic-levels of control over the process.
+    /// </summary>
+    /// <typeparam name="TSaga"></typeparam>
     public interface IDapperRepositoryConfigurator<TSaga>
         where TSaga : class
     {
@@ -16,74 +16,19 @@
         /// other configuration methods are insufficiently flexible to configure the repository.
         /// </summary>
         IDapperRepositoryConfigurator<TSaga> SetContextFactory(DatabaseContextFactory<TSaga> contextFactory);
+
+        /// <summary>
+        /// Allows specifying a custom SQL generator for this saga.  A custom formatter must be
+        /// specified if not using one of the additional libraries providing them.
+        /// </summary>
         IDapperRepositoryConfigurator<TSaga> SetSqlFormatter(ISagaSqlFormatter<TSaga> formatter);
+
+        /// <summary>
+        /// Allows specifying a custom connection provider.  Connection providers are generally
+        /// thin wrappers over an underlying database connection, abstracting connection-specific
+        /// behaviors away.  The connection provider must be specified if not using one of the
+        /// additional libraries providing one.
+        /// </summary>
         IDapperRepositoryConfigurator<TSaga> SetConnectionProvider(ISagaConnectionProvider<TSaga> connectionProvider);
     }
-
-    public class DapperRepositoryConfigurator<TSaga> : IDapperRepositoryConfigurator<TSaga>, ISpecification
-        where TSaga : class, ISaga
-    {
-        DatabaseContextFactory<TSaga>? _contextFactory;
-        ISagaSqlFormatter<TSaga>? _formatter;
-        ISagaConnectionProvider<TSaga>? _connectionProvider;
-
-        public IDapperRepositoryConfigurator<TSaga> SetContextFactory(DatabaseContextFactory<TSaga> contextFactory)
-        {
-            _contextFactory = contextFactory;
-            return this;
-        }
-
-        public IDapperRepositoryConfigurator<TSaga> SetSqlFormatter(ISagaSqlFormatter<TSaga> formatter)
-        {
-            _formatter = formatter;
-            return this;
-        }
-
-        public IDapperRepositoryConfigurator<TSaga> SetConnectionProvider(ISagaConnectionProvider<TSaga> connectionProvider)
-        {
-            _connectionProvider = connectionProvider;
-            return this;
-        }
-
-        public IEnumerable<ValidationResult> Validate()
-        {
-            if (_contextFactory is null)
-                yield return this.Failure("ContextFactory must be set");
-
-            if (_formatter is null)
-                yield return this.Failure("SqlFormatter must be set");
-
-            if (_connectionProvider is null)
-                yield return this.Failure("ConnectionProvider must be set");
-        }
-
-        public void Register(ISagaRepositoryRegistrationConfigurator<TSaga> services)
-        {
-            services.TryAddScoped(_ => _formatter!);
-            services.TryAddScoped(_ => _connectionProvider!);
-
-            services.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
-            services.RegisterQuerySagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
-            services.RegisterSagaRepository<TSaga, DatabaseContext<TSaga>, SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>, DapperSagaRepositoryContextFactory<TSaga>>();
-        }
-    }
-
-    public static class SagaRegistrationConfiguratorExtensions
-    {
-        public static void DapperRepository<TSaga>(
-            this ISagaRegistrationConfigurator<TSaga> sagaRegistration,
-            Action<IDapperRepositoryConfigurator<TSaga>> configure
-        ) where TSaga : class, ISaga
-        {
-            var configuration = new DapperRepositoryConfigurator<TSaga>();
-
-            configure.Invoke(configuration);
-
-            configuration.Validate().ThrowIfContainsFailure("The saga repository configuration is invalid:");
-            sagaRegistration.Repository(configuration.Register);
-        }
-    }
-
-    public delegate Task<DatabaseContext<TSaga>> DatabaseContextFactory<TSaga>(IServiceProvider serviceProvider)
-        where TSaga : class;
 }

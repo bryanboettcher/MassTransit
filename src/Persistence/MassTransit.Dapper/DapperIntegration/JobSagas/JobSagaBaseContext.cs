@@ -1,5 +1,4 @@
-﻿#nullable enable
-namespace MassTransit.DapperIntegration.JobSagas
+﻿namespace MassTransit.DapperIntegration.JobSagas
 {
     using System;
     using System.Collections.Generic;
@@ -27,7 +26,7 @@ namespace MassTransit.DapperIntegration.JobSagas
             return _serializer.FromModel(model);
         }
 
-        public Task<IEnumerable<TSaga>> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken = default) 
+        public IAsyncEnumerable<TSaga> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, CancellationToken cancellationToken = default) 
             => throw new NotImplementedByDesignException("Job sagas use different models for persistence and cannot be queried with the Dapper provider");
 
         public Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default)
@@ -57,10 +56,10 @@ namespace MassTransit.DapperIntegration.JobSagas
             );
         }
 
-        public Task CommitAsync(CancellationToken cancellationToken = default) 
-            => _databaseContext.CommitAsync(cancellationToken);
-
         public ValueTask DisposeAsync() 
             => _databaseContext.DisposeAsync();
+
+        public void Dispose()
+            => _databaseContext.Dispose();
     }
 }

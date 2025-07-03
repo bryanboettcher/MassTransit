@@ -3,7 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Linq.Expressions;
-    using Legacy;
+    using Dapper.SqlServer.Formatting;
     using NUnit.Framework;
     using Saga;
     using SqlBuilders;

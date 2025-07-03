@@ -2,6 +2,7 @@
 {
     using System;
     using Common;
+    using Dapper.SqlServer.Formatting;
     using NUnit.Framework;
     using SqlBuilders;
 

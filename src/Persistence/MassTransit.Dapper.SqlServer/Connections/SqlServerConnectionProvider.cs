@@ -1,16 +1,17 @@
-namespace MassTransit.DapperIntegration.SqlBuilders;
+namespace MassTransit.Dapper.SqlServer.Connections;
 
 using System.Data;
+using DapperIntegration.Saga;
 using Microsoft.Data.SqlClient;
 using Saga;
 
-public class ServerConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
+public class SqlServerConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
     where TModel : class, ISaga
 {
     readonly string _connectionString;
     readonly IsolationLevel? _isolationLevel;
 
-    public ServerConnectionProvider(string connectionString, IsolationLevel? isolationLevel = null)
+    public SqlServerConnectionProvider(string connectionString, IsolationLevel? isolationLevel = null)
     {
         _connectionString = connectionString;
         _isolationLevel = isolationLevel;
@@ -23,9 +24,9 @@ public class ServerConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
         await connection.OpenAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        var transaction = (_isolationLevel is not null)
-            ? (await connection.BeginTransactionAsync(_isolationLevel!.Value, cancellationToken)
-                .ConfigureAwait(false)) as SqlTransaction
+        var transaction = _isolationLevel is not null
+            ? await connection.BeginTransactionAsync(_isolationLevel!.Value, cancellationToken)
+                .ConfigureAwait(false) as SqlTransaction
             : null;
 
         return new SqlServerConnection<TModel>(connection, transaction);

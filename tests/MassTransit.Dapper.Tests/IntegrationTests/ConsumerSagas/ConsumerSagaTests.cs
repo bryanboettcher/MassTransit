@@ -2,6 +2,7 @@
 {
     using System.Threading.Tasks;
     using Common;
+    using Dapper.SqlServer.Formatting;
     using NUnit.Framework;
     using Saga;
     using SqlBuilders;
@@ -20,7 +21,6 @@
             {
                 conf.ConnectionString = ConnectionString;
                 conf.TableName = "VersionedSagas";
-                conf.ContextFactoryProvider = _ => (c, t) => new SagaDatabaseContext<VersionedConsumerSaga>(c, t, new PessimisticSqlServerSagaFormatter<VersionedConsumerSaga>("VersionedSagas"));
             });
 
             configurator.Saga(_repository);

@@ -1,9 +1,13 @@
-namespace MassTransit.DapperIntegration.SqlBuilders
+using MassTransit.DapperIntegration.SqlBuilders;
+
+namespace MassTransit.Dapper.SqlServer.Formatting
 {
     using System;
     using System.Collections.Generic;
+    using System.Data;
     using System.Linq;
     using System.Linq.Expressions;
+    using DapperIntegration.Saga;
     using Saga;
     
     public class PessimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>

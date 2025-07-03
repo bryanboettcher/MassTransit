@@ -5,6 +5,9 @@ using NUnit.Framework;
 
 namespace MassTransit.Dapper.Tests.ComponentTests
 {
+    using SqlServer.Formatting;
+
+
     [TestFixture]
     public class SqlServer_OptimisticSqlBuilder_Tests
     {

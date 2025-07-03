@@ -2,7 +2,7 @@
 {
     using System.Threading.Tasks;
     using Dapper.Configuration;
-    using Dapper.SqlServer;
+    using Dapper.SqlServer.Configuration;
     using IntegrationTests.StateMachines;
     using Microsoft.Extensions.DependencyInjection;
     using NUnit.Framework;
@@ -19,7 +19,11 @@
             services.AddMassTransit(bus =>
             {
                 bus.AddSagaStateMachine<VersionedSagaStateMachine, VersionedBehaviorSaga>()
-                    .DapperRepository(conf => conf);
+                    .DapperRepository(conf => conf.UsingSqlServer(
+                        sql => sql.SetConnectionString("")
+                            .SetTableName("VersionedSaga")
+                    )
+                );
             });
 
             var provider = services.BuildServiceProvider();
