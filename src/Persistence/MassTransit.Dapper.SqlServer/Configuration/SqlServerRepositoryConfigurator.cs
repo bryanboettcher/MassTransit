@@ -3,9 +3,9 @@
 using System.Data;
 using Connections;
 using Dapper.Configuration;
-using DapperIntegration.Saga;
-using DapperIntegration.SqlBuilders;
 using Formatting;
+using MassTransit.DapperIntegration.Saga;
+using MassTransit.DapperIntegration.SqlBuilders;
 using Microsoft.Extensions.DependencyInjection;
 
 public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfigurator<TSaga>, ISpecification

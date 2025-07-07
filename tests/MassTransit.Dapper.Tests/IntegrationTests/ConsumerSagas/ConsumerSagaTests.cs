@@ -2,10 +2,9 @@
 {
     using System.Threading.Tasks;
     using Common;
-    using Dapper.SqlServer.Formatting;
+    using Dapper.DapperIntegration.Saga;
     using NUnit.Framework;
-    using Saga;
-    using SqlBuilders;
+    using NUnit.Framework.Internal;
     using Testing;
 
 
@@ -14,14 +13,12 @@
     public class ConsumerSagaTests : DapperVersionedSagaTests
     {
         ISagaRepository<VersionedConsumerSaga> _repository;
+        IServiceProvider _provider;
 
         protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
         {
-            _repository = DapperSagaRepository<VersionedConsumerSaga>.Create(conf =>
-            {
-                conf.ConnectionString = ConnectionString;
-                conf.TableName = "VersionedSagas";
-            });
+            
+            _repository = DapperSagaRepository<VersionedConsumerSaga>.Create(conf => { });
 
             configurator.Saga(_repository);
             base.ConfigureInMemoryReceiveEndpoint(configurator);

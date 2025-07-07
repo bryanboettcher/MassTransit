@@ -1,81 +1,78 @@
-﻿#nullable enable
-
-namespace MassTransit.DapperIntegration.JobSagas
+﻿namespace MassTransit.DapperIntegration.JobSagas
 {
     using System.Collections.Generic;
     using System;
     using Saga;
 
-    public class JobTypeSagaDatabaseContext : JobSagaBaseContext<JobTypeSaga, DbJobTypeModel>, DatabaseContext<JobTypeSaga>
+    public class JobTypeSagaDatabaseContext : JobSagaBaseContext<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, DatabaseContext<JobTypeSaga>
     {
         public JobTypeSagaDatabaseContext(
-            DatabaseContext<DbJobTypeModel> databaseContext,
-            DapperSagaSerializer<JobTypeSaga, DbJobTypeModel> serializer
+            DatabaseContext<DbModel> databaseContext,
+            DapperSagaSerializer<JobTypeSaga, DbModel> serializer
         ) : base(databaseContext, serializer)
         { }
-    }
 
-    public class JobTypeSerializer : SystemTextJsonSagaSerializerBase<JobTypeSaga, DbJobTypeModel>
-    {
-        public override DbJobTypeModel FromSaga(JobTypeSaga instance)
+        public class Serializer : SystemTextJsonSagaSerializerBase<JobTypeSaga, DbModel>
         {
-            return new DbJobTypeModel
+            public override DbModel FromSaga(JobTypeSaga instance)
             {
-                CorrelationId = instance.CorrelationId,
+                return new DbModel
+                {
+                    CorrelationId = instance.CorrelationId,
 
-                Name = instance.Name,
-                CurrentState = instance.CurrentState,
-                ActiveJobCount = instance.ActiveJobCount,
-                ConcurrentJobLimit = instance.ConcurrentJobLimit,
-                OverrideJobLimit = instance.OverrideJobLimit,
-                OverrideLimitExpiration = instance.OverrideLimitExpiration,
-                GlobalConcurrentJobLimit = instance.GlobalConcurrentJobLimit,
+                    Name = instance.Name,
+                    CurrentState = instance.CurrentState,
+                    ActiveJobCount = instance.ActiveJobCount,
+                    ConcurrentJobLimit = instance.ConcurrentJobLimit,
+                    OverrideJobLimit = instance.OverrideJobLimit,
+                    OverrideLimitExpiration = instance.OverrideLimitExpiration,
+                    GlobalConcurrentJobLimit = instance.GlobalConcurrentJobLimit,
 
-                ActiveJobs = Serialize(instance.ActiveJobs),
-                Instances = Serialize(instance.Instances),
-                Properties = Serialize(instance.Properties),
-            };
+                    ActiveJobs = Serialize(instance.ActiveJobs),
+                    Instances = Serialize(instance.Instances),
+                    Properties = Serialize(instance.Properties),
+                };
+            }
+
+            public override JobTypeSaga? FromModel(DbModel? model)
+            {
+                if (model is null)
+                    return null;
+
+                return new JobTypeSaga
+                {
+                    CorrelationId = model.CorrelationId,
+
+                    Name = model.Name!,
+                    CurrentState = model.CurrentState,
+                    ActiveJobCount = model.ActiveJobCount,
+                    ConcurrentJobLimit = model.ConcurrentJobLimit,
+                    OverrideJobLimit = model.OverrideJobLimit,
+                    OverrideLimitExpiration = model.OverrideLimitExpiration,
+                    GlobalConcurrentJobLimit = model.GlobalConcurrentJobLimit,
+
+                    ActiveJobs = Deserialize<List<ActiveJob>>(model.ActiveJobs),
+                    Instances = Deserialize<Dictionary<Uri, JobTypeInstance>>(model.Instances),
+                    Properties = Deserialize<Dictionary<string, object>>(model.Properties),
+                };
+            }
         }
 
-        public override JobTypeSaga? FromModel(DbJobTypeModel? model)
+        public class DbModel : ISaga
         {
-            if (model is null)
-                return null;
+            public Guid CorrelationId { get; set; }
+            public string? Name { get; set; }
+            public int CurrentState { get; set; }
 
-            return new JobTypeSaga
-            {
-                CorrelationId = model.CorrelationId,
+            public int ActiveJobCount { get; set; }
+            public int ConcurrentJobLimit { get; set; }
+            public int? OverrideJobLimit { get; set; }
+            public DateTime? OverrideLimitExpiration { get; set; }
+            public int? GlobalConcurrentJobLimit { get; set; }
 
-                Name = model.Name!,
-                CurrentState = model.CurrentState,
-                ActiveJobCount = model.ActiveJobCount,
-                ConcurrentJobLimit = model.ConcurrentJobLimit,
-                OverrideJobLimit = model.OverrideJobLimit,
-                OverrideLimitExpiration = model.OverrideLimitExpiration,
-                GlobalConcurrentJobLimit = model.GlobalConcurrentJobLimit,
-
-                ActiveJobs = Deserialize<List<ActiveJob>>(model.ActiveJobs),
-                Instances = Deserialize<Dictionary<Uri, JobTypeInstance>>(model.Instances),
-                Properties = Deserialize<Dictionary<string, object>>(model.Properties),
-            };
+            public string? ActiveJobs { get; set; }
+            public string? Instances { get; set; }
+            public string? Properties { get; set; }
         }
-    }
-
-    public class DbJobTypeModel : ISaga
-    {
-        public Guid CorrelationId { get; set; }
-        public string? Name { get; set; }
-        public int CurrentState { get; set; }
-
-        public int ActiveJobCount { get; set; }
-        public int ConcurrentJobLimit { get; set; }
-        public int? OverrideJobLimit { get; set; }
-        public DateTime? OverrideLimitExpiration { get; set; }
-        public int? GlobalConcurrentJobLimit { get; set; }
-
-        public string? ActiveJobs { get; set; }
-        public string? Instances { get; set; }
-        public string? Properties { get; set; }
     }
 }
-#nullable restore

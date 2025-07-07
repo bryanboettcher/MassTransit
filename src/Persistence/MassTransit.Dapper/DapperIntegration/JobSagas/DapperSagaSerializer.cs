@@ -1,65 +1,26 @@
-﻿#nullable enable
-
-using System;
-using System.Text;
-
-namespace MassTransit.DapperIntegration.JobSagas
+﻿namespace MassTransit.DapperIntegration.JobSagas
 {
-    using System.Text.Json.Serialization;
-    using System.Text.Json;
-    using System.Threading;
-    using System.Threading.Tasks;
-
+    /// <summary>
+    /// Used to adapt certain saga types to a format the underlying data store is more suited for.
+    /// Usually used when a saga is serializing a small collection that doesn't join to anything
+    /// in the database, so this can (de)serialize to a JSON object.
+    /// </summary>
+    /// <typeparam name="TSaga"></typeparam>
+    /// <typeparam name="TModel"></typeparam>
     public interface DapperSagaSerializer<TSaga, TModel>
         where TSaga : class
         where TModel : class, ISaga
     {
+        /// <summary>
+        /// Produce the storage-friendly model from the code-friendly saga.
+        /// </summary>
         TModel FromSaga(TSaga instance);
+
+        /// <summary>
+        /// Produce the code-friendly saga from the storage-friendly model.
+        /// </summary>
+        /// <param name="model"></param>
+        /// <returns></returns>
         TSaga? FromModel(TModel? model);
-    }
-
-    public abstract class SystemTextJsonSagaSerializerBase<TSaga, TModel> : DapperSagaSerializer<TSaga, TModel>
-        where TSaga : class
-        where TModel : class, ISaga
-    {
-
-        // All job saga types will serialize similarly -- these options are
-        // at the field level, not the entire object level.
-        // ReSharper disable once StaticMemberInGenericType
-        protected static readonly JsonSerializerOptions SerializerOptions = new()
-        {
-            AllowTrailingCommas = true,
-            PropertyNameCaseInsensitive = true,
-            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-            IncludeFields = false,
-            PreferredObjectCreationHandling = JsonObjectCreationHandling.Populate,
-        };
-
-        protected Uri? UriOrDefault(string? uri) => string.IsNullOrWhiteSpace(uri) 
-            ? null 
-            : new Uri(uri);
-
-        protected virtual T? Deserialize<T>(string? value)
-        {
-            if (value is null) return default;
-
-            return JsonSerializer.Deserialize<T>(
-                Encoding.UTF8.GetBytes(value), SerializerOptions
-            );
-        }
-
-        protected virtual string? Serialize<T>(T? value)
-        {
-            if (value is null) return null;
-
-            return Encoding.UTF8.GetString(
-                JsonSerializer.SerializeToUtf8Bytes(value, SerializerOptions)
-            );
-        }
-
-        public abstract TModel FromSaga(TSaga instance);
-        public abstract TSaga? FromModel(TModel? model);
     }
 }

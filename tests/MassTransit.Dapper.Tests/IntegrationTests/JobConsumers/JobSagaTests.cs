@@ -2,9 +2,9 @@
 {
     using System;
     using System.Threading.Tasks;
-    using Configuration;
     using Contracts.JobService;
     using Dapper.Configuration;
+    using Dapper.SqlServer.Configuration;
     using MassTransit.Tests;
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Data.SqlClient;
@@ -69,7 +69,6 @@
 
             configurator.AddJobSagaStateMachines()
                 .DapperRepository(conf => conf.UsingSqlServer());
-                //.DapperRepository(conf => _connector.Connect(conf));
             
             configurator.UsingInMemory((ctx, cfg) =>
             {

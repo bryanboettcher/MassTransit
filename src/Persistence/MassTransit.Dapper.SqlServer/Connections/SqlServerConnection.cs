@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using DapperIntegration.Saga;
+using MassTransit.DapperIntegration.Saga;
 using Microsoft.Data.SqlClient;
 
 public class SqlServerConnection<TModel> : ISagaSqlConnection<TModel>

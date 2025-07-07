@@ -7,6 +7,9 @@
     using System.Threading.Tasks;
     using Saga;
 
+    /// <summary>
+    /// Implements common functionality specifically for JobConsumers.
+    /// </summary>
     public abstract class JobSagaBaseContext<TSaga, TModel>
         where TSaga : class
         where TModel : class, ISaga

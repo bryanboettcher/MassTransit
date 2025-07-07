@@ -6,7 +6,6 @@
     using Dapper.SqlServer.Formatting;
     using NUnit.Framework;
     using Saga;
-    using SqlBuilders;
 
 
     public class WhereStatementHelperTests

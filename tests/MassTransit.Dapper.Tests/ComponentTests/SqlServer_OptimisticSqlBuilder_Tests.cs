@@ -1,6 +1,5 @@
 ﻿using MassTransit.DapperIntegration.SqlBuilders;
 using MassTransit.DapperIntegration.Tests.Common;
-using MassTransit.DapperIntegration.Tests.ComponentTests;
 using NUnit.Framework;
 
 namespace MassTransit.Dapper.Tests.ComponentTests

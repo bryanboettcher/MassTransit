@@ -2,6 +2,7 @@
 
 using DapperIntegration.Saga;
 using MassTransit.Configuration;
+using MassTransit.DapperIntegration.Saga;
 using Microsoft.Extensions.DependencyInjection;
 using Saga;
 
@@ -30,6 +31,8 @@ public class DapperRepositoryConfigurator<TSaga> : IDapperRepositoryConfigurator
     {
         _callbacks.ForEach(c => c.Invoke(services));
         _callbacks.Clear();
+
+        services.AddScoped(_ => _contextFactory!);
 
         services.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
         services.RegisterQuerySagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();

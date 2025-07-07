@@ -5,11 +5,11 @@ namespace MassTransit.DapperIntegration.Saga
     using System.Data.Common;
     using System.Threading;
     using System.Threading.Tasks;
+    using Dapper.Configuration;
     using Internals;
     using MassTransit.Saga;
     using Microsoft.Extensions.DependencyInjection;
-
-
+    
     public class DapperSagaRepositoryContextFactory<TSaga> :
         ISagaRepositoryContextFactory<TSaga>,
         IQuerySagaRepositoryContextFactory<TSaga>,
@@ -93,7 +93,8 @@ namespace MassTransit.DapperIntegration.Saga
 
         async Task<DatabaseContext<TSaga>> CreateDatabaseContext(CancellationToken cancellationToken)
         {
-            await using var context = _serviceProvider.GetRequiredService<DatabaseContext<TSaga>>();
+            var contextFactory = _serviceProvider.GetRequiredService<DatabaseContextFactory<TSaga>>();
+            var context = contextFactory(_serviceProvider);
         }
     }
 }

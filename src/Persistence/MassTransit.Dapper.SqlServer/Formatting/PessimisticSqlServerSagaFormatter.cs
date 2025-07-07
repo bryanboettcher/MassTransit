@@ -8,6 +8,7 @@ namespace MassTransit.Dapper.SqlServer.Formatting
     using System.Linq;
     using System.Linq.Expressions;
     using DapperIntegration.Saga;
+    using MassTransit.DapperIntegration.Saga;
     using Saga;
     
     public class PessimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>

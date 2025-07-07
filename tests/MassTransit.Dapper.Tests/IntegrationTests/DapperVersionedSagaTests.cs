@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
+    using global::Dapper;
     using MassTransit.Tests;
     using Microsoft.Data.SqlClient;
     using NUnit.Framework;
@@ -19,7 +20,7 @@
         {
             ConnectionString = LocalDbConnectionStringProvider.GetLocalDbConnectionString();
         }
-        
+
         [OneTimeSetUp]
         public async Task Initialize()
         {
@@ -38,7 +39,7 @@ CREATE TABLE VersionedSagas (
             {
                 await ExecuteSql(sql);
             }
-            catch ( SqlException e )
+            catch (SqlException e)
             {
                 throw new Exception($"Failure initializing test: {e.Message}", e);
             }

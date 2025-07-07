@@ -2,6 +2,7 @@ namespace MassTransit.Dapper.SqlServer.Connections;
 
 using System.Data;
 using DapperIntegration.Saga;
+using MassTransit.DapperIntegration.Saga;
 using Microsoft.Data.SqlClient;
 using Saga;
 

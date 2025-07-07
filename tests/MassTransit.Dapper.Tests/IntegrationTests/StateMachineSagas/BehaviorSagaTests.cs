@@ -3,9 +3,8 @@
     using System.Threading.Tasks;
     using Common;
     using ConsumerSagas;
+    using Dapper.DapperIntegration.Saga;
     using NUnit.Framework;
-    using Saga;
-    using SqlBuilders;
     using Testing;
 
     [Category("Integration")]
@@ -21,9 +20,6 @@
         {
             _repository = DapperSagaRepository<VersionedBehaviorSaga>.Create(conf =>
             {
-                conf.ConnectionString = ConnectionString;
-                conf.TableName = "VersionedSagas";
-                conf.ContextFactoryProvider = _ => (c, t) => new SagaDatabaseContext<VersionedBehaviorSaga>(c, t, new PessimisticSqlServerSagaFormatter<VersionedBehaviorSaga>("VersionedSagas"));
             });
 
             configurator.StateMachineSaga(_stateMachine, _repository);

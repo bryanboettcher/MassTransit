@@ -4,6 +4,7 @@ namespace MassTransit.Dapper.SqlServer.Formatting;
 
 using System.Linq.Expressions;
 using DapperIntegration.Saga;
+using MassTransit.DapperIntegration.Saga;
 using Saga;
 
 public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
