@@ -1,16 +1,17 @@
-namespace MassTransit.Dapper.SqlServer.Connections;
+namespace MassTransit.Dapper.PostgreSql.Connections;
 
 using System.Data;
 using MassTransit.DapperIntegration.Saga;
-using Microsoft.Data.SqlClient;
+using Npgsql;
 
-public class SqlServerConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
+
+public class PostgresConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
     where TModel : class, ISaga
 {
     readonly string _connectionString;
     readonly IsolationLevel? _isolationLevel;
 
-    public SqlServerConnectionProvider(string connectionString, IsolationLevel? isolationLevel = null)
+    public PostgresConnectionProvider(string connectionString, IsolationLevel? isolationLevel = null)
     {
         _connectionString = connectionString;
         _isolationLevel = isolationLevel;
@@ -18,7 +19,7 @@ public class SqlServerConnectionProvider<TModel> : ISagaConnectionProvider<TMode
 
     public async Task<ISagaSqlConnection<TModel>> CreateConnection(CancellationToken cancellationToken = default)
     {
-        var connection = new SqlConnection(_connectionString);
+        var connection = new NpgsqlConnection(_connectionString);
 
         await connection.OpenAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -27,10 +28,10 @@ public class SqlServerConnectionProvider<TModel> : ISagaConnectionProvider<TMode
             ? await CreateTransaction(_isolationLevel.Value)
             : null;
 
-        return new SqlServerConnection<TModel>(connection, transaction);
+        return new PostgresConnection<TModel>(connection, transaction);
 
-        async Task<SqlTransaction> CreateTransaction(IsolationLevel isolationLevel)
-            => (SqlTransaction) await connection.BeginTransactionAsync(
+        async Task<NpgsqlTransaction> CreateTransaction(IsolationLevel isolationLevel)
+            => (NpgsqlTransaction) await connection.BeginTransactionAsync(
                 isolationLevel,
                 cancellationToken
             ).ConfigureAwait(false);

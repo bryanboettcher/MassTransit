@@ -1,29 +1,28 @@
-namespace MassTransit.DapperIntegration.SqlBuilders
+using MassTransit.DapperIntegration.SqlBuilders;
+
+namespace MassTransit.Dapper.PostgreSql.Formatting
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
-    using Saga;
-
-
-    public class PostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
+    using MassTransit.DapperIntegration.Saga;
+    
+    public class PessimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
         where TModel : class, ISaga
     {
         readonly string _tableName;
         readonly string _idColumnName;
-        readonly string _versionColumnName;
 
-        public PostgresSagaFormatter(string tableName = default, string idColumnName = default)
+        public PessimisticPostgresSagaFormatter(string? tableName = null, string? idColumnName = null)
         {
             _tableName = tableName ?? GetTableName(typeof(TModel));
             _idColumnName = idColumnName ?? GetIdColumnName(typeof(TModel));
-            _versionColumnName = GetColumnName(typeof(TModel), nameof(ISagaVersion.Version));
         }
 
         public string BuildLoadSql()
         {
-            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid FOR UPDATE";
+            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid FOR UPDATE LIMIT 1";
         }
 
         public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -59,12 +58,9 @@ namespace MassTransit.DapperIntegration.SqlBuilders
         {
             var sagaType = typeof(TModel);
 
-            var forbidden = new HashSet<string> { _idColumnName, _versionColumnName };
+            var forbidden = new HashSet<string?> { _idColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
-            properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "correlationid"));
-
-            if (_versionColumnName != null)
-                properties.Insert(1, (col: _versionColumnName, prop: "version"));
+            properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
 
             var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
             var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
@@ -78,18 +74,12 @@ namespace MassTransit.DapperIntegration.SqlBuilders
         {
             var sagaType = typeof(TModel);
 
-            var forbidden = new HashSet<string> { _idColumnName, _versionColumnName };
+            var forbidden = new HashSet<string?> { _idColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
-
-            if (_versionColumnName != null)
-                properties.Insert(0, (col: _versionColumnName, prop: "version"));
 
             var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
 
             var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = @correlationid";
-
-            if (_versionColumnName != null)
-                sql += $" AND {_versionColumnName} < @version";
 
             return sql;
         }
@@ -97,9 +87,6 @@ namespace MassTransit.DapperIntegration.SqlBuilders
         public string BuildDeleteSql()
         {
             var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = @correlationid";
-
-            if (_versionColumnName != null)
-                sql += $" AND {_versionColumnName} < @version";
 
             return sql;
         }

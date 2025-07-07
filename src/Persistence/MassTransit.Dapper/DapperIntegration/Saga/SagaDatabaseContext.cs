@@ -86,6 +86,11 @@ namespace MassTransit.DapperIntegration.Saga
                 throw new SagaConcurrencyException("Saga Update failed", instance);
         }
 
+        public Task CommitAsync(CancellationToken cancellationToken = default)
+        {
+            return _connection.CommitAsync(cancellationToken);
+        }
+
         public async Task DeleteAsync(TSaga instance, CancellationToken cancellationToken)
         {
             var sql = _formatter.BuildDeleteSql();
@@ -100,9 +105,9 @@ namespace MassTransit.DapperIntegration.Saga
                 throw new SagaConcurrencyException("Saga Delete failed", instance);
         }
 
-        public void Dispose() { }
+        public void Dispose() => _connection.Dispose();
 
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        public ValueTask DisposeAsync() => _connection.DisposeAsync();
 
         async Task<int> ExecuteSql(string sql, object parameters, CancellationToken cancellationToken)
         {

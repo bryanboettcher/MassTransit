@@ -59,6 +59,9 @@
             );
         }
 
+        public Task CommitAsync(CancellationToken cancellationToken = default)
+            => _databaseContext.CommitAsync(cancellationToken);
+
         public ValueTask DisposeAsync() 
             => _databaseContext.DisposeAsync();
 

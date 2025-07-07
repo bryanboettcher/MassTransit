@@ -1,21 +1,20 @@
-using MassTransit.DapperIntegration.SqlBuilders;
-
-namespace MassTransit.Dapper.SqlServer.Connections;
+namespace MassTransit.Dapper.PostgreSql.Connections;
 
 using System.Data;
 using System.Runtime.CompilerServices;
 using MassTransit.DapperIntegration.Saga;
-using Microsoft.Data.SqlClient;
+using MassTransit.DapperIntegration.SqlBuilders;
+using Npgsql;
 
-public class SqlServerConnection<TModel> : ISagaSqlConnection<TModel>
+public class PostgresConnection<TModel> : ISagaSqlConnection<TModel>
     where TModel : class, ISaga
 {
-    readonly SqlConnection _connection;
-    readonly SqlTransaction? _transaction;
+    readonly NpgsqlConnection _connection;
+    readonly NpgsqlTransaction? _transaction;
 
     bool _disposed;
 
-    public SqlServerConnection(SqlConnection connection, SqlTransaction? transaction)
+    public PostgresConnection(NpgsqlConnection connection, NpgsqlTransaction transaction)
     {
         _connection = connection;
         _transaction = transaction;
@@ -96,7 +95,7 @@ public class SqlServerConnection<TModel> : ISagaSqlConnection<TModel>
         _disposed = true;
     }
 
-    static void AssignParameters(SqlCommand command, object? parameters)
+    static void AssignParameters(NpgsqlCommand command, object? parameters)
     {
         foreach (var (name, value) in ParameterReader.Read(parameters))
         {

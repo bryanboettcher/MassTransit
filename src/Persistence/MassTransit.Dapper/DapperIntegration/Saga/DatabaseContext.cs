@@ -19,5 +19,7 @@ namespace MassTransit.DapperIntegration.Saga
         Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default);
 
         Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default);
+
+        Task CommitAsync(CancellationToken cancellationToken = default);
     }
 }

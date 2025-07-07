@@ -2,6 +2,7 @@
 {
     using System;
     using Common;
+    using Dapper.PostgreSql.Formatting;
     using NUnit.Framework;
     using SqlBuilders;
 
@@ -11,7 +12,7 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected ISagaSqlFormatter<VersionedSaga> Subject = new PostgresSagaFormatter<VersionedSaga>();
+            protected ISagaSqlFormatter<VersionedSaga> Subject = new OptimisticPostgresSagaFormatter<VersionedSaga>();
 
             [Test]
             public void Insert_builds_correct_sql()
@@ -61,7 +62,7 @@
 
         public class UnversionedSaga_SqlBuilder
         {
-            protected ISagaSqlFormatter<UnversionedSaga> Subject = new PostgresSagaFormatter<UnversionedSaga>();
+            protected ISagaSqlFormatter<UnversionedSaga> Subject = new PessimisticPostgresSagaFormatter<UnversionedSaga>();
 
             [Test]
             public void Insert_builds_correct_sql()
@@ -111,7 +112,7 @@
 
         public class Complex_SqlBuilder
         {
-            protected ISagaSqlFormatter<ComplexSaga> Subject = new PostgresSagaFormatter<ComplexSaga>();
+            protected ISagaSqlFormatter<ComplexSaga> Subject = new PessimisticPostgresSagaFormatter<ComplexSaga>();
 
 
             [Test]
@@ -132,7 +133,7 @@
             [SetUp]
             public void Prepare()
             {
-                Subject = new PostgresSagaFormatter<PrefixedSaga>();
+                Subject = new PessimisticPostgresSagaFormatter<PrefixedSaga>();
             }
 
             [Test]
