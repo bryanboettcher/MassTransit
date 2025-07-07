@@ -1,8 +1,5 @@
 ﻿namespace MassTransit.Dapper.Configuration;
 
-using MassTransit.Configuration;
-
-
 public static class SagaRegistrationConfiguratorExtensions
 {
     public static void DapperRepository<TSaga>(
@@ -27,20 +24,5 @@ public static class SagaRegistrationConfiguratorExtensions
 
         configurator.Validate().ThrowIfContainsFailure("The job saga repository configuration is invalid:");
         jobSagaRegistration.UseRepositoryRegistrationProvider(configurator);
-    }
-}
-
-public interface IDapperJobSagaRepositoryConfigurator {}
-public class DapperJobSagaRepositoryConfigurator : IDapperJobSagaRepositoryConfigurator, ISpecification,
-    ISagaRepositoryRegistrationProvider
-{
-    public IEnumerable<ValidationResult> Validate()
-    {
-        yield break;
-    }
-
-    public void Configure<TSaga>(ISagaRegistrationConfigurator<TSaga> configurator)
-        where TSaga : class, ISaga
-    {
     }
 }

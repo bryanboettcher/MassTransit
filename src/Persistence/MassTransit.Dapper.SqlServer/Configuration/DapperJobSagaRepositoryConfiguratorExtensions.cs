@@ -62,32 +62,3 @@ public static class DapperJobSagaRepositoryConfiguratorExtensions
         return jobSagaConfigurator;
     }
 }
-
-
-public interface ISqlServerJobSagaRepositoryConfigurator
-{
-    ISqlServerJobSagaRepositoryConfigurator SetConnectionString(string connectionString);
-    
-    string ConnectionString { get; set; }
-}
-
-public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositoryConfigurator, ISpecification
-{
-    public string? ConnectionString { get; set; }
-    
-    public IEnumerable<ValidationResult> Validate()
-    {
-        if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return this.Failure("ConnectionString must be specified");
-    }
-
-    public void Configure(IDapperJobSagaRepositoryConfigurator jobSagaConfigurator)
-    {
-    }
-
-    public ISqlServerJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
-    {
-        ConnectionString = connectionString;
-        return this;
-    }
-}

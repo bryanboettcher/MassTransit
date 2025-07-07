@@ -1,36 +1,21 @@
 ﻿namespace MassTransit.Dapper.Configuration;
 
 using DapperIntegration.Saga;
-using DapperIntegration.SqlBuilders;
 using MassTransit.Configuration;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 using Saga;
 
 public class DapperRepositoryConfigurator<TSaga> : IDapperRepositoryConfigurator<TSaga>, ISpecification
     where TSaga : class, ISaga
 {
-    DatabaseContextFactory<TSaga>? _contextFactory;
-    ISagaSqlFormatter<TSaga>? _formatter;
-    ISagaConnectionProvider<TSaga>? _connectionProvider;
+    readonly List<Action<IServiceCollection>> _callbacks = new();
 
+    DatabaseContextFactory<TSaga>? _contextFactory;
+    
     /// <inheritdoc />
     public IDapperRepositoryConfigurator<TSaga> SetContextFactory(DatabaseContextFactory<TSaga> contextFactory)
     {
         _contextFactory = contextFactory;
-        return this;
-    }
-
-    /// <inheritdoc />
-    public IDapperRepositoryConfigurator<TSaga> SetSqlFormatter(ISagaSqlFormatter<TSaga> formatter)
-    {
-        _formatter = formatter;
-        return this;
-    }
-
-    /// <inheritdoc />
-    public IDapperRepositoryConfigurator<TSaga> SetConnectionProvider(ISagaConnectionProvider<TSaga> connectionProvider)
-    {
-        _connectionProvider = connectionProvider;
         return this;
     }
 
@@ -43,11 +28,14 @@ public class DapperRepositoryConfigurator<TSaga> : IDapperRepositoryConfigurator
 
     public void Register(ISagaRepositoryRegistrationConfigurator<TSaga> services)
     {
-        services.TryAddScoped(_ => _formatter!);
-        services.TryAddScoped(_ => _connectionProvider!);
+        _callbacks.ForEach(c => c.Invoke(services));
+        _callbacks.Clear();
 
         services.RegisterLoadSagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
         services.RegisterQuerySagaRepository<TSaga, DapperSagaRepositoryContextFactory<TSaga>>();
         services.RegisterSagaRepository<TSaga, DatabaseContext<TSaga>, SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>, DapperSagaRepositoryContextFactory<TSaga>>();
     }
+
+    public void AddCallback(Action<IServiceCollection> callback)
+        => _callbacks.Add(callback);
 }

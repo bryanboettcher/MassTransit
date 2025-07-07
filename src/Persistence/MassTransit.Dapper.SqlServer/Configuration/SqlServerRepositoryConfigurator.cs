@@ -8,7 +8,6 @@ using DapperIntegration.SqlBuilders;
 using Formatting;
 using Microsoft.Extensions.DependencyInjection;
 
-
 public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfigurator<TSaga>, ISpecification
     where TSaga : class, ISaga
 {
@@ -62,11 +61,12 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
         
     public void Configure(IDapperRepositoryConfigurator<TSaga> sagaConfigurator)
     {
-        sagaConfigurator.SetSqlFormatter(ConfiguredFormatter());
-        sagaConfigurator.SetConnectionProvider(ConfiguredConnectionProvider());
+        (sagaConfigurator as DapperRepositoryConfigurator<TSaga>)?
+            .AddCallback(RegisterServices);
+
         sagaConfigurator.SetContextFactory(ConfiguredSqlServerContextFactory);
     }
-
+    
     ISagaSqlFormatter<TSaga> ConfiguredFormatter() => ConcurrencyMode == ConcurrencyMode.Optimistic
         ? new OptimisticSqlServerSagaFormatter<TSaga>(TableName, IdentityColumnName, VersionColumnName)
         : new PessimisticSqlServerSagaFormatter<TSaga>(TableName, IdentityColumnName);
@@ -74,9 +74,12 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
     ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
         new SqlServerConnectionProvider<TSaga>(ConnectionString!, IsolationLevel);
 
-    Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
+    static Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
+        => Task.FromResult<DatabaseContext<TSaga>>(serviceProvider.GetRequiredService<SagaDatabaseContext<TSaga>>());
+
+    void RegisterServices(IServiceCollection services)
     {
-        var context = serviceProvider.GetRequiredService<SagaDatabaseContext<TSaga>>() as DatabaseContext<TSaga>;
-        return Task.FromResult(context);
+        services.AddSingleton(ConfiguredFormatter());
+        services.AddSingleton(ConfiguredConnectionProvider());
     }
 }
