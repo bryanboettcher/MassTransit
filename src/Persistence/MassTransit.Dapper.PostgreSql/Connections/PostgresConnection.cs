@@ -2,8 +2,8 @@ namespace MassTransit.Dapper.PostgreSql.Connections;
 
 using System.Data;
 using System.Runtime.CompilerServices;
-using MassTransit.DapperIntegration.Saga;
-using MassTransit.DapperIntegration.SqlBuilders;
+using Integration.Saga;
+using Integration.SqlBuilders;
 using Npgsql;
 
 public class PostgresConnection<TModel> : ISagaSqlConnection<TModel>

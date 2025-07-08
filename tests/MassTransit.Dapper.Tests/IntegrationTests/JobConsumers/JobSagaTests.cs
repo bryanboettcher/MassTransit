@@ -1,27 +1,23 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.Dapper.Tests.IntegrationTests.JobConsumers
 {
     using System;
     using System.Threading.Tasks;
-    using Contracts.JobService;
-    using Dapper.Configuration;
-    using Dapper.PostgreSql.Configuration;
-    using Dapper.SqlServer.Configuration;
+    using MassTransit.Contracts.JobService;
+    using MassTransit.Dapper.Configuration;
+    using MassTransit.Dapper.PostgreSql.Configuration;
+    using MassTransit.Dapper.SqlServer.Configuration;
+    using MassTransit.TestFramework;
+    using MassTransit.Testing;
     using MassTransit.Tests;
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.DependencyInjection;
     using Npgsql;
     using NUnit.Framework;
-    using TestFramework;
-    using Testing;
 
 
     namespace JobConsumerTests
     {
-        using System;
-        using System.Threading.Tasks;
-        using Contracts.JobService;
-        
         public interface OddJob
         {
             TimeSpan Duration { get; }
@@ -150,7 +146,7 @@
 
         public Task Teardown() => RunSql(Sql.Postgres_DropJobTables);
 
-        public void Connect(IDapperJobSagaRepositoryConfigurator conf)
+        public void Connect(IAdoJobSagaRepositoryConfigurator conf)
         {
             conf.UsingPostgres(_connectionString);
         }
@@ -193,7 +189,7 @@
             return RunSql(Sql.SqlServer_DropJobTables);
         }
 
-        public void Connect(IDapperJobSagaRepositoryConfigurator conf)
+        public void Connect(IAdoJobSagaRepositoryConfigurator conf)
         {
             conf.UsingSqlServer(_connectionString);
         }
@@ -215,6 +211,6 @@
         Task Setup();
         Task Reset();
         Task Teardown();
-        void Connect(IDapperJobSagaRepositoryConfigurator conf);
+        void Connect(IAdoJobSagaRepositoryConfigurator conf);
     }
 }

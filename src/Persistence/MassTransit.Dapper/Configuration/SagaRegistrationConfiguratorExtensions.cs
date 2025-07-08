@@ -2,12 +2,15 @@
 
 public static class SagaRegistrationConfiguratorExtensions
 {
+    /// <summary>
+    /// Adds middleware to use custom repositories for sagas.
+    /// </summary>
     public static void DapperRepository<TSaga>(
         this ISagaRegistrationConfigurator<TSaga> sagaRegistration,
-        Action<IDapperRepositoryConfigurator<TSaga>> configure
+        Action<IAdoRepositoryConfigurator<TSaga>> configure
     ) where TSaga : class, ISaga
     {
-        var configurator = new DapperRepositoryConfigurator<TSaga>();
+        var configurator = new AdoRepositoryConfigurator<TSaga>();
 
         configure.Invoke(configurator);
 
@@ -15,10 +18,13 @@ public static class SagaRegistrationConfiguratorExtensions
         sagaRegistration.Repository(configurator.Register);
     }
 
+    /// <summary>
+    /// Adds middleware to use custom repositories for Job Consumers.
+    /// </summary>
     public static void DapperRepository(this IJobSagaRegistrationConfigurator jobSagaRegistration,
-        Action<IDapperJobSagaRepositoryConfigurator> configure)
+        Action<IAdoJobSagaRepositoryConfigurator> configure)
     {
-        var configurator = new DapperJobSagaRepositoryConfigurator();
+        var configurator = new AdoJobSagaRepositoryConfigurator();
 
         configure.Invoke(configurator);
 

@@ -1,13 +1,14 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests
+﻿namespace MassTransit.Dapper.Tests.IntegrationTests
 {
     using System;
     using System.Collections.Generic;
     using System.Threading.Tasks;
     using global::Dapper;
+    using MassTransit.TestFramework;
     using MassTransit.Tests;
     using Microsoft.Data.SqlClient;
     using NUnit.Framework;
-    using TestFramework;
+
 
     public abstract class DapperVersionedSagaTests : InMemoryTestFixture
     {
@@ -28,7 +29,7 @@
 
 CREATE TABLE VersionedSagas (
     [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
-    [Version] INT NOT NULL,
+    [RowVersion] ROWVERSION,
     [CurrentState] VARCHAR(20),
 
     [Name] NVARCHAR(MAX),

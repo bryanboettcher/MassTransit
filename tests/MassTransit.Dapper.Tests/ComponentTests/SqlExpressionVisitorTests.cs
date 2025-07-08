@@ -1,10 +1,10 @@
-﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
+﻿namespace MassTransit.Dapper.Tests.ComponentTests
 {
     using System;
     using System.Linq;
     using System.Linq.Expressions;
+    using MassTransit.Dapper.Integration.Saga;
     using NUnit.Framework;
-    using Saga;
 
 
     public class SqlExpressionVisitorTests

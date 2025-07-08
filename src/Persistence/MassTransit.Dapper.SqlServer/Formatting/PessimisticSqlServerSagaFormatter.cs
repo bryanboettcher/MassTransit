@@ -1,16 +1,13 @@
-using MassTransit.DapperIntegration.SqlBuilders;
-
 namespace MassTransit.Dapper.SqlServer.Formatting
 {
     using System;
     using System.Collections.Generic;
-    using System.Data;
     using System.Linq;
     using System.Linq.Expressions;
-    using DapperIntegration.Saga;
-    using MassTransit.DapperIntegration.Saga;
-    using Saga;
-    
+    using Integration.Saga;
+    using Integration.SqlBuilders;
+
+
     public class PessimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
         where TModel : class
     {
@@ -25,7 +22,7 @@ namespace MassTransit.Dapper.SqlServer.Formatting
         
         public string BuildLoadSql()
         {
-            return $"SELECT * FROM {_tableName} WITH (UPDLOCK, ROWLOCK) WHERE [{_idColumnName}] = @correlationId";
+            return $"SELECT TOP 1 * FROM {_tableName} WITH (UPDLOCK, ROWLOCK) WHERE [{_idColumnName}] = @correlationId";
         }
 
         public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)

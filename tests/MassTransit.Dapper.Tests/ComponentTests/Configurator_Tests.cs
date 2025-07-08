@@ -1,9 +1,9 @@
-﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
+﻿namespace MassTransit.Dapper.Tests.ComponentTests
 {
     using System.Threading.Tasks;
-    using Dapper.Configuration;
-    using Dapper.SqlServer.Configuration;
-    using IntegrationTests.StateMachines;
+    using IntegrationTests.StateMachineSagas;
+    using MassTransit.Dapper.Configuration;
+    using MassTransit.Dapper.SqlServer.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using NUnit.Framework;
 
@@ -20,7 +20,7 @@
             {
                 bus.AddSagaStateMachine<VersionedSagaStateMachine, VersionedBehaviorSaga>()
                     .DapperRepository(conf => conf.UsingSqlServer(
-                        sql => sql.SetConnectionString("")
+                        sql => sql.SetConnectionString("Server=localhost; User Id=sa;")
                             .SetTableName("VersionedSaga")
                     )
                 );

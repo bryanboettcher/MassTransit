@@ -1,10 +1,9 @@
-using MassTransit.DapperIntegration.SqlBuilders;
-
 namespace MassTransit.Dapper.SqlServer.Connections;
 
 using System.Data;
 using System.Runtime.CompilerServices;
-using MassTransit.DapperIntegration.Saga;
+using Integration.Saga;
+using Integration.SqlBuilders;
 using Microsoft.Data.SqlClient;
 
 public class SqlServerConnection<TModel> : ISagaSqlConnection<TModel>

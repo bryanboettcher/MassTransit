@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
+namespace MassTransit.Dapper.Tests.IntegrationTests {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace MassTransit.DapperIntegration.Tests.IntegrationTests {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MassTransit.DapperIntegration.Tests.IntegrationTests.Sql", typeof(Sql).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("MassTransit.Dapper.Tests.IntegrationTests.Sql", typeof(Sql).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;

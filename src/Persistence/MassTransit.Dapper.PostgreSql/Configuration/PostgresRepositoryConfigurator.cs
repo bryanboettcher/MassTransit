@@ -3,9 +3,9 @@
 using System.Data;
 using Connections;
 using Formatting;
+using Integration.Saga;
+using Integration.SqlBuilders;
 using MassTransit.Dapper.Configuration;
-using MassTransit.DapperIntegration.Saga;
-using MassTransit.DapperIntegration.SqlBuilders;
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -60,9 +60,9 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
         return this;
     }
         
-    public void Configure(IDapperRepositoryConfigurator<TSaga> sagaConfigurator)
+    public void Configure(IAdoRepositoryConfigurator<TSaga> sagaConfigurator)
     {
-        (sagaConfigurator as DapperRepositoryConfigurator<TSaga>)?
+        (sagaConfigurator as AdoRepositoryConfigurator<TSaga>)?
             .AddCallback(RegisterServices);
 
         sagaConfigurator.SetContextFactory(ConfiguredSqlServerContextFactory);
@@ -72,8 +72,8 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
         ? new OptimisticPostgresSagaFormatter<TSaga>(TableName, IdentityColumnName, VersionColumnName)
         : new PessimisticPostgresSagaFormatter<TSaga>(TableName, IdentityColumnName);
 
-    ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
-        new PostgresConnectionProvider<TSaga>(ConnectionString!, IsolationLevel);
+    ISagaSqlConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
+        new PostgresSqlConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
 
     static Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
         => Task.FromResult<DatabaseContext<TSaga>>(serviceProvider.GetRequiredService<SagaDatabaseContext<TSaga>>());

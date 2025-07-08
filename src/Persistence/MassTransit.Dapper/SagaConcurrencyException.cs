@@ -1,7 +1,5 @@
-﻿namespace MassTransit
+﻿namespace MassTransit.Dapper
 {
-    using System;
-    
     [Serializable]
     public class SagaConcurrencyException :
         ConcurrencyException

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
   </ItemGroup>
 
   <ItemGroup>
@@ -17,6 +18,21 @@
     <ProjectReference Include="..\..\src\Persistence\MassTransit.Dapper.SqlServer\MassTransit.Dapper.SqlServer.csproj" />
     <ProjectReference Include="..\..\src\Persistence\MassTransit.Dapper\MassTransit.Dapper.csproj" />
     <ProjectReference Include="..\MassTransit.Tests\MassTransit.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="IntegrationTests\Sql.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Sql.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="IntegrationTests\Sql.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Sql.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

@@ -1,9 +1,9 @@
-using MassTransit.DapperIntegration.SqlBuilders;
-
 namespace MassTransit.Dapper.SqlServer.Formatting;
 
 using System.Linq.Expressions;
-using MassTransit.DapperIntegration.Saga;
+using Integration.Saga;
+using Integration.SqlBuilders;
+
 
 public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
     where TModel : class
@@ -18,7 +18,7 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
 
         _tableName = tableName ?? GetTableName(type);
         _idColumnName = idColumnName ?? GetIdColumnName(type);
-        _versionColumnName = versionColumnName ?? GetVersionColumnName(type);
+        _versionColumnName = versionColumnName ?? GetVersionColumnName<byte[]>(type, "rowversion");
 
         if (_versionColumnName is null)
             throw new InvalidOperationException($"Optimistic concurrency cannot be used with {type.Name} because the ROWVERSION column was not auto-detected.  Either specify the column name directly in the constructor, or ensure a 'public byte[] RowVersion' property exists.");
@@ -26,7 +26,7 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
 
     public string BuildLoadSql()
     {
-        return $"SELECT * FROM {_tableName} WHERE [{_idColumnName}] = @correlationId";
+        return $"SELECT TOP 1 * FROM {_tableName} WHERE [{_idColumnName}] = @correlationId";
     }
 
     public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -64,7 +64,7 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         properties.Insert(0, (col: _idColumnName, prop: "correlationId"));
-        properties.Insert(1, (col: _versionColumnName, prop: "rowversion"));
+        // properties.Insert(1, (col: _versionColumnName, prop: "rowversion"));
 
         var columns = string.Join(", ", properties.Select(p => $"[{p.col}]"));
         var values = string.Join(", ", properties.Select(p => $"@{p.prop}"));
@@ -81,8 +81,8 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
         var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
-        properties.Insert(0, (col: _idColumnName, prop: "correlationId"));
-        properties.Insert(1, (col: _versionColumnName, prop: "rowversion"));
+        // properties.Insert(0, (col: _idColumnName, prop: "correlationId"));
+        // properties.Insert(1, (col: _versionColumnName, prop: "rowversion"));
 
         var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));
 

@@ -1,11 +1,11 @@
-﻿namespace MassTransit.DapperIntegration.Tests.ComponentTests
+﻿namespace MassTransit.Dapper.Tests.ComponentTests
 {
     using System;
     using System.Collections.Generic;
     using System.Linq.Expressions;
-    using Dapper.SqlServer.Formatting;
+    using MassTransit.Dapper.Integration.Saga;
+    using MassTransit.Dapper.SqlServer.Formatting;
     using NUnit.Framework;
-    using Saga;
 
 
     public class WhereStatementHelperTests

@@ -1,11 +1,11 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.ConsumerSagas
+﻿namespace MassTransit.Dapper.Tests.IntegrationTests.ConsumerSagas
 {
     using System.Threading.Tasks;
-    using Common;
-    using Dapper.DapperIntegration.Saga;
+    using MassTransit.Dapper.Integration.Saga;
+    using MassTransit.Dapper.SqlServer.Configuration;
+    using MassTransit.Dapper.Tests.Common;
+    using MassTransit.Testing;
     using NUnit.Framework;
-    using NUnit.Framework.Internal;
-    using Testing;
 
 
     [Category("Integration")]
@@ -17,8 +17,11 @@
 
         protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
         {
-            
-            _repository = DapperSagaRepository<VersionedConsumerSaga>.Create(conf => { });
+            _repository = AdoSagaRepository<VersionedConsumerSaga>.Create(conf =>
+                conf.UsingSqlServer(
+                    ConnectionString, sql => sql.SetTableName("VersionedSagas").SetOptimisticConcurrency()
+                )
+            );
 
             configurator.Saga(_repository);
             base.ConfigureInMemoryReceiveEndpoint(configurator);
@@ -37,7 +40,6 @@
             Assert.That(sagas, Is.Not.Empty);
             Assert.That(sagas.Count, Is.EqualTo(1));
             Assert.That(sagas[0].Name, Is.EqualTo("my saga"));
-            Assert.That(sagas[0].Version, Is.EqualTo(1));
         }
         
         [Test]
@@ -56,7 +58,6 @@
             Assert.That(sagas, Is.Not.Empty);
             Assert.That(sagas.Count, Is.EqualTo(1));
             Assert.That(sagas[0].Name, Is.EqualTo("my saga 1"));
-            Assert.That(sagas[0].Version, Is.EqualTo(2));
         }
     }
 }

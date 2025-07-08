@@ -2,7 +2,9 @@
 
 using System.Data;
 
-
+/// <summary>
+/// Configures Postgres-specific settings for an individual saga repository.
+/// </summary>
 public interface IPostgresRepositoryConfigurator<TSaga>
     where TSaga : class, ISaga
 {

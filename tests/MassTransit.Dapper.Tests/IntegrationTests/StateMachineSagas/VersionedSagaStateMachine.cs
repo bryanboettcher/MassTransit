@@ -1,6 +1,9 @@
-﻿namespace MassTransit.DapperIntegration.Tests.IntegrationTests.StateMachines
+﻿// ReSharper disable UnassignedGetOnlyAutoProperty
+// Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+#pragma warning disable CS8618
+namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
 {
-    using Common;
+    using MassTransit.Dapper.Tests.Common;
 
 
     public class VersionedSagaStateMachine : MassTransitStateMachine<VersionedBehaviorSaga>
@@ -27,10 +30,10 @@
             SetCompletedWhenFinalized();
         }
 
-        public State Ready { get; } = null!;
+        public State Ready { get; }
 
-        public Event<CreateSaga> OnCreate { get; } = null!;
-        public Event<UpdateSaga> OnUpdate { get; } = null!;
-        public Event<DeleteSagaByName> OnDelete { get; } = null!;
+        public Event<CreateSaga> OnCreate { get; }
+        public Event<UpdateSaga> OnUpdate { get; }
+        public Event<DeleteSagaByName> OnDelete { get; }
     }
 }

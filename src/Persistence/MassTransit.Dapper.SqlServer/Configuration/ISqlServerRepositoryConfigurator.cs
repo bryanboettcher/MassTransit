@@ -2,7 +2,9 @@
 
 using System.Data;
 
-
+/// <summary>
+/// Configures SQL Server-specific settings for an individual saga repository.
+/// </summary>
 public interface ISqlServerRepositoryConfigurator<TSaga>
     where TSaga : class, ISaga
 {

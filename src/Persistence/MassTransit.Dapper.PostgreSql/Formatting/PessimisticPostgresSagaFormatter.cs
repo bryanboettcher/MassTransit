@@ -1,13 +1,13 @@
-using MassTransit.DapperIntegration.SqlBuilders;
-
 namespace MassTransit.Dapper.PostgreSql.Formatting
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
-    using MassTransit.DapperIntegration.Saga;
-    
+    using Integration.Saga;
+    using Integration.SqlBuilders;
+
+
     public class PessimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
         where TModel : class, ISaga
     {

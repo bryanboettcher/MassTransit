@@ -1,8 +1,9 @@
 namespace MassTransit.Dapper.PostgreSql.Formatting;
 
 using System.Linq.Expressions;
-using MassTransit.DapperIntegration.Saga;
-using MassTransit.DapperIntegration.SqlBuilders;
+using Integration.Saga;
+using Integration.SqlBuilders;
+
 
 public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
     where TModel : class, ISaga
@@ -17,7 +18,7 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
 
         _tableName = tableName ?? GetTableName(type);
         _idColumnName = idColumnName ?? GetIdColumnName(type);
-        _versionColumnName = versionColumnName ?? GetVersionColumnName(type);
+        _versionColumnName = versionColumnName ?? GetVersionColumnName<uint>(type, "xmin");
 
         if (_versionColumnName is null)
             throw new InvalidOperationException($"Optimistic concurrency cannot be used with {type.Name} because the XMIN column was not auto-detected.  Either specify the column name directly in the constructor, or ensure a 'public uint XMin' property exists.");
@@ -64,7 +65,7 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
-        properties.Insert(1, (col: _versionColumnName, prop: "xmin"));
+        // properties.Insert(1, (col: _versionColumnName, prop: "xmin"));
         
         var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
         var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
@@ -81,8 +82,8 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
         var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
-        properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
-        properties.Insert(1, (col: _versionColumnName, prop: "xmin"));
+        // properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
+        // properties.Insert(1, (col: _versionColumnName, prop: "xmin"));
 
         var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
 
