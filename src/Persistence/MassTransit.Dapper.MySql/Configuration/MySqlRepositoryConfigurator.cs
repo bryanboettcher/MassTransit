@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Dapper.MySqlql.Configuration;
 
 using System.Data;
 using Connections;
@@ -9,7 +9,7 @@ using MassTransit.Dapper.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 
-public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigurator<TSaga>, ISpecification
+public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<TSaga>, ISpecification
     where TSaga : class, ISaga
 {
     /// <inheritdoc />
@@ -41,28 +41,28 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
     }
 
     /// <inheritdoc />
-    public IPostgresRepositoryConfigurator<TSaga> SetConnectionString(string connectionString)
+    public IMySqlRepositoryConfigurator<TSaga> SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
         return this;
     }
 
     /// <inheritdoc />
-    public IPostgresRepositoryConfigurator<TSaga> SetTableName(string tableName)
+    public IMySqlRepositoryConfigurator<TSaga> SetTableName(string tableName)
     {
         TableName = tableName;
         return this;
     }
 
     /// <inheritdoc />
-    public IPostgresRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName)
+    public IMySqlRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName)
     {
         IdentityColumnName = identityColumnName;
         return this;
     }
 
     /// <inheritdoc />
-    public IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin")
+    public IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin")
     {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
         VersionColumnName = versionColumnName;
@@ -70,7 +70,7 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
     }
 
     /// <inheritdoc />
-    public IPostgresRepositoryConfigurator<TSaga> SetPessimisticConcurrency(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
+    public IMySqlRepositoryConfigurator<TSaga> SetPessimisticConcurrency(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
     {
         ConcurrencyMode = ConcurrencyMode.Pessimistic;
         IsolationLevel = isolationLevel;
@@ -86,11 +86,11 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
     }
     
     ISagaSqlFormatter<TSaga> ConfiguredFormatter() => ConcurrencyMode == ConcurrencyMode.Optimistic
-        ? new OptimisticPostgresSagaFormatter<TSaga>(TableName, IdentityColumnName, VersionColumnName)
-        : new PessimisticPostgresSagaFormatter<TSaga>(TableName, IdentityColumnName);
+        ? new OptimisticMySqlSagaFormatter<TSaga>(TableName, IdentityColumnName, VersionColumnName)
+        : new PessimisticMySqlSagaFormatter<TSaga>(TableName, IdentityColumnName);
 
     ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
-        new PostgresSagaConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
+        new MySqlSagaConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
 
     static Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
         => Task.FromResult<DatabaseContext<TSaga>>(serviceProvider.GetRequiredService<SagaDatabaseContext<TSaga>>());

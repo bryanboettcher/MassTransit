@@ -5,19 +5,19 @@ using Integration.Saga;
 using Npgsql;
 
 
-public class PostgresSqlConnectionProvider<TModel> : ISagaSqlConnectionProvider<TModel>
+public class PostgresSagaConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
     where TModel : class, ISaga
 {
     readonly string _connectionString;
     readonly IsolationLevel? _isolationLevel;
 
-    public PostgresSqlConnectionProvider(string connectionString, IsolationLevel? isolationLevel = null)
+    public PostgresSagaConnectionProvider(string connectionString, IsolationLevel? isolationLevel = null)
     {
         _connectionString = connectionString;
         _isolationLevel = isolationLevel;
     }
 
-    public async Task<ISagaSqlConnection<TModel>> CreateConnection(CancellationToken cancellationToken = default)
+    public async Task<ISagaConnection<TModel>> CreateConnection(CancellationToken cancellationToken = default)
     {
         var connection = new NpgsqlConnection(_connectionString);
 
@@ -28,7 +28,7 @@ public class PostgresSqlConnectionProvider<TModel> : ISagaSqlConnectionProvider<
             ? await CreateTransaction(_isolationLevel.Value)
             : null;
 
-        return new PostgresConnection<TModel>(connection, transaction);
+        return new PostgresSagaConnection<TModel>(connection, transaction);
 
         async Task<NpgsqlTransaction> CreateTransaction(IsolationLevel isolationLevel)
             => (NpgsqlTransaction) await connection.BeginTransactionAsync(

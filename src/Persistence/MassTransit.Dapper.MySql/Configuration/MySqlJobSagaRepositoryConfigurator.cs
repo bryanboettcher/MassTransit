@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Dapper.MySqlql.Configuration;
 
 using System.Data;
 using Connections;
@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 
-public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryConfigurator, ISpecification
+public class MySqlJobSagaRepositoryConfigurator : IMySqlJobSagaRepositoryConfigurator, ISpecification
 {
     /// <inheritdoc />
     public string? ConnectionString { get; set; }
@@ -24,7 +24,7 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
     }
 
     /// <inheritdoc />
-    public IPostgresJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
+    public IMySqlJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
         return this;
@@ -44,28 +44,28 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
         services.TryAddScoped<JobSagaDatabaseContext>();
         services.TryAddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
         services.TryAddScoped<ISagaSqlFormatter<JobSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
+            _ => new PessimisticMySqlSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
         );
         services.TryAddScoped<ISagaConnectionProvider<JobSagaDatabaseContext.DbModel>>(
-            _ => new PostgresSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+            _ => new MySqlSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
         );
 
         services.TryAddScoped<JobAttemptSagaDatabaseContext>();
         services.TryAddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
         services.TryAddScoped<ISagaSqlFormatter<JobAttemptSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
+            _ => new PessimisticMySqlSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
         );
         services.TryAddScoped<ISagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
-            _ => new PostgresSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+            _ => new MySqlSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
         );
 
         services.TryAddScoped<JobTypeSagaDatabaseContext>();
         services.TryAddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
         services.TryAddScoped<ISagaSqlFormatter<JobTypeSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
+            _ => new PessimisticMySqlSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
         );
         services.TryAddScoped<ISagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
-            _ => new PostgresSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+            _ => new MySqlSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
         );
     }
 

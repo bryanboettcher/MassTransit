@@ -3,52 +3,51 @@
 using System.Data;
 using ClaimChecks;
 using MassTransit.Configuration;
-using Microsoft.Data.SqlClient;
-
+using MySql.Data.MySqlClient;
 
 public static class MessageDataRepositorySelectorExtensions
 {
     /// <summary>
-    /// Configures a MessageData repository using SqlServer.  Requires
+    /// Configures a MessageData repository using MySql.  Requires
     /// setting the connection string via <paramref name="configure"/>.
     /// </summary>
-    public static IMessageDataRepository UsingSqlServer(
+    public static IMessageDataRepository UsingMySql(
         this IMessageDataRepositorySelector selector,
-        Action<ISqlServerMessageDataConfigurator> configure)
+        Action<IMySqlMessageDataConfigurator> configure)
     {
-        return UsingSqlServer(selector, string.Empty, configure);
+        return UsingMySql(selector, string.Empty, configure);
     }
 
     /// <summary>
-    /// Configures a MessageData repository using SqlServer.
+    /// Configures a MessageData repository using MySql.
     /// Builds the connection string from the parameters.
     /// </summary>
-    public static IMessageDataRepository UsingSqlServer(
+    public static IMessageDataRepository UsingMySql(
         this IMessageDataRepositorySelector selector,
         string hostname, string catalog, string username, string password,
-        Action<ISqlServerMessageDataConfigurator>? configure = null)
+        Action<IMySqlMessageDataConfigurator>? configure = null)
     {
-        var connectionStringBuilder = new SqlConnectionStringBuilder
+        var connectionStringBuilder = new MySqlConnectionStringBuilder
         {
-            DataSource = hostname,
-            InitialCatalog = catalog,
+            Server = hostname,
+            Database = catalog,
             UserID = username,
             Password = password
         };
 
-        return UsingSqlServer(selector, connectionStringBuilder.ToString());
+        return UsingMySql(selector, connectionStringBuilder.ToString());
     }
 
     /// <summary>
-    /// Configures a MessageData repository using SqlServer.  Requires
+    /// Configures a MessageData repository using MySql.  Requires
     /// passing the connection string.
     /// </summary>
-    public static IMessageDataRepository UsingSqlServer(
+    public static IMessageDataRepository UsingMySql(
         this IMessageDataRepositorySelector selector,
         string connectionString,
-        Action<ISqlServerMessageDataConfigurator>? configure = null)
+        Action<IMySqlMessageDataConfigurator>? configure = null)
     {
-        var configurator = new SqlServerMessageDataConfigurator();
+        var configurator = new MySqlMessageDataConfigurator();
 
         configurator.SetConnectionString(connectionString);
 
@@ -56,7 +55,7 @@ public static class MessageDataRepositorySelectorExtensions
 
         configurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
         
-        return new SqlServerMessageDataRepository(
+        return new MySqlMessageDataRepository(
             configurator.ConnectionString,
             configurator.TableName,
             configurator.IsolationLevel,
@@ -66,23 +65,23 @@ public static class MessageDataRepositorySelectorExtensions
 }
 
 
-public interface ISqlServerMessageDataConfigurator
+public interface IMySqlMessageDataConfigurator
 {
     /// <summary>
     /// Sets the connection string.
     /// </summary>
-    ISqlServerMessageDataConfigurator SetConnectionString(string connectionString);
+    IMySqlMessageDataConfigurator SetConnectionString(string connectionString);
 
     /// <summary>
     /// Sets the table name.
     /// </summary>
 
-    ISqlServerMessageDataConfigurator SetTableName(string tableName);
+    IMySqlMessageDataConfigurator SetTableName(string tableName);
 
     /// <summary>
     /// Sets the isolation level.
     /// </summary>
-    ISqlServerMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
+    IMySqlMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
 
     /// <summary>
     /// Gets/sets the connection string.
@@ -100,7 +99,7 @@ public interface ISqlServerMessageDataConfigurator
     IsolationLevel IsolationLevel { get; set; }
 }
 
-public class SqlServerMessageDataConfigurator : ISqlServerMessageDataConfigurator, ISpecification
+public class MySqlMessageDataConfigurator : IMySqlMessageDataConfigurator, ISpecification
 {
     /// <inheritdoc />
     public string ConnectionString { get; set; }
@@ -112,21 +111,21 @@ public class SqlServerMessageDataConfigurator : ISqlServerMessageDataConfigurato
     public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
     /// <inheritdoc />
-    public ISqlServerMessageDataConfigurator SetConnectionString(string connectionString)
+    public IMySqlMessageDataConfigurator SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
         return this;
     }
 
     /// <inheritdoc />
-    public ISqlServerMessageDataConfigurator SetTableName(string tableName)
+    public IMySqlMessageDataConfigurator SetTableName(string tableName)
     {
         TableName = tableName;
         return this;
     }
 
     /// <inheritdoc />
-    public ISqlServerMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+    public IMySqlMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
     {
         IsolationLevel = isolationLevel;
         return this;

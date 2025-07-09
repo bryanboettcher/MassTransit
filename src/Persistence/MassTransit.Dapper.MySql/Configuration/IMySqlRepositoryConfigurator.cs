@@ -1,41 +1,41 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Dapper.MySqlql.Configuration;
 
 using System.Data;
 
 /// <summary>
-/// Configures Postgres-specific settings for an individual saga repository.
+/// Configures MySql-specific settings for an individual saga repository.
 /// </summary>
-public interface IPostgresRepositoryConfigurator<TSaga>
+public interface IMySqlRepositoryConfigurator<TSaga>
     where TSaga : class, ISaga
 {
     /// <summary>
     /// Sets the connection string for this saga.
     /// </summary>
-    IPostgresRepositoryConfigurator<TSaga> SetConnectionString(string connectionString);
+    IMySqlRepositoryConfigurator<TSaga> SetConnectionString(string connectionString);
 
     /// <summary>
     /// Sets the table name for this saga.  No schemas are assumed, and the table name will
     /// be auto-detected from attributes or naive pluralization if unspecified.
     /// </summary>
-    IPostgresRepositoryConfigurator<TSaga> SetTableName(string tableName);
+    IMySqlRepositoryConfigurator<TSaga> SetTableName(string tableName);
 
     /// <summary>
     /// Sets the name of the primary key column.  Defaults to `CorrelationId` if not specified.
     /// </summary>
-    IPostgresRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName);
+    IMySqlRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName);
 
     /// <summary>
     /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `uint XMin` in the model.
+    /// to `DateTimeOffset RowVersion` in the model.
     /// </summary>
-    IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin");
+    IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion");
 
     /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
     /// but will lock rows being used.  <see cref="IsolationLevel"/> sets the isolation for the
     /// transaction.
     /// </summary>
-    IPostgresRepositoryConfigurator<TSaga> SetPessimisticConcurrency(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
+    IMySqlRepositoryConfigurator<TSaga> SetPessimisticConcurrency(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted);
 
     /// <summary>
     /// Gets/sets the connection string.

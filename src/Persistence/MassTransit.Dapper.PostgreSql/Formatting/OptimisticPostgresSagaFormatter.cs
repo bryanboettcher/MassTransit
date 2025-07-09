@@ -65,7 +65,6 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
-        // properties.Insert(1, (col: _versionColumnName, prop: "xmin"));
         
         var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
         var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
@@ -81,9 +80,6 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
 
         var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
-
-        // properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
-        // properties.Insert(1, (col: _versionColumnName, prop: "xmin"));
 
         var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
 

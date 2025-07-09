@@ -1,32 +1,32 @@
-namespace MassTransit.Dapper.SqlServer.Formatting;
+namespace MassTransit.Dapper.MySqlql.Formatting;
 
 using System.Linq.Expressions;
 using Integration.Saga;
 using Integration.SqlBuilders;
 
 
-public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
-    where TModel : class
+public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
+    where TModel : class, ISaga
 {
     readonly string _tableName;
     readonly string _idColumnName;
     readonly string _versionColumnName;
 
-    public OptimisticSqlServerSagaFormatter(string? tableName = null, string? idColumnName = null, string? versionColumnName = null)
+    public OptimisticMySqlSagaFormatter(string? tableName = null, string? idColumnName = null, string? versionColumnName = null)
     {
         var type = typeof(TModel);
 
         _tableName = tableName ?? GetTableName(type);
         _idColumnName = idColumnName ?? GetIdColumnName(type);
-        _versionColumnName = versionColumnName ?? GetVersionColumnName<byte[]>(type, "rowversion");
+        _versionColumnName = versionColumnName ?? GetVersionColumnName<DateTimeOffset>(type, "RowVersion");
 
         if (_versionColumnName is null)
-            throw new InvalidOperationException($"Optimistic concurrency cannot be used with {type.Name} because the ROWVERSION column was not auto-detected.  Either specify the column name directly in the constructor, or ensure a 'public byte[] RowVersion' property exists.");
+            throw new InvalidOperationException($"Optimistic concurrency cannot be used with {type.Name} because the RowVersion column was not auto-detected.  Either specify the column name directly in the constructor, or ensure a 'public DateTimeOffset RowVersion' property exists.");
     }
 
     public string BuildLoadSql()
     {
-        return $"SELECT TOP 1 * FROM {_tableName} WHERE [{_idColumnName}] = @correlationId";
+        return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid LIMIT 1";
     }
 
     public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -48,9 +48,10 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
 
         foreach (var p in predicates)
         {
-            var paramName = $"value{queryPredicates.Count}";
-            queryPredicates.Add($"[{p.Name}] {p.Operator} @{paramName}");
-            parameterCallback?.Invoke(paramName, p.Value);
+            var paramName = p.Name.ToLowerInvariant();
+
+            queryPredicates.Add($"{p.Name} {p.Operator} @{paramName}");
+            parameterCallback?.Invoke($"@{paramName}", p.Value);
         }
 
         return string.Join(" AND ", queryPredicates);
@@ -63,10 +64,10 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
         var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
-        properties.Insert(0, (col: _idColumnName, prop: "correlationId"));
-
-        var columns = string.Join(", ", properties.Select(p => $"[{p.col}]"));
-        var values = string.Join(", ", properties.Select(p => $"@{p.prop}"));
+        properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
+        
+        var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
+        var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
 
         var sql = $"INSERT INTO {_tableName} ({columns}) VALUES ({values})";
 
@@ -80,21 +81,21 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
         var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
-        var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));
+        var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
 
-        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE [{_idColumnName}] = @correlationId AND [{_versionColumnName}] = @rowversion";
+        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = @correlationid AND xmin = @xmin";
 
         return sql;
     }
 
     public string BuildDeleteSql()
     {
-        var sql = $"DELETE FROM {_tableName} WHERE [{_idColumnName}] = @correlationId AND [{_versionColumnName}] = @rowversion";
+        var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = @correlationid AND xmin = @xmin";
 
         return sql;
     }
 
-    public void MapPrefix<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? prefixName = null)
+    public void MapPrefix<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string prefixName = null)
         => MapCore(mappingExpression, prefixName, false);
 
     public void MapProperty<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string targetName)

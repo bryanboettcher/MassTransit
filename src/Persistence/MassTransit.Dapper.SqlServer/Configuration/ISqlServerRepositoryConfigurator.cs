@@ -26,7 +26,7 @@ public interface ISqlServerRepositoryConfigurator<TSaga>
 
     /// <summary>
     /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `byte[] RowVersion`.
+    /// to `byte[] RowVersion` in the model.
     /// </summary>
     ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion");
 

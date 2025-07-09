@@ -6,7 +6,7 @@ using Integration.Saga;
 using Integration.SqlBuilders;
 using Microsoft.Data.SqlClient;
 
-public class SqlServerConnection<TModel> : ISagaSqlConnection<TModel>
+public class SqlServerSagaConnection<TModel> : ISagaConnection<TModel>
     where TModel : class, ISaga
 {
     readonly SqlConnection _connection;
@@ -14,7 +14,7 @@ public class SqlServerConnection<TModel> : ISagaSqlConnection<TModel>
 
     bool _disposed;
 
-    public SqlServerConnection(SqlConnection connection, SqlTransaction? transaction)
+    public SqlServerSagaConnection(SqlConnection connection, SqlTransaction? transaction)
     {
         _connection = connection;
         _transaction = transaction;

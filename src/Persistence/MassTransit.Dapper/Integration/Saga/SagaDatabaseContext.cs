@@ -12,10 +12,10 @@ namespace MassTransit.Dapper.Integration.Saga
     public class SagaDatabaseContext<TSaga> : DatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        readonly ISagaSqlConnection<TSaga> _connection;
+        readonly ISagaConnection<TSaga> _connection;
         readonly ISagaSqlFormatter<TSaga> _formatter;
 
-        public SagaDatabaseContext(ISagaSqlConnection<TSaga> connection, ISagaSqlFormatter<TSaga> formatter)
+        public SagaDatabaseContext(ISagaConnection<TSaga> connection, ISagaSqlFormatter<TSaga> formatter)
         {
             _connection = connection;
             _formatter = formatter;

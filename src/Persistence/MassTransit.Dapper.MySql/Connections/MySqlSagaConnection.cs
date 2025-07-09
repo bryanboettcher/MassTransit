@@ -1,20 +1,21 @@
-namespace MassTransit.Dapper.PostgreSql.Connections;
+namespace MassTransit.Dapper.MySqlql.Connections;
 
 using System.Data;
 using System.Runtime.CompilerServices;
 using Integration.Saga;
 using Integration.SqlBuilders;
-using Npgsql;
+using MySql.Data.MySqlClient;
 
-public class PostgresConnection<TModel> : ISagaSqlConnection<TModel>
+
+public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
     where TModel : class, ISaga
 {
-    readonly NpgsqlConnection _connection;
-    readonly NpgsqlTransaction? _transaction;
+    readonly MySqlConnection _connection;
+    readonly MySqlTransaction? _transaction;
 
     bool _disposed;
 
-    public PostgresConnection(NpgsqlConnection connection, NpgsqlTransaction transaction)
+    public MySqlSagaConnection(MySqlConnection connection, MySqlTransaction? transaction)
     {
         _connection = connection;
         _transaction = transaction;
@@ -95,7 +96,7 @@ public class PostgresConnection<TModel> : ISagaSqlConnection<TModel>
         _disposed = true;
     }
 
-    static void AssignParameters(NpgsqlCommand command, object? parameters)
+    static void AssignParameters(MySqlCommand command, object? parameters)
     {
         foreach (var (name, value) in ParameterReader.Read(parameters))
         {

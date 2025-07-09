@@ -13,8 +13,10 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositoryConfigurator, ISpecification
 {
+    /// <inheritdoc />
     public string? ConnectionString { get; set; }
-    
+
+    /// <inheritdoc />
     public ISqlServerJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
@@ -43,8 +45,8 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
         services.TryAddScoped<ISagaSqlFormatter<JobSagaDatabaseContext.DbModel>>(
             _ => new PessimisticSqlServerSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
         );
-        services.TryAddScoped<ISagaSqlConnectionProvider<JobSagaDatabaseContext.DbModel>>(
-            _ => new SqlServerSqlConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+        services.TryAddScoped<ISagaConnectionProvider<JobSagaDatabaseContext.DbModel>>(
+            _ => new SqlServerSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
         );
 
         services.TryAddScoped<JobAttemptSagaDatabaseContext>();
@@ -52,8 +54,8 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
         services.TryAddScoped<ISagaSqlFormatter<JobAttemptSagaDatabaseContext.DbModel>>(
             _ => new PessimisticSqlServerSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
         );
-        services.TryAddScoped<ISagaSqlConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
-            _ => new SqlServerSqlConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+        services.TryAddScoped<ISagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
+            _ => new SqlServerSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
         );
 
         services.TryAddScoped<JobTypeSagaDatabaseContext>();
@@ -61,8 +63,8 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
         services.TryAddScoped<ISagaSqlFormatter<JobTypeSagaDatabaseContext.DbModel>>(
             _ => new PessimisticSqlServerSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
         );
-        services.TryAddScoped<ISagaSqlConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
-            _ => new SqlServerSqlConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+        services.TryAddScoped<ISagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
+            _ => new SqlServerSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
         );
     }
 
@@ -75,7 +77,7 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
         {
             var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TModel>>();
             var serializer = serviceProvider.GetRequiredService<SagaSerializer<TSaga, TModel>>();
-            var provider = serviceProvider.GetRequiredService<ISagaSqlConnectionProvider<TModel>>();
+            var provider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TModel>>();
 
             var connection = await provider.CreateConnection();
             var context = new SagaDatabaseContext<TModel>(connection, formatter);

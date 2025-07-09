@@ -7,7 +7,7 @@ using System.Data;
 /// Stateful object that represents the lifecycle of a single connection, query, transaction, etc.
 /// </summary>
 /// <typeparam name="TSaga"></typeparam>
-public interface ISagaSqlConnection<TSaga> : IAsyncDisposable, IDisposable
+public interface ISagaConnection<TSaga> : IAsyncDisposable, IDisposable
     where TSaga : class
 {
     /// <summary>

@@ -88,13 +88,13 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
         ? new OptimisticSqlServerSagaFormatter<TSaga>(TableName, IdentityColumnName, VersionColumnName)
         : new PessimisticSqlServerSagaFormatter<TSaga>(TableName, IdentityColumnName);
 
-    ISagaSqlConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
-        new SqlServerSqlConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
+    ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
+        new SqlServerSagaConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
 
     static async Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
     {
         var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TSaga>>();
-        var connectionProvider = serviceProvider.GetRequiredService<ISagaSqlConnectionProvider<TSaga>>();
+        var connectionProvider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TSaga>>();
 
         var connection = await connectionProvider.CreateConnection();
         return new SagaDatabaseContext<TSaga>(connection, formatter);

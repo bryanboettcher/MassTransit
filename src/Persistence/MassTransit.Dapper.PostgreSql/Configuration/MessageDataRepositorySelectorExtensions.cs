@@ -3,52 +3,51 @@
 using System.Data;
 using ClaimChecks;
 using MassTransit.Configuration;
-using Microsoft.Data.SqlClient;
-
+using Npgsql;
 
 public static class MessageDataRepositorySelectorExtensions
 {
     /// <summary>
-    /// Configures a MessageData repository using SqlServer.  Requires
+    /// Configures a MessageData repository using Postgres.  Requires
     /// setting the connection string via <paramref name="configure"/>.
     /// </summary>
-    public static IMessageDataRepository UsingSqlServer(
+    public static IMessageDataRepository UsingPostgres(
         this IMessageDataRepositorySelector selector,
-        Action<ISqlServerMessageDataConfigurator> configure)
+        Action<IPostgresMessageDataConfigurator> configure)
     {
-        return UsingSqlServer(selector, string.Empty, configure);
+        return UsingPostgres(selector, string.Empty, configure);
     }
 
     /// <summary>
-    /// Configures a MessageData repository using SqlServer.
+    /// Configures a MessageData repository using Postgres.
     /// Builds the connection string from the parameters.
     /// </summary>
-    public static IMessageDataRepository UsingSqlServer(
+    public static IMessageDataRepository UsingPostgres(
         this IMessageDataRepositorySelector selector,
         string hostname, string catalog, string username, string password,
-        Action<ISqlServerMessageDataConfigurator>? configure = null)
+        Action<IPostgresMessageDataConfigurator>? configure = null)
     {
-        var connectionStringBuilder = new SqlConnectionStringBuilder
+        var connectionStringBuilder = new NpgsqlConnectionStringBuilder
         {
-            DataSource = hostname,
-            InitialCatalog = catalog,
-            UserID = username,
+            Host = hostname,
+            Database = catalog,
+            Username = username,
             Password = password
         };
 
-        return UsingSqlServer(selector, connectionStringBuilder.ToString());
+        return UsingPostgres(selector, connectionStringBuilder.ToString());
     }
 
     /// <summary>
-    /// Configures a MessageData repository using SqlServer.  Requires
+    /// Configures a MessageData repository using Postgres.  Requires
     /// passing the connection string.
     /// </summary>
-    public static IMessageDataRepository UsingSqlServer(
+    public static IMessageDataRepository UsingPostgres(
         this IMessageDataRepositorySelector selector,
         string connectionString,
-        Action<ISqlServerMessageDataConfigurator>? configure = null)
+        Action<IPostgresMessageDataConfigurator>? configure = null)
     {
-        var configurator = new SqlServerMessageDataConfigurator();
+        var configurator = new PostgresMessageDataConfigurator();
 
         configurator.SetConnectionString(connectionString);
 
@@ -56,7 +55,7 @@ public static class MessageDataRepositorySelectorExtensions
 
         configurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
         
-        return new SqlServerMessageDataRepository(
+        return new PostgresMessageDataRepository(
             configurator.ConnectionString,
             configurator.TableName,
             configurator.IsolationLevel,
@@ -65,24 +64,23 @@ public static class MessageDataRepositorySelectorExtensions
     }
 }
 
-
-public interface ISqlServerMessageDataConfigurator
+public interface IPostgresMessageDataConfigurator
 {
     /// <summary>
     /// Sets the connection string.
     /// </summary>
-    ISqlServerMessageDataConfigurator SetConnectionString(string connectionString);
+    IPostgresMessageDataConfigurator SetConnectionString(string connectionString);
 
     /// <summary>
     /// Sets the table name.
     /// </summary>
 
-    ISqlServerMessageDataConfigurator SetTableName(string tableName);
+    IPostgresMessageDataConfigurator SetTableName(string tableName);
 
     /// <summary>
     /// Sets the isolation level.
     /// </summary>
-    ISqlServerMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
+    IPostgresMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
 
     /// <summary>
     /// Gets/sets the connection string.
@@ -100,7 +98,7 @@ public interface ISqlServerMessageDataConfigurator
     IsolationLevel IsolationLevel { get; set; }
 }
 
-public class SqlServerMessageDataConfigurator : ISqlServerMessageDataConfigurator, ISpecification
+public class PostgresMessageDataConfigurator : IPostgresMessageDataConfigurator, ISpecification
 {
     /// <inheritdoc />
     public string ConnectionString { get; set; }
@@ -112,21 +110,21 @@ public class SqlServerMessageDataConfigurator : ISqlServerMessageDataConfigurato
     public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
     /// <inheritdoc />
-    public ISqlServerMessageDataConfigurator SetConnectionString(string connectionString)
+    public IPostgresMessageDataConfigurator SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
         return this;
     }
 
     /// <inheritdoc />
-    public ISqlServerMessageDataConfigurator SetTableName(string tableName)
+    public IPostgresMessageDataConfigurator SetTableName(string tableName)
     {
         TableName = tableName;
         return this;
     }
 
     /// <inheritdoc />
-    public ISqlServerMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+    public IPostgresMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
     {
         IsolationLevel = isolationLevel;
         return this;
