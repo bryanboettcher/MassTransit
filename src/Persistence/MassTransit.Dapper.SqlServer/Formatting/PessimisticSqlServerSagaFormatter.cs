@@ -56,7 +56,7 @@ namespace MassTransit.Dapper.SqlServer.Formatting
         {
             var sagaType = typeof(TModel);
 
-            var forbidden = new HashSet<string?> { _idColumnName };
+            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
 
             properties.Insert(0, (col: GetIdColumnName(sagaType), prop: "correlationId"));
@@ -73,7 +73,7 @@ namespace MassTransit.Dapper.SqlServer.Formatting
         {
             var sagaType = typeof(TModel);
 
-            var forbidden = new HashSet<string?> { _idColumnName };
+            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
 
             var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));

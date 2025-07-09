@@ -1,6 +1,5 @@
 ﻿namespace MassTransit.Dapper.Tests.ComponentTests.MySql
 {
-    using System;
     using Common;
     using Integration.SqlBuilders;
     using MySqlql.Formatting;
@@ -95,7 +94,7 @@
             public void Load_builds_correct_sql()
             {
                 var actual = Subject.BuildLoadSql();
-                var expected = "SELECT * FROM UnversionedSagas WHERE CorrelationId = @correlationid FOR UPDATE LIMIT 1";
+                var expected = "SELECT * FROM UnversionedSagas WHERE CorrelationId = @correlationid LIMIT 1 FOR UPDATE";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }

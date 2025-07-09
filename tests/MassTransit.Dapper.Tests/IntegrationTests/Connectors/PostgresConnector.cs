@@ -2,9 +2,9 @@
 
 using Configuration;
 using global::Dapper;
-using StateMachineSagas;
 using Npgsql;
 using PostgreSql.Configuration;
+using StateMachineSagas;
 
 
 public class OptimisticPostgresConnector : PostgresConnector, TestConnector
@@ -14,7 +14,7 @@ public class OptimisticPostgresConnector : PostgresConnector, TestConnector
     public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
-        conf.UsingPostgres(ConnectionString, opt => opt.SetOptimisticConcurrency());
+        conf.UsingPostgres(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
     }
 
     public Task<List<TSaga>> GetSagas<TSaga>()
@@ -27,7 +27,7 @@ public class PessimisticPostgresConnector : PostgresConnector, TestConnector
     public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
-        conf.UsingPostgres(ConnectionString, opt => opt.SetPessimisticConcurrency());
+        conf.UsingPostgres(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
     }
 
     public Task<List<TSaga>> GetSagas<TSaga>()

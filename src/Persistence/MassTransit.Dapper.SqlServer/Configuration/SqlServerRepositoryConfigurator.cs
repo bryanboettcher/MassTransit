@@ -81,7 +81,7 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
         (sagaConfigurator as AdoRepositoryConfigurator<TSaga>)?
             .AddCallback(RegisterServices);
 
-        sagaConfigurator.SetContextFactory(ConfiguredSqlServerContextFactory);
+        sagaConfigurator.SetContextFactory(ConfiguredContextFactory);
     }
     
     ISagaSqlFormatter<TSaga> ConfiguredFormatter() => ConcurrencyMode == ConcurrencyMode.Optimistic
@@ -91,7 +91,7 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
     ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
         new SqlServerSagaConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
 
-    static async Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
+    static async Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
     {
         var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TSaga>>();
         var connectionProvider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TSaga>>();

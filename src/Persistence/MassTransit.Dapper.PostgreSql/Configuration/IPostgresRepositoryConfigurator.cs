@@ -26,7 +26,7 @@ public interface IPostgresRepositoryConfigurator<TSaga>
 
     /// <summary>
     /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `uint XMin` in the model.
+    /// to `int XMin` in the model.
     /// </summary>
     IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin");
 

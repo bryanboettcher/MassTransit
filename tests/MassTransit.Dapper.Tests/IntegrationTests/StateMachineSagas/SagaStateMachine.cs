@@ -4,7 +4,8 @@
 namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
 {
     using Common;
-    
+
+
     public class SagaStateMachine<TSaga> : MassTransitStateMachine<TSaga> where TSaga : BehaviorSaga
     {
         public SagaStateMachine()

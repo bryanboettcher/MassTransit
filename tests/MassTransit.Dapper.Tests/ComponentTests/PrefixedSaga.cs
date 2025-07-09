@@ -1,9 +1,5 @@
 ﻿namespace MassTransit.Dapper.Tests.ComponentTests
 {
-    using System;
-    using MassTransit;
-
-
     public class PrefixedSaga : ISaga
     {
         public Guid CorrelationId { get; set; }

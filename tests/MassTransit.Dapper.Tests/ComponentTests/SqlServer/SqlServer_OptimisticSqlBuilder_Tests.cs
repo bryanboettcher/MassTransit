@@ -1,10 +1,10 @@
-﻿using NUnit.Framework;
-
-namespace MassTransit.Dapper.Tests.ComponentTests.SqlServer
+﻿namespace MassTransit.Dapper.Tests.ComponentTests.SqlServer
 {
     using Common;
     using Dapper.SqlServer.Formatting;
     using Integration.SqlBuilders;
+    using NUnit.Framework;
+
 
     [TestFixture]
     public class SqlServer_OptimisticSqlBuilder_Tests : SqlServer_Tests

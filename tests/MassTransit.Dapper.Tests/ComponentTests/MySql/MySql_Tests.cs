@@ -5,7 +5,7 @@ public class MySql_Tests
     public class VersionedSaga : ISaga
     {
         public Guid CorrelationId { get; set; }
-        public DateTimeOffset RowVersion { get; set; }
+        public DateTime RowVersion { get; set; }
         public string Name { get; set; }
         public int Age { get; set; }
         public string PhoneNumber { get; set; }

@@ -2,19 +2,19 @@
 
 using Configuration;
 using global::Dapper;
-using StateMachineSagas;
+using MySql.Data.MySqlClient;
 using MySqlql.Configuration;
-using Npgsql;
+using StateMachineSagas;
 
 
 public class OptimisticMySqlConnector : MySqlConnector, TestConnector
 {
-    public uint XMin { get; set; }
+    public DateTime RowVersion { get; set; }
 
     public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
-        conf.UsingMySql(ConnectionString, opt => opt.SetOptimisticConcurrency());
+        conf.UsingMySql(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
     }
 
     public Task<List<TSaga>> GetSagas<TSaga>()
@@ -27,7 +27,7 @@ public class PessimisticMySqlConnector : MySqlConnector, TestConnector
     public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
-        conf.UsingMySql(ConnectionString, opt => opt.SetPessimisticConcurrency());
+        conf.UsingMySql(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
     }
 
     public Task<List<TSaga>> GetSagas<TSaga>()
@@ -70,7 +70,7 @@ public abstract class MySqlConnector : BehaviorSaga
 
     protected async Task<List<TSaga>> GetSagas<TSaga>(string tableName)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new MySqlConnection(ConnectionString);
 
         var sql = $"SELECT * FROM {tableName};";
         return (await connection.QueryAsync<TSaga>(sql)).AsList();
@@ -78,7 +78,7 @@ public abstract class MySqlConnector : BehaviorSaga
 
     async Task RunSql(string sql)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new MySqlConnection(ConnectionString);
         await connection.OpenAsync();
 
         await using var command = connection.CreateCommand();

@@ -82,7 +82,7 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
         (sagaConfigurator as AdoRepositoryConfigurator<TSaga>)?
             .AddCallback(RegisterServices);
 
-        sagaConfigurator.SetContextFactory(ConfiguredSqlServerContextFactory);
+        sagaConfigurator.SetContextFactory(ConfiguredContextFactory);
     }
     
     ISagaSqlFormatter<TSaga> ConfiguredFormatter() => ConcurrencyMode == ConcurrencyMode.Optimistic
@@ -92,11 +92,19 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
     ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
         new MySqlSagaConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
 
-    static Task<DatabaseContext<TSaga>> ConfiguredSqlServerContextFactory(IServiceProvider serviceProvider)
-        => Task.FromResult<DatabaseContext<TSaga>>(serviceProvider.GetRequiredService<SagaDatabaseContext<TSaga>>());
+    static async Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
+    {
+        var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TSaga>>();
+        var connectionProvider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TSaga>>();
+
+        var connection = await connectionProvider.CreateConnection();
+        return new SagaDatabaseContext<TSaga>(connection, formatter);
+    }
 
     void RegisterServices(IServiceCollection services)
     {
+        services.AddScoped<DatabaseContext<TSaga>, SagaDatabaseContext<TSaga>>();
+
         services.AddSingleton(ConfiguredFormatter());
         services.AddSingleton(ConfiguredConnectionProvider());
     }

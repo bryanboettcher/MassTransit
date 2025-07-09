@@ -18,10 +18,10 @@ public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlF
 
         _tableName = tableName ?? GetTableName(type);
         _idColumnName = idColumnName ?? GetIdColumnName(type);
-        _versionColumnName = versionColumnName ?? GetVersionColumnName<DateTimeOffset>(type, "RowVersion");
+        _versionColumnName = versionColumnName ?? GetVersionColumnName<DateTime>(type, "RowVersion");
 
         if (_versionColumnName is null)
-            throw new InvalidOperationException($"Optimistic concurrency cannot be used with {type.Name} because the RowVersion column was not auto-detected.  Either specify the column name directly in the constructor, or ensure a 'public DateTimeOffset RowVersion' property exists.");
+            throw new InvalidOperationException($"Optimistic concurrency cannot be used with {type.Name} because the RowVersion column was not auto-detected.  Either specify the column name directly in the constructor, or ensure a 'public DateTime RowVersion' property exists.");
     }
 
     public string BuildLoadSql()
@@ -61,7 +61,7 @@ public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlF
     {
         var sagaType = typeof(TModel);
 
-        var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
+        var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
@@ -78,7 +78,7 @@ public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlF
     {
         var sagaType = typeof(TModel);
 
-        var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
+        var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));

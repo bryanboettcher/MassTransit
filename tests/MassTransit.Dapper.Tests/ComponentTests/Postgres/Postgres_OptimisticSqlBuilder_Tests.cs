@@ -1,10 +1,9 @@
 ﻿namespace MassTransit.Dapper.Tests.ComponentTests.Postgres
 {
-    using System;
     using Common;
-    using Dapper.Integration.SqlBuilders;
-    using Dapper.PostgreSql.Formatting;
+    using Integration.SqlBuilders;
     using NUnit.Framework;
+    using PostgreSql.Formatting;
 
 
     [TestFixture]

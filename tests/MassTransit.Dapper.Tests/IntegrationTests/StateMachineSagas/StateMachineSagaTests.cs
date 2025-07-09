@@ -1,21 +1,19 @@
 ﻿namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
 {
-    using System.Threading.Tasks;
-    using ConsumerSagas;
-    using MassTransit.Dapper.Integration.Saga;
     using Common;
     using Connectors;
-    using Testing;
+    using Integration.Saga;
     using NUnit.Framework;
+    using Testing;
 
 
     [Category("Integration")]
     [TestFixture(typeof(OptimisticSqlServerConnector))]
-    [TestFixture(typeof(OptimisticPostgresConnector), Explicit = true)]
-    [TestFixture(typeof(OptimisticMySqlConnector), Explicit = true)]
+    [TestFixture(typeof(OptimisticPostgresConnector))]
+    [TestFixture(typeof(OptimisticMySqlConnector))]
     [TestFixture(typeof(PessimisticSqlServerConnector))]
-    [TestFixture(typeof(PessimisticPostgresConnector), Explicit = true)]
-    [TestFixture(typeof(PessimisticMySqlConnector), Explicit = true)]
+    [TestFixture(typeof(PessimisticPostgresConnector))]
+    [TestFixture(typeof(PessimisticMySqlConnector))]
     [TestFixture]
     public class StateMachineSagaTests<TConnector> : SagaTests<TConnector>
         where TConnector : BehaviorSaga, TestConnector, new()
@@ -41,7 +39,7 @@
         [Test]
         public async Task CreateMessage_creates_saga()
         {
-            var sagas = await GetSagas<VersionedConsumerSaga>();
+            var sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
@@ -50,7 +48,7 @@
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
 
-            sagas = await GetSagas<VersionedConsumerSaga>();
+            sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Not.Empty);
             Assert.That(sagas[0].Name, Is.EqualTo("my saga"));
         }
@@ -58,12 +56,12 @@
         [Test]
         public async Task UpdateMessage_updates_saga()
         {
-            var sagas = await GetSagas<VersionedConsumerSaga>();
+            var sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga 0" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
-            await Task.Delay(50);
+            await Task.Delay(250);
 
             await InputQueueSendEndpoint.Send<UpdateSaga>(new { CorrelationId = SagaId, Name = "my saga 1" });
             await BusTestHarness.Consumed.Any<UpdateSaga>();
@@ -71,7 +69,7 @@
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
 
-            sagas = await GetSagas<VersionedConsumerSaga>();
+            sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Not.Empty);
             Assert.That(sagas[0].Name, Is.EqualTo("my saga 1"));
         }
@@ -79,11 +77,12 @@
         [Test]
         public async Task DeleteMessage_deletes_saga()
         {
-            var sagas = await GetSagas<VersionedConsumerSaga>();
+            var sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
+            await Task.Delay(250);
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
@@ -91,7 +90,7 @@
             await InputQueueSendEndpoint.Send<DeleteSagaByName>(new { Name = "my saga" });
             await BusTestHarness.Consumed.Any<DeleteSagaByName>();
 
-            sagas = await GetSagas<VersionedConsumerSaga>();
+            sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);
         }
     }

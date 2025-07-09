@@ -22,7 +22,7 @@ namespace MassTransit.Dapper.MySqlql.Formatting
 
         public string BuildLoadSql()
         {
-            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid FOR UPDATE LIMIT 1";
+            return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid LIMIT 1 FOR UPDATE";
         }
 
         public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -58,7 +58,7 @@ namespace MassTransit.Dapper.MySqlql.Formatting
         {
             var sagaType = typeof(TModel);
 
-            var forbidden = new HashSet<string?> { _idColumnName };
+            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
             properties.Insert(0, (col: _idColumnName, prop: "correlationid"));
 
@@ -74,7 +74,7 @@ namespace MassTransit.Dapper.MySqlql.Formatting
         {
             var sagaType = typeof(TModel);
 
-            var forbidden = new HashSet<string?> { _idColumnName };
+            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName };
             var properties = BuildProperties(sagaType, forbidden).ToList();
 
             var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));

@@ -2,10 +2,10 @@
 
 using Configuration;
 using global::Dapper;
-using StateMachineSagas;
 using MassTransit.Tests;
 using Microsoft.Data.SqlClient;
 using SqlServer.Configuration;
+using StateMachineSagas;
 
 
 public class OptimisticSqlServerConnector : SqlServerConnector, TestConnector
@@ -13,7 +13,7 @@ public class OptimisticSqlServerConnector : SqlServerConnector, TestConnector
     public byte[] RowVersion { get; set; }
     
     void TestConnector.Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
-        => conf.UsingSqlServer(ConnectionString, opt => opt.SetOptimisticConcurrency());
+        => conf.UsingSqlServer(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
 
     public Task<List<TSaga>> GetSagas<TSaga>() where TSaga : class, ISaga
         => base.GetSagas<TSaga>("OptimisticSagas");
@@ -22,7 +22,7 @@ public class OptimisticSqlServerConnector : SqlServerConnector, TestConnector
 public class PessimisticSqlServerConnector : SqlServerConnector, TestConnector
 {
     void TestConnector.Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
-        => conf.UsingSqlServer(ConnectionString, opt => opt.SetPessimisticConcurrency());
+        => conf.UsingSqlServer(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
 
     public Task<List<TSaga>> GetSagas<TSaga>() where TSaga : class, ISaga
         => base.GetSagas<TSaga>("PessimisticSagas");

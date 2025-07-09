@@ -60,7 +60,7 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
     {
         var sagaType = typeof(TModel);
 
-        var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
+        var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         properties.Insert(0, (col: _idColumnName, prop: "correlationId"));
@@ -77,7 +77,7 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
     {
         var sagaType = typeof(TModel);
 
-        var forbidden = new HashSet<string?> { _idColumnName, _versionColumnName };
+        var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { _idColumnName, _versionColumnName };
         var properties = BuildProperties(sagaType, forbidden).ToList();
 
         var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));

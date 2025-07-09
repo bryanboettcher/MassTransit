@@ -1,6 +1,5 @@
 ﻿namespace MassTransit.Dapper.Tests.Common
 {
-    using System;
     using System.ComponentModel.DataAnnotations.Schema;
 
 

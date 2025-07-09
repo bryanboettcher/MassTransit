@@ -1,11 +1,8 @@
 ﻿namespace MassTransit.Dapper.Tests.IntegrationTests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Threading.Tasks;
     using Connectors;
-    using TestFramework;
     using NUnit.Framework;
+    using TestFramework;
 
 
     public abstract class SagaTests<TConnector> : InMemoryTestFixture
@@ -32,8 +29,8 @@
         [SetUp]
         public Task Setup() => Connector.Reset();
 
-        protected async Task<List<TSaga>> GetSagas<TSaga>()
+        protected Task<List<TSaga>> GetSagas<TSaga>()
             where TSaga : class, ISaga =>
-            Connector.GetSagas();
+            Connector.GetSagas<TSaga>();
     }
 }

@@ -1,9 +1,8 @@
 ﻿namespace MassTransit.Dapper.Tests.ComponentTests.SqlServer
 {
-    using System;
     using Common;
-    using Dapper.Integration.SqlBuilders;
     using Dapper.SqlServer.Formatting;
+    using Integration.SqlBuilders;
     using NUnit.Framework;
 
 

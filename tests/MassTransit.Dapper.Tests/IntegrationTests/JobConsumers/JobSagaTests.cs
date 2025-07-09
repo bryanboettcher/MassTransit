@@ -1,19 +1,20 @@
 ﻿namespace MassTransit.Dapper.Tests.IntegrationTests.JobConsumers
 {
-    using System;
-    using System.Threading.Tasks;
-    using MassTransit.Contracts.JobService;
-    using MassTransit.Dapper.Configuration;
-    using MassTransit.Dapper.Tests.IntegrationTests.Connectors;
-    using MassTransit.TestFramework;
-    using MassTransit.Testing;
+    using Configuration;
+    using Connectors;
+    using Contracts.JobService;
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Extensions.DependencyInjection;
     using NUnit.Framework;
+    using TestFramework;
+    using Testing;
 
 
     namespace JobConsumerTests
     {
+        using Contracts.JobService;
+
+
         public interface OddJob
         {
             TimeSpan Duration { get; }
@@ -40,8 +41,8 @@
 
     [Category("Integration")]
     [TestFixture(typeof(SqlServerConnector))]
-    [TestFixture(typeof(PostgresConnector), Explicit = true)]
-    [TestFixture(typeof(MySqlConnector), Explicit = true)]
+    [TestFixture(typeof(PostgresConnector))]
+    [TestFixture(typeof(MySqlConnector))]
     public class JobSagaTests<TConnector> : InMemoryTestFixture
         where TConnector : TestConnector, new()
     {

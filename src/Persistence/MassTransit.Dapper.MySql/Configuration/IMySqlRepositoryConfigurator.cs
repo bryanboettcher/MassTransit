@@ -26,7 +26,7 @@ public interface IMySqlRepositoryConfigurator<TSaga>
 
     /// <summary>
     /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `DateTimeOffset RowVersion` in the model.
+    /// to `DateTime RowVersion` in the model.
     /// </summary>
     IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion");
 

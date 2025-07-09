@@ -1,10 +1,8 @@
 ﻿namespace MassTransit.Dapper.Tests.ComponentTests
 {
-    using System;
-    using System.Collections.Generic;
     using System.Linq.Expressions;
-    using MassTransit.Dapper.Integration.Saga;
-    using MassTransit.Dapper.SqlServer.Formatting;
+    using Dapper.SqlServer.Formatting;
+    using Integration.Saga;
     using NUnit.Framework;
 
 
