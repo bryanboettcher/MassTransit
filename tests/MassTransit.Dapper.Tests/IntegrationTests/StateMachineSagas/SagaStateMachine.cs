@@ -3,12 +3,11 @@
 #pragma warning disable CS8618
 namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
 {
-    using MassTransit.Dapper.Tests.Common;
-
-
-    public class VersionedSagaStateMachine : MassTransitStateMachine<VersionedBehaviorSaga>
+    using Common;
+    
+    public class SagaStateMachine<TSaga> : MassTransitStateMachine<TSaga> where TSaga : BehaviorSaga
     {
-        public VersionedSagaStateMachine()
+        public SagaStateMachine()
         {
             InstanceState(c => c.CurrentState);
 

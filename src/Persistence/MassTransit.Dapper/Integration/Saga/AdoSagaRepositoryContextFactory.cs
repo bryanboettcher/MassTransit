@@ -78,13 +78,13 @@ namespace MassTransit.Dapper.Integration.Saga
                 .ConfigureAwait(false);
         }
 
-        async Task<T> ExecuteAsyncMethod<T>(Func<DapperSagaRepositoryContext<TSaga>, Task<T>> asyncMethod, CancellationToken cancellationToken)
+        async Task<T> ExecuteAsyncMethod<T>(Func<AdoSagaRepositoryContext<TSaga>, Task<T>> asyncMethod, CancellationToken cancellationToken)
             where T : class
         {
             await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
 
-            var sagaRepositoryContext = new DapperSagaRepositoryContext<TSaga>(databaseContext, cancellationToken);
+            var sagaRepositoryContext = new AdoSagaRepositoryContext<TSaga>(databaseContext, cancellationToken);
 
             var result = await asyncMethod(sagaRepositoryContext)
                 .ConfigureAwait(false);

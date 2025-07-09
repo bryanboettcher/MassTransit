@@ -117,6 +117,102 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="MySql_CreateJobTables" xml:space="preserve">
+    <value>CREATE TABLE Jobs (
+    CorrelationId BINARY(16) NOT NULL,
+    CurrentState INT NOT NULL,    
+    Completed TIMESTAMP NULL,
+    Faulted TIMESTAMP NULL,
+    Started TIMESTAMP NULL,
+    Submitted TIMESTAMP NULL,    
+    EndDate TIMESTAMP NULL,
+    NextStartDate TIMESTAMP NULL,
+    StartDate TIMESTAMP NULL,    
+    AttemptId BINARY(16) NOT NULL,
+    JobTypeId BINARY(16) NOT NULL,
+    JobRetryDelayToken BINARY(16) NULL,
+    JobSlotWaitToken BINARY(16) NULL,    
+    RetryAttempt INT NOT NULL,
+    LastProgressLimit BIGINT NULL,
+    LastProgressSequenceNumber BIGINT NULL,
+    LastProgressValue BIGINT NULL,
+    CronExpression VARCHAR(255) NULL,
+    Reason TEXT NULL,
+    TimeZoneId VARCHAR(100) NULL,    
+    Duration TIME NULL,
+    JobTimeout TIME NULL,
+    ServiceAddress VARCHAR(1000) NULL,    
+    IncompleteAttempts TEXT NULL,    
+    Job TEXT NULL,
+    JobProperties TEXT NULL,
+    JobState TEXT NULL,    
+    PRIMARY KEY (CorrelationId)
+);
+
+CREATE TABLE JobAttempts (
+    CorrelationId BINARY(16) NOT NULL,
+    CurrentState INT NOT NULL,
+    JobId BINARY(16) NOT NULL,    
+    Started TIMESTAMP NULL,
+    Faulted TIMESTAMP NULL,
+    StatusCheckTokenId BINARY(16) NULL,    
+    RetryAttempt INT NOT NULL,
+    ServiceAddress VARCHAR(1000) NULL,
+    InstanceAddress VARCHAR(1000) NULL,                
+    PRIMARY KEY (CorrelationId)
+);
+
+CREATE TABLE JobTypes (
+    CorrelationId BINARY(16) NOT NULL,
+    Name VARCHAR(255) NOT NULL,
+    CurrentState INT NOT NULL,
+    ActiveJobCount INT NOT NULL,
+    ConcurrentJobLimit INT NOT NULL,
+    OverrideJobLimit INT NULL,
+    OverrideLimitExpiration TIMESTAMP NULL,
+    GlobalConcurrentJobLimit INT NULL,
+    ActiveJobs TEXT NULL,
+    Instances TEXT NULL,
+    Properties TEXT NULL,      
+    PRIMARY KEY (CorrelationId)
+);</value>
+  </data>
+  <data name="MySql_CreateSagaTables" xml:space="preserve">
+    <value>CREATE TABLE OptimisticSagas (
+    CorrelationId CHAR(36) NOT NULL,
+    RowVersion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CurrentState VARCHAR(20),
+    Name TEXT,
+    
+    PRIMARY KEY (CorrelationId)
+);
+
+CREATE TABLE PessimisticSagas (
+    CorrelationId CHAR(36) NOT NULL,
+    CurrentState VARCHAR(20),
+    Name TEXT,
+    
+    PRIMARY KEY (CorrelationId)
+);</value>
+  </data>
+  <data name="MySql_DropJobTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS Jobs;
+DROP TABLE IF EXISTS JobTypes;
+DROP TABLE IF EXISTS JobAttempts;</value>
+  </data>
+  <data name="MySql_DropSagaTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS OptimisticSagas;
+DROP TABLE IF EXISTS PessimisticSagas;</value>
+  </data>
+  <data name="MySql_ResetJobTables" xml:space="preserve">
+    <value>TRUNCATE TABLE Jobs;
+TRUNCATE TABLE JobAttempts;
+TRUNCATE TABLE JobTypes;</value>
+  </data>
+  <data name="MySql_ResetSagaTables" xml:space="preserve">
+    <value>TRUNCATE TABLE OptimisticSagas;
+TRUNCATE TABLE PessimisticSagas;</value>
+  </data>
   <data name="Postgres_CreateJobTables" xml:space="preserve">
     <value>CREATE TABLE Jobs (
     CorrelationId UUID NOT NULL,
@@ -177,11 +273,34 @@ CREATE TABLE JobTypes (
     PRIMARY KEY (CorrelationId)
 );</value>
   </data>
+  <data name="Postgres_CreateSagaTables" xml:space="preserve">
+    <value>CREATE TABLE OptimisticSagas (
+    CorrelationId UUID NOT NULL,
+    CurrentState VARCHAR(20),
+    Name TEXT,
+    
+    PRIMARY KEY (CorrelationId)
+);
+
+CREATE TABLE PessimisticSagas (
+    CorrelationId UUID NOT NULL,
+    CurrentState VARCHAR(20),
+    Name TEXT,
+    
+    PRIMARY KEY (CorrelationId)
+);</value>
+  </data>
   <data name="Postgres_DropJobTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS Jobs, JobAttempts, JobTypes;</value>
   </data>
+  <data name="Postgres_DropSagaTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS OptimisticSagas, PessimisticSagas;</value>
+  </data>
   <data name="Postgres_ResetJobTables" xml:space="preserve">
     <value>TRUNCATE TABLE Jobs, JobAttempts, JobTypes;</value>
+  </data>
+  <data name="Postgres_ResetSagaTables" xml:space="preserve">
+    <value>TRUNCATE TABLE OptimisticSagas, PessimisticSagas;</value>
   </data>
   <data name="SqlServer_CreateJobTables" xml:space="preserve">
     <value>CREATE TABLE [dbo].[Jobs] (
@@ -243,14 +362,42 @@ CREATE TABLE [dbo].[JobTypes] (
     PRIMARY KEY CLUSTERED ([CorrelationId] ASC)
 );</value>
   </data>
+  <data name="SqlServer_CreateSagaTables" xml:space="preserve">
+    <value>CREATE TABLE [dbo].[OptimisticSagas] (
+    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+    [RowVersion] ROWVERSION,
+    [CurrentState] VARCHAR(20),
+
+    [Name] NVARCHAR(MAX),
+    
+    PRIMARY KEY CLUSTERED ([CorrelationId])
+);
+
+CREATE TABLE [dbo].[PessimisticSagas] (
+    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+    [CurrentState] VARCHAR(20),
+
+    [Name] NVARCHAR(MAX),
+    
+    PRIMARY KEY CLUSTERED ([CorrelationId])
+);</value>
+  </data>
   <data name="SqlServer_DropJobTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS [dbo].[Jobs];
 DROP TABLE IF EXISTS [dbo].[JobAttempts];
 DROP TABLE IF EXISTS [dbo].[JobTypes];</value>
   </data>
+  <data name="SqlServer_DropSagaTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS [dbo].[OptimisticSagas];
+DROP TABLE IF EXISTS [dbo].[PessimisticSagas];</value>
+  </data>
   <data name="SqlServer_ResetJobTables" xml:space="preserve">
     <value>TRUNCATE TABLE [dbo].[Jobs];
 TRUNCATE TABLE [dbo].[JobAttempts];
 TRUNCATE TABLE [dbo].[JobTypes];</value>
+  </data>
+  <data name="SqlServer_ResetSagaTables" xml:space="preserve">
+    <value>TRUNCATE TABLE [dbo].[OptimisticSagas];
+TRUNCATE TABLE [dbo].[PessimisticSagas];</value>
   </data>
 </root>

@@ -62,6 +62,96 @@ namespace MassTransit.Dapper.Tests.IntegrationTests {
         
         /// <summary>
         ///   Looks up a localized string similar to CREATE TABLE Jobs (
+        ///    CorrelationId BINARY(16) NOT NULL,
+        ///    CurrentState INT NOT NULL,    
+        ///    Completed TIMESTAMP NULL,
+        ///    Faulted TIMESTAMP NULL,
+        ///    Started TIMESTAMP NULL,
+        ///    Submitted TIMESTAMP NULL,    
+        ///    EndDate TIMESTAMP NULL,
+        ///    NextStartDate TIMESTAMP NULL,
+        ///    StartDate TIMESTAMP NULL,    
+        ///    AttemptId BINARY(16) NOT NULL,
+        ///    JobTypeId BINARY(16) NOT NULL,
+        ///    JobRetryDelayToken BINARY(16) NULL,
+        ///    JobSlotWaitToken BINARY(16) NULL,    
+        ///    RetryAttempt INT NOT NULL,
+        ///     [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MySql_CreateJobTables {
+            get {
+                return ResourceManager.GetString("MySql_CreateJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE OptimisticSagas (
+        ///    CorrelationId CHAR(36) NOT NULL,
+        ///    RowVersion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        ///    CurrentState VARCHAR(20),
+        ///    Name TEXT,
+        ///    
+        ///    PRIMARY KEY (CorrelationId)
+        ///);
+        ///
+        ///CREATE TABLE PessimisticSagas (
+        ///    CorrelationId CHAR(36) NOT NULL,
+        ///    CurrentState VARCHAR(20),
+        ///    Name TEXT,
+        ///    
+        ///    PRIMARY KEY (CorrelationId)
+        ///);.
+        /// </summary>
+        internal static string MySql_CreateSagaTables {
+            get {
+                return ResourceManager.GetString("MySql_CreateSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS Jobs;
+        ///DROP TABLE IF EXISTS JobTypes;
+        ///DROP TABLE IF EXISTS JobAttempts;.
+        /// </summary>
+        internal static string MySql_DropJobTables {
+            get {
+                return ResourceManager.GetString("MySql_DropJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS OptimisticSagas;
+        ///DROP TABLE IF EXISTS PessimisticSagas;.
+        /// </summary>
+        internal static string MySql_DropSagaTables {
+            get {
+                return ResourceManager.GetString("MySql_DropSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TRUNCATE TABLE Jobs;
+        ///TRUNCATE TABLE JobAttempts;
+        ///TRUNCATE TABLE JobTypes;.
+        /// </summary>
+        internal static string MySql_ResetJobTables {
+            get {
+                return ResourceManager.GetString("MySql_ResetJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TRUNCATE TABLE OptimisticSagas;
+        ///TRUNCATE TABLE PessimisticSagas;.
+        /// </summary>
+        internal static string MySql_ResetSagaTables {
+            get {
+                return ResourceManager.GetString("MySql_ResetSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE Jobs (
         ///    CorrelationId UUID NOT NULL,
         ///    CurrentState INT NOT NULL,    
         ///    Completed TIMESTAMP NULL,
@@ -84,6 +174,29 @@ namespace MassTransit.Dapper.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE OptimisticSagas (
+        ///    CorrelationId UUID NOT NULL,
+        ///    CurrentState VARCHAR(20),
+        ///    Name TEXT,
+        ///    
+        ///    PRIMARY KEY (CorrelationId)
+        ///);
+        ///
+        ///CREATE TABLE PessimisticSagas (
+        ///    CorrelationId UUID NOT NULL,
+        ///    CurrentState VARCHAR(20),
+        ///    Name TEXT,
+        ///    
+        ///    PRIMARY KEY (CorrelationId)
+        ///);.
+        /// </summary>
+        internal static string Postgres_CreateSagaTables {
+            get {
+                return ResourceManager.GetString("Postgres_CreateSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DROP TABLE IF EXISTS Jobs, JobAttempts, JobTypes;.
         /// </summary>
         internal static string Postgres_DropJobTables {
@@ -93,11 +206,29 @@ namespace MassTransit.Dapper.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS OptimisticSagas, PessimisticSagas;.
+        /// </summary>
+        internal static string Postgres_DropSagaTables {
+            get {
+                return ResourceManager.GetString("Postgres_DropSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to TRUNCATE TABLE Jobs, JobAttempts, JobTypes;.
         /// </summary>
         internal static string Postgres_ResetJobTables {
             get {
                 return ResourceManager.GetString("Postgres_ResetJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TRUNCATE TABLE OptimisticSagas, PessimisticSagas;.
+        /// </summary>
+        internal static string Postgres_ResetSagaTables {
+            get {
+                return ResourceManager.GetString("Postgres_ResetSagaTables", resourceCulture);
             }
         }
         
@@ -124,6 +255,32 @@ namespace MassTransit.Dapper.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE [dbo].[OptimisticSagas] (
+        ///    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+        ///    [RowVersion] ROWVERSION,
+        ///    [CurrentState] VARCHAR(20),
+        ///
+        ///    [Name] NVARCHAR(MAX),
+        ///    
+        ///    PRIMARY KEY CLUSTERED ([CorrelationId])
+        ///);
+        ///
+        ///CREATE TABLE [dbo].[PessimisticSagas] (
+        ///    [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
+        ///    [CurrentState] VARCHAR(20),
+        ///
+        ///    [Name] NVARCHAR(MAX),
+        ///    
+        ///    PRIMARY KEY CLUSTERED ([CorrelationId])
+        ///);.
+        /// </summary>
+        internal static string SqlServer_CreateSagaTables {
+            get {
+                return ResourceManager.GetString("SqlServer_CreateSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DROP TABLE IF EXISTS [dbo].[Jobs];
         ///DROP TABLE IF EXISTS [dbo].[JobAttempts];
         ///DROP TABLE IF EXISTS [dbo].[JobTypes];.
@@ -135,6 +292,16 @@ namespace MassTransit.Dapper.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS [dbo].[OptimisticSagas];
+        ///DROP TABLE IF EXISTS [dbo].[PessimisticSagas];.
+        /// </summary>
+        internal static string SqlServer_DropSagaTables {
+            get {
+                return ResourceManager.GetString("SqlServer_DropSagaTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to TRUNCATE TABLE [dbo].[Jobs];
         ///TRUNCATE TABLE [dbo].[JobAttempts];
         ///TRUNCATE TABLE [dbo].[JobTypes];.
@@ -142,6 +309,16 @@ namespace MassTransit.Dapper.Tests.IntegrationTests {
         internal static string SqlServer_ResetJobTables {
             get {
                 return ResourceManager.GetString("SqlServer_ResetJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to TRUNCATE TABLE [dbo].[OptimisticSagas];
+        ///TRUNCATE TABLE [dbo].[PessimisticSagas];.
+        /// </summary>
+        internal static string SqlServer_ResetSagaTables {
+            get {
+                return ResourceManager.GetString("SqlServer_ResetSagaTables", resourceCulture);
             }
         }
     }

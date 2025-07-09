@@ -3,27 +3,35 @@
     using System.Threading.Tasks;
     using ConsumerSagas;
     using MassTransit.Dapper.Integration.Saga;
-    using MassTransit.Dapper.SqlServer.Configuration;
-    using MassTransit.Dapper.Tests.Common;
-    using MassTransit.Testing;
+    using Common;
+    using Connectors;
+    using Testing;
     using NUnit.Framework;
 
 
     [Category("Integration")]
+    [TestFixture(typeof(OptimisticSqlServerConnector))]
+    [TestFixture(typeof(OptimisticPostgresConnector), Explicit = true)]
+    [TestFixture(typeof(OptimisticMySqlConnector), Explicit = true)]
+    [TestFixture(typeof(PessimisticSqlServerConnector))]
+    [TestFixture(typeof(PessimisticPostgresConnector), Explicit = true)]
+    [TestFixture(typeof(PessimisticMySqlConnector), Explicit = true)]
     [TestFixture]
-    public class BehaviorSagaTests : DapperVersionedSagaTests
+    public class StateMachineSagaTests<TConnector> : SagaTests<TConnector>
+        where TConnector : BehaviorSaga, TestConnector, new()
     {
-        readonly VersionedSagaStateMachine _stateMachine;
-        ISagaRepository<VersionedBehaviorSaga> _repository;
+        SagaStateMachine<TConnector> _stateMachine;
+        ISagaRepository<TConnector> _repository;
 
-        public BehaviorSagaTests() => _stateMachine = new VersionedSagaStateMachine();
+        public StateMachineSagaTests()
+        {
+            _stateMachine = new SagaStateMachine<TConnector>();
+        }
 
         protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
         {
-            _repository = AdoSagaRepository<VersionedBehaviorSaga>.Create(conf =>
-                conf.UsingSqlServer(
-                    ConnectionString, sql => sql.SetTableName("VersionedSagas").SetOptimisticConcurrency()
-                )
+            _repository = AdoSagaRepository<TConnector>.Create(conf =>
+                Connector.Connect(conf)
             );
 
             configurator.StateMachineSaga(_stateMachine, _repository);

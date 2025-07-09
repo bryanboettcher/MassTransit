@@ -10,7 +10,7 @@
 
     [Category("Integration")]
     [TestFixture]
-    public class ConsumerSagaTests : DapperVersionedSagaTests
+    public class ConsumerSagaTests : SagaTests
     {
         ISagaRepository<VersionedConsumerSaga> _repository;
         IServiceProvider _provider;

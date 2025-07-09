@@ -4,15 +4,11 @@
     using System.Threading.Tasks;
     using MassTransit.Contracts.JobService;
     using MassTransit.Dapper.Configuration;
-    using MassTransit.Dapper.PostgreSql.Configuration;
-    using MassTransit.Dapper.SqlServer.Configuration;
+    using MassTransit.Dapper.Tests.IntegrationTests.Connectors;
     using MassTransit.TestFramework;
     using MassTransit.Testing;
-    using MassTransit.Tests;
     using MassTransit.Tests.JobConsumerTests;
-    using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.DependencyInjection;
-    using Npgsql;
     using NUnit.Framework;
 
 
@@ -45,6 +41,7 @@
     [Category("Integration")]
     [TestFixture(typeof(SqlServerConnector))]
     [TestFixture(typeof(PostgresConnector), Explicit = true)]
+    [TestFixture(typeof(MySqlConnector), Explicit = true)]
     public class JobSagaTests<TConnector> : InMemoryTestFixture
         where TConnector : TestConnector, new()
     {
@@ -124,93 +121,5 @@
         [OneTimeTearDown]
         public Task TearDown() => _connector.Teardown();
 
-    }
-
-
-    public class PostgresConnector : TestConnector
-    {
-        readonly string _connectionString;
-
-        public PostgresConnector()
-        {
-            _connectionString = "Host=localhost; Username=postgres; Password=Password12!; Database=masstransit";
-        }
-
-        public async Task Setup()
-        {
-            await RunSql(Sql.Postgres_DropJobTables);
-            await RunSql(Sql.Postgres_CreateJobTables);
-        }
-
-        public Task Reset() => RunSql(Sql.Postgres_ResetJobTables);
-
-        public Task Teardown() => RunSql(Sql.Postgres_DropJobTables);
-
-        public void Connect(IAdoJobSagaRepositoryConfigurator conf)
-        {
-            conf.UsingPostgres(_connectionString);
-        }
-
-        async Task RunSql(string sql)
-        {
-            await using var connection = new NpgsqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-
-            await command.ExecuteNonQueryAsync();
-        }
-    }
-
-
-    public class SqlServerConnector : TestConnector
-    {
-        readonly string _connectionString;
-
-        public SqlServerConnector()
-        {
-            _connectionString = LocalDbConnectionStringProvider.GetLocalDbConnectionString();
-        }
-
-        public async Task Setup()
-        {
-            await RunSql(Sql.SqlServer_DropJobTables);
-            await RunSql(Sql.SqlServer_CreateJobTables);
-        }
-
-        public Task Reset()
-        {
-            return RunSql(Sql.SqlServer_ResetJobTables);
-        }
-
-        public Task Teardown()
-        {
-            return RunSql(Sql.SqlServer_DropJobTables);
-        }
-
-        public void Connect(IAdoJobSagaRepositoryConfigurator conf)
-        {
-            conf.UsingSqlServer(_connectionString);
-        }
-
-        async Task RunSql(string sql)
-        {
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-
-            await command.ExecuteNonQueryAsync();
-        }
-    }
-    
-    public interface TestConnector
-    {
-        Task Setup();
-        Task Reset();
-        Task Teardown();
-        void Connect(IAdoJobSagaRepositoryConfigurator conf);
     }
 }
