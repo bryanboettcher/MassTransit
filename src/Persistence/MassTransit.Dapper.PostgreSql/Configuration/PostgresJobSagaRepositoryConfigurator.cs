@@ -13,14 +13,17 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryConfigurator, ISpecification
 {
+    /// <inheritdoc />
     public string? ConnectionString { get; set; }
-    
+
+    /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate()
     {
         if (string.IsNullOrWhiteSpace(ConnectionString))
             yield return this.Failure("ConnectionString must be specified");
     }
-    
+
+    /// <inheritdoc />
     public IPostgresJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;

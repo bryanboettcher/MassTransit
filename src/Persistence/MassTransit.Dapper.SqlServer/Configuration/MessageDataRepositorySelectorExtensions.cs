@@ -7,13 +7,15 @@ using Microsoft.Data.SqlClient;
 
 public static class MessageDataRepositorySelectorExtensions
 {
-    public static IMessageDataRepository SqlServer(this IMessageDataRepositorySelector selector,
+    public static IMessageDataRepository UsingSqlServer(
+        this IMessageDataRepositorySelector selector,
         Action<ISqlServerMessageDataConfigurator> configure)
     {
-        return SqlServer(selector, string.Empty, configure);
+        return UsingSqlServer(selector, string.Empty, configure);
     }
 
-    public static IMessageDataRepository SqlServer(this IMessageDataRepositorySelector selector,
+    public static IMessageDataRepository UsingSqlServer(
+        this IMessageDataRepositorySelector selector,
         string hostname, string catalog, string username, string password,
         Action<ISqlServerMessageDataConfigurator>? configure = null)
     {
@@ -25,10 +27,11 @@ public static class MessageDataRepositorySelectorExtensions
             Password = password
         };
 
-        return SqlServer(selector, connectionStringBuilder.ToString());
+        return UsingSqlServer(selector, connectionStringBuilder.ToString());
     }
 
-    public static IMessageDataRepository SqlServer(this IMessageDataRepositorySelector selector,
+    public static IMessageDataRepository UsingSqlServer(
+        this IMessageDataRepositorySelector selector,
         string connectionString,
         Action<ISqlServerMessageDataConfigurator>? configure = null)
     {

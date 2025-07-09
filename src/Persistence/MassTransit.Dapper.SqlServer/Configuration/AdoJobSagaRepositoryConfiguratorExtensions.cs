@@ -6,27 +6,27 @@ using Microsoft.Data.SqlClient;
 
 public static class AdoJobSagaRepositoryConfiguratorExtensions
 {
+    /// <summary>
+    /// Configures the JobConsumer sagas to use Sql Server.  Requires
+    /// setting the connection string as part of the <paramref name="configure"/>
+    /// callback.
+    /// </summary>
     public static IAdoJobSagaRepositoryConfigurator UsingSqlServer(
         this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
         Action<ISqlServerJobSagaRepositoryConfigurator> configure)
     {
-        var repositoryConfigurator = new SqlServerJobSagaRepositoryConfigurator();
-
-        configure.Invoke(repositoryConfigurator);
-
-        repositoryConfigurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
-        repositoryConfigurator.Configure(jobSagaConfigurator);
-
-        return jobSagaConfigurator;
+        return UsingSqlServer(jobSagaConfigurator, string.Empty, configure);
     }
 
+    /// <summary>
+    /// Configures the JobConsumer sagas to use Sql Server.  Builds
+    /// the connection string from the provided parameters.
+    /// </summary>
     public static IAdoJobSagaRepositoryConfigurator UsingSqlServer(
         this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
         string hostname, string catalog, string username, string password,
         Action<ISqlServerJobSagaRepositoryConfigurator>? configure = null)
     {
-        var repositoryConfigurator = new SqlServerJobSagaRepositoryConfigurator();
-
         var connectionStringBuilder = new SqlConnectionStringBuilder
         {
             DataSource = hostname,
@@ -34,17 +34,14 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
             UserID = username,
             Password = password
         };
-
-        repositoryConfigurator.SetConnectionString(connectionStringBuilder.ToString());
-
-        configure?.Invoke(repositoryConfigurator);
-
-        repositoryConfigurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
-        repositoryConfigurator.Configure(jobSagaConfigurator);
-
-        return jobSagaConfigurator;
+        
+        return UsingSqlServer(jobSagaConfigurator, connectionStringBuilder.ToString(), configure);
     }
 
+    /// <summary>
+    /// Configures the JobConsumer sagas to use Sql Server.  Takes the
+    /// connection string directly.
+    /// </summary>
     public static IAdoJobSagaRepositoryConfigurator UsingSqlServer(
         this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
         string connectionString,

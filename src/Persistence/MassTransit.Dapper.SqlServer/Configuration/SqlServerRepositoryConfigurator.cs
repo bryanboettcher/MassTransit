@@ -11,13 +11,25 @@ using Microsoft.Extensions.DependencyInjection;
 public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfigurator<TSaga>, ISpecification
     where TSaga : class, ISaga
 {
+    /// <inheritdoc />
     public string? ConnectionString { get; set; }
-    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.ReadCommitted;
-    public ConcurrencyMode ConcurrencyMode { get; set; } = ConcurrencyMode.Pessimistic;
-    public string VersionColumnName { get; set; }
-    public string? TableName { get; set; }
-    public string IdentityColumnName { get; set; }
 
+    /// <inheritdoc />
+    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.ReadCommitted;
+
+    /// <inheritdoc />
+    public ConcurrencyMode ConcurrencyMode { get; set; } = ConcurrencyMode.Pessimistic;
+
+    /// <inheritdoc />
+    public string VersionColumnName { get; set; }
+
+    /// <inheritdoc />
+    public string? TableName { get; set; }
+
+    /// <inheritdoc />
+    public string IdentityColumnName { get; set; } = "CorrelationId";
+
+    /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate()
     {
         if (string.IsNullOrWhiteSpace(ConnectionString))
@@ -27,24 +39,28 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
             yield return this.Failure($"{nameof(VersionColumnName)} must be set when using Optimistic concurrency");
     }
 
+    /// <inheritdoc />
     public ISqlServerRepositoryConfigurator<TSaga> SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
         return this;
     }
 
+    /// <inheritdoc />
     public ISqlServerRepositoryConfigurator<TSaga> SetTableName(string tableName)
     {
         TableName = tableName;
         return this;
     }
 
+    /// <inheritdoc />
     public ISqlServerRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName)
     {
         IdentityColumnName = identityColumnName;
         return this;
     }
 
+    /// <inheritdoc />
     public ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion")
     {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
@@ -52,13 +68,14 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
         return this;
     }
 
+    /// <inheritdoc />
     public ISqlServerRepositoryConfigurator<TSaga> SetPessimisticConcurrency(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted)
     {
         ConcurrencyMode = ConcurrencyMode.Pessimistic;
         IsolationLevel = isolationLevel;
         return this;
     }
-        
+
     public void Configure(IAdoRepositoryConfigurator<TSaga> sagaConfigurator)
     {
         (sagaConfigurator as AdoRepositoryConfigurator<TSaga>)?

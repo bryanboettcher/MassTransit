@@ -2,9 +2,16 @@ namespace MassTransit.Dapper.Integration.SqlBuilders;
 
 using System.Data.Common;
 
-
+/// <summary>
+/// Picks apart various "parameters" objects into a sequence of key/value pairs,
+/// in order to build a DbParameterCollection.
+/// </summary>
 public class ParameterReader
 {
+    /// <summary>
+    /// Turn nearly any kind of input object into a loopable key-value sequence.  Supports
+    /// anonymous objects, dictionaries, and DbParameterCollections directly.
+    /// </summary>
     public static IEnumerable<KeyValuePair<string, object?>> Read(object? input)
     {
         return input switch

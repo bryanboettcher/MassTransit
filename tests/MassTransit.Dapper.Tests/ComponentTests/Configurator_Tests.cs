@@ -2,7 +2,7 @@
 {
     using System.Threading.Tasks;
     using IntegrationTests.StateMachineSagas;
-    using MassTransit.Dapper.Configuration;
+    using Configuration;
     using MassTransit.Dapper.SqlServer.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using NUnit.Framework;

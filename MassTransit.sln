@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35818.85 d17.13
+VisualStudioVersion = 17.13.35818.85
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Persistence", "Persistence", "{56F516D7-BC3C-49E1-A639-83C5F14953F8}"
 EndProject
@@ -148,6 +148,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.Tests", "tests\MassTransit.Dapper.Tests\MassTransit.Dapper.Tests.csproj", "{00EA0B23-F076-6A55-218F-6EBDA6F33436}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.PostgreSql", "src\Persistence\MassTransit.Dapper.PostgreSql\MassTransit.Dapper.PostgreSql.csproj", "{59023D72-9EE3-462A-A200-CA3184F74307}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.MySql", "src\Persistence\MassTransit.Dapper.MySql\MassTransit.Dapper.MySql.csproj", "{295D3C5E-7CB4-4888-A629-8346241E29CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -840,6 +842,18 @@ Global
 		{59023D72-9EE3-462A-A200-CA3184F74307}.ReleaseUnsigned|Any CPU.Build.0 = Release|Any CPU
 		{59023D72-9EE3-462A-A200-CA3184F74307}.ReleaseUnsigned|x86.ActiveCfg = Release|Any CPU
 		{59023D72-9EE3-462A-A200-CA3184F74307}.ReleaseUnsigned|x86.Build.0 = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Debug|x86.Build.0 = Debug|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Release|x86.ActiveCfg = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.Release|x86.Build.0 = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.ReleaseUnsigned|Any CPU.ActiveCfg = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.ReleaseUnsigned|Any CPU.Build.0 = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.ReleaseUnsigned|x86.ActiveCfg = Release|Any CPU
+		{295D3C5E-7CB4-4888-A629-8346241E29CF}.ReleaseUnsigned|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -901,6 +915,7 @@ Global
 		{22AE54FB-4A32-1407-5788-988484C88DAF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{00EA0B23-F076-6A55-218F-6EBDA6F33436} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{59023D72-9EE3-462A-A200-CA3184F74307} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{295D3C5E-7CB4-4888-A629-8346241E29CF} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {43D3A7D5-0945-435E-8D03-1E631E5CDBA8}

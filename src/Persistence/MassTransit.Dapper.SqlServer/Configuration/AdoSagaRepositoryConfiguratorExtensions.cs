@@ -6,6 +6,11 @@
     
     public static class AdoSagaRepositoryConfiguratorExtensions
     {
+        /// <summary>
+        /// Configures a Sql Server-based saga repository for this <typeparamref name="TSaga"/>.
+        /// Requires setting the connection string as part of the <paramref name="configure"/>
+        /// callback.
+        /// </summary>
         public static IAdoRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
             this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
             Action<ISqlServerRepositoryConfigurator<TSaga>> configure) where TSaga : class, ISaga
@@ -13,6 +18,10 @@
             return UsingSqlServer(sagaConfigurator, string.Empty, configure);
         }
 
+        /// <summary>
+        /// Configures a Sql Server-based saga repository for this <typeparamref name="TSaga"/>.
+        /// Builds the connection string from provided parameters.
+        /// </summary>
         public static IAdoRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
             this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
             string hostname, string catalog, string username, string password,
@@ -30,6 +39,10 @@
             return UsingSqlServer(sagaConfigurator, connectionStringBuilder.ToString(), configure);
         }
 
+        /// <summary>
+        /// Configures a Sql Server-based saga repository for this <typeparamref name="TSaga"/>.
+        /// Takes the connection string directly.
+        /// </summary>
         public static IAdoRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
             this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
             string connectionString,
