@@ -1,9 +1,8 @@
-namespace MassTransit.Dapper.MySqlql.Connections;
+namespace MassTransit.Dapper.MySql.Connections;
 
 using System.Data;
+using global::MySql.Data.MySqlClient;
 using Integration.Saga;
-using MySql.Data.MySqlClient;
-
 
 public class MySqlSagaConnectionProvider<TModel> : ISagaConnectionProvider<TModel>
     where TModel : class, ISaga

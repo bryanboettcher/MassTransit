@@ -2,7 +2,7 @@
 {
     using Common;
     using Integration.SqlBuilders;
-    using MySqlql.Formatting;
+    using Dapper.MySql.Formatting;
     using NUnit.Framework;
 
 
@@ -26,7 +26,7 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND xmin = @xmin";
+                var expected = "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND RowVersion = @rowversion";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -35,7 +35,7 @@
             public void Delete_builds_correct_sql()
             {
                 var actual = Subject.BuildDeleteSql();
-                var expected = "DELETE FROM VersionedSagas WHERE CorrelationId = @correlationid AND xmin = @xmin";
+                var expected = "DELETE FROM VersionedSagas WHERE CorrelationId = @correlationid AND RowVersion = @rowversion";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }

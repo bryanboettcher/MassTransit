@@ -1,7 +1,7 @@
 ﻿namespace MassTransit.Dapper.SqlServer.ClaimChecks
 {
     using System.Data;
-    using MySql.Data.MySqlClient;
+    using global::MySql.Data.MySqlClient;
 
 
     public class MySqlMessageDataRepository : IMessageDataRepository

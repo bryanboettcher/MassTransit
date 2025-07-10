@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.MySqlql.Configuration;
+﻿namespace MassTransit.Dapper.MySql.Configuration;
 
 using System.Data;
 using Connections;
@@ -62,7 +62,7 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
     }
 
     /// <inheritdoc />
-    public IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin")
+    public IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion")
     {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
         VersionColumnName = versionColumnName;

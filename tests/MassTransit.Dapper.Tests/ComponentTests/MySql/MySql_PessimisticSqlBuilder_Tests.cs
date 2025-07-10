@@ -2,7 +2,7 @@
 {
     using Common;
     using Integration.SqlBuilders;
-    using MySqlql.Formatting;
+    using Dapper.MySql.Formatting;
     using NUnit.Framework;
 
 

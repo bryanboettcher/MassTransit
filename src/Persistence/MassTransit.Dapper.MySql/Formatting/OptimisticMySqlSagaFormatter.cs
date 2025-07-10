@@ -1,11 +1,12 @@
-namespace MassTransit.Dapper.MySqlql.Formatting;
+namespace MassTransit.Dapper.MySql.Formatting;
 
+using System.Data.Common;
 using System.Linq.Expressions;
 using Integration.Saga;
 using Integration.SqlBuilders;
 
 
-public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
+public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>, IParameterCallback
     where TModel : class, ISaga
 {
     readonly string _tableName;
@@ -83,14 +84,14 @@ public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlF
 
         var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
 
-        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = @correlationid AND xmin = @xmin";
+        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE {_idColumnName} = @correlationid AND {_versionColumnName} = @{_versionColumnName.ToLowerInvariant()}";
 
         return sql;
     }
 
     public string BuildDeleteSql()
     {
-        var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = @correlationid AND xmin = @xmin";
+        var sql = $"DELETE FROM {_tableName} WHERE {_idColumnName} = @correlationid AND {_versionColumnName} = @{_versionColumnName.ToLowerInvariant()}";
 
         return sql;
     }
@@ -100,4 +101,8 @@ public class OptimisticMySqlSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlF
 
     public void MapProperty<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string targetName)
         => MapCore(mappingExpression, targetName, true);
+
+    public void Modify(DbParameterCollection parameters)
+    {
+    }
 }

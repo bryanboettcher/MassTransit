@@ -1,9 +1,8 @@
-﻿namespace MassTransit.Dapper.MySqlql.Configuration
+﻿namespace MassTransit.Dapper.MySql.Configuration
 {
+    using global::MySql.Data.MySqlClient;
     using MassTransit;
     using MassTransit.Dapper.Configuration;
-    using MySql.Data.MySqlClient;
-
 
     public static class AdoSagaRepositoryConfiguratorExtensions
     {

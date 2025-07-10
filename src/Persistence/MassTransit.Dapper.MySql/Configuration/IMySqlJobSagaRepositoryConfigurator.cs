@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.MySqlql.Configuration;
+﻿namespace MassTransit.Dapper.MySql.Configuration;
 
 /// <summary>
 /// Builds the appropriate components for a MySql-based DatabaseContext, specific to JobConsumers.

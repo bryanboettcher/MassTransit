@@ -34,7 +34,7 @@ public class ReflectionsAdapter
 
                 var value = input.GetValue(index);
                 var actual = CheckDbNull(value);
-
+                
                 property.SetValue(target, actual);
             }
 

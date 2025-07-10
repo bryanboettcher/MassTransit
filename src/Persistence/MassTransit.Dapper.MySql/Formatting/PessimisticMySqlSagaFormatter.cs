@@ -1,4 +1,4 @@
-namespace MassTransit.Dapper.MySqlql.Formatting
+namespace MassTransit.Dapper.MySql.Formatting
 {
     using System;
     using System.Collections.Generic;

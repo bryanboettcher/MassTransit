@@ -44,7 +44,7 @@
             public void Load_builds_correct_sql()
             {
                 var actual = Subject.BuildLoadSql();
-                var expected = "SELECT * FROM VersionedSagas WHERE CorrelationId = @correlationid LIMIT 1";
+                var expected = "SELECT *, xmin AS XMin FROM VersionedSagas WHERE CorrelationId = @correlationid LIMIT 1";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -53,7 +53,7 @@
             public void Query_builds_correct_sql()
             {
                 var actual = Subject.BuildQuerySql(x => x.Name == "test", null);
-                var expected = "SELECT * FROM VersionedSagas WHERE Name = @name";
+                var expected = "SELECT *, xmin AS XMin FROM VersionedSagas WHERE Name = @name";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }

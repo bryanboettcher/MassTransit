@@ -40,9 +40,9 @@
     }
 
     [Category("Integration")]
-    [TestFixture(typeof(SqlServerConnector))]
-    [TestFixture(typeof(PostgresConnector))]
-    [TestFixture(typeof(MySqlConnector))]
+    [TestFixture(typeof(PessimisticSqlServerConnector))]
+    [TestFixture(typeof(PessimisticPostgresConnector))]
+    [TestFixture(typeof(PessimisticMySqlConnector))]
     public class JobSagaTests<TConnector> : InMemoryTestFixture
         where TConnector : TestConnector, new()
     {

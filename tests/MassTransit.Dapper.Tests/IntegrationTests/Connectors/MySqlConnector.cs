@@ -2,8 +2,8 @@
 
 using Configuration;
 using global::Dapper;
-using MySql.Data.MySqlClient;
-using MySqlql.Configuration;
+using global::MySql.Data.MySqlClient;
+using MySql.Configuration;
 using StateMachineSagas;
 
 
@@ -41,7 +41,7 @@ public abstract class MySqlConnector : BehaviorSaga
 
     public MySqlConnector()
     {
-        ConnectionString = "Server=localhost; Database=masstransit; Uid=root; Pwd=Password12!";
+        ConnectionString = "Server=localhost; Database=masstransit; Uid=root; Pwd=Password12!; OldGuids=true";
     }
 
     public async Task Setup()

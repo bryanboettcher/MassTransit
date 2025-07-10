@@ -82,14 +82,14 @@ public class OptimisticSqlServerSagaFormatter<TModel> : SagaFormatterBase, ISaga
 
         var updateExpression = string.Join(", ", properties.Select(p => $"[{p.col}] = @{p.prop}"));
 
-        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE [{_idColumnName}] = @correlationId AND [{_versionColumnName}] = @rowversion";
+        var sql = $"UPDATE {_tableName} SET {updateExpression} WHERE [{_idColumnName}] = @correlationId AND [{_versionColumnName}] = @{_versionColumnName.ToLowerInvariant()}";
 
         return sql;
     }
 
     public string BuildDeleteSql()
     {
-        var sql = $"DELETE FROM {_tableName} WHERE [{_idColumnName}] = @correlationId AND [{_versionColumnName}] = @rowversion";
+        var sql = $"DELETE FROM {_tableName} WHERE [{_idColumnName}] = @correlationId AND [{_versionColumnName}] = @{_versionColumnName.ToLowerInvariant()}";
 
         return sql;
     }

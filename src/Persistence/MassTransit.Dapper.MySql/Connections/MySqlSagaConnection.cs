@@ -1,10 +1,13 @@
-namespace MassTransit.Dapper.MySqlql.Connections;
+namespace MassTransit.Dapper.MySql.Connections;
 
 using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using global::MySql.Data.MySqlClient;
 using Integration.Saga;
 using Integration.SqlBuilders;
-using MySql.Data.MySqlClient;
 
 
 public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
@@ -26,7 +29,9 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
         string query,
         object? parameters = null,
         Func<IDataReader, TModel>? adapter = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        Action<DbParameterCollection>? parameterCallback = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         adapter ??= ReflectionsAdapter.CreateFor<TModel>();
 
@@ -36,6 +41,8 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
 
         if (parameters is not null)
             AssignParameters(command, parameters);
+
+        parameterCallback?.Invoke(command.Parameters);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -49,7 +56,9 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
     public async Task<int> RunAsync(
         string query,
         object? parameters = null,
-        CancellationToken cancellationToken = default)
+        Action<DbParameterCollection>? parameterCallback = null,
+        CancellationToken cancellationToken = default
+    )
     {
         await using var command = _connection.CreateCommand();
         command.Transaction = _transaction;
@@ -57,6 +66,8 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
 
         if (parameters is not null)
             AssignParameters(command, parameters);
+
+        parameterCallback?.Invoke(command.Parameters);
 
         var rows = await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -100,7 +111,83 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
     {
         foreach (var (name, value) in ParameterReader.Read(parameters))
         {
-            command.Parameters.AddWithValue(name, value ?? DBNull.Value);
+            if (value is Guid g)
+            {
+                command.Parameters.AddWithValue(name, g.ToByteArray());
+            }
+            else
+            {
+                command.Parameters.AddWithValue(name, value ?? DBNull.Value);
+            }
         }
     }
+
+    static TModel ConvertReader(IDataReader reader)
+    {
+        var dataReader = (MySqlDataReader) reader;
+        var model = Activator.CreateInstance<TModel>();
+
+        var properties = typeof(TModel).GetProperties()
+            .Where(p => p is { CanRead: true, CanWrite: true });
+
+        foreach (var prop in properties)
+        {
+            var propertyName = prop.Name;
+            var propertyType = prop.PropertyType;
+
+            prop.SetValue(model, Read(propertyType, propertyName, dataReader));
+        }
+
+        return model;
+
+        static object? Read(Type propertyType, string propertyName, MySqlDataReader reader)
+        {
+            var type = propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                ? propertyType.GenericTypeArguments[0]
+                : propertyType;
+
+            if (_mappings.TryGetValue(type, out var converter))
+            {
+                return reader.IsDBNull(propertyName)
+                    ? null
+                    : converter(reader, propertyName);
+            }
+
+            return reader.IsDBNull(propertyName)
+                ? null
+                : reader.GetValue(propertyName);
+        }
+    }
+
+    static readonly Dictionary<Type, Func<MySqlDataReader, string, object>> _mappings = new()
+    {
+        // Integer types
+        { typeof(byte), (reader, col) => reader.GetByte(col) },
+        { typeof(sbyte), (reader, col) => reader.GetSByte(col) },
+        { typeof(short), (reader, col) => reader.GetInt16(col) },
+        { typeof(ushort), (reader, col) => reader.GetUInt16(col) },
+        { typeof(int), (reader, col) => reader.GetInt32(col) },
+        { typeof(uint), (reader, col) => reader.GetUInt32(col) },
+        { typeof(long), (reader, col) => reader.GetInt64(col) },
+        { typeof(ulong), (reader, col) => reader.GetUInt64(col) },
+    
+        // Floating point types
+        { typeof(float), (reader, col) => reader.GetFloat(col) },
+        { typeof(double), (reader, col) => reader.GetDouble(col) },
+        { typeof(decimal), (reader, col) => reader.GetDecimal(col) },
+    
+        // Character and string types
+        { typeof(char), (reader, col) => reader.GetChar(col) },
+        { typeof(string), (reader, col) => reader.GetString(col) },
+    
+        // Boolean type
+        { typeof(bool), (reader, col) => reader.GetBoolean(col) },
+    
+        // Date and time types
+        { typeof(DateTime), (reader, col) => reader.GetDateTime(col) },
+        { typeof(TimeSpan), (reader, col) => reader.GetTimeSpan(col) },
+        
+        // Guid type
+        { typeof(Guid), (reader, col) => reader.GetGuid(col) },
+    };
 }

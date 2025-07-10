@@ -1,11 +1,14 @@
 namespace MassTransit.Dapper.PostgreSql.Formatting;
 
+using System.Data.Common;
 using System.Linq.Expressions;
 using Integration.Saga;
 using Integration.SqlBuilders;
+using Npgsql;
+using NpgsqlTypes;
 
 
-public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>
+public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaSqlFormatter<TModel>, IParameterCallback
     where TModel : class, ISaga
 {
     readonly string _tableName;
@@ -26,12 +29,12 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
 
     public string BuildLoadSql()
     {
-        return $"SELECT * FROM {_tableName} WHERE {_idColumnName} = @correlationid LIMIT 1";
+        return $"SELECT *, xmin AS {_versionColumnName} FROM {_tableName} WHERE {_idColumnName} = @correlationid LIMIT 1";
     }
 
     public string BuildQuerySql(Expression<Func<TModel, bool>> filterExpression, Action<string, object?> parameterCallback)
     {
-        var sqlRoot = $"SELECT * FROM {_tableName}";
+        var sqlRoot = $"SELECT *, xmin AS {_versionColumnName} FROM {_tableName}";
 
         var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
@@ -100,4 +103,17 @@ public class OptimisticPostgresSagaFormatter<TModel> : SagaFormatterBase, ISagaS
 
     public void MapProperty<TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string targetName)
         => MapCore(mappingExpression, targetName, true);
+
+    public void Modify(DbParameterCollection parameters)
+    {
+        if (parameters is not NpgsqlParameterCollection col)
+            return;
+
+        // find timestamp column
+        var param = col.FirstOrDefault(p => p.ParameterName.Equals(_versionColumnName, StringComparison.OrdinalIgnoreCase));
+        if (param is null)
+            return;
+
+        param.NpgsqlDbType = NpgsqlDbType.Xid;
+    }
 }

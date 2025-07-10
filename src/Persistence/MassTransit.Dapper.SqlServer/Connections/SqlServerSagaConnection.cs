@@ -1,6 +1,7 @@
 namespace MassTransit.Dapper.SqlServer.Connections;
 
 using System.Data;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
 using Integration.Saga;
 using Integration.SqlBuilders;
@@ -25,7 +26,9 @@ public class SqlServerSagaConnection<TModel> : ISagaConnection<TModel>
         string query,
         object? parameters = null,
         Func<IDataReader, TModel>? adapter = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        Action<DbParameterCollection>? parameterCallback = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default
+    )
     {
         adapter ??= ReflectionsAdapter.CreateFor<TModel>();
 
@@ -35,6 +38,8 @@ public class SqlServerSagaConnection<TModel> : ISagaConnection<TModel>
 
         if (parameters is not null)
             AssignParameters(command, parameters);
+
+        parameterCallback?.Invoke(command.Parameters);
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -48,7 +53,9 @@ public class SqlServerSagaConnection<TModel> : ISagaConnection<TModel>
     public async Task<int> RunAsync(
         string query,
         object? parameters = null,
-        CancellationToken cancellationToken = default)
+        Action<DbParameterCollection>? parameterCallback = null,
+        CancellationToken cancellationToken = default
+    )
     {
         await using var command = _connection.CreateCommand();
         command.Transaction = _transaction;
@@ -56,6 +63,8 @@ public class SqlServerSagaConnection<TModel> : ISagaConnection<TModel>
 
         if (parameters is not null)
             AssignParameters(command, parameters);
+
+        parameterCallback?.Invoke(command.Parameters);
 
         var rows = await command.ExecuteNonQueryAsync(cancellationToken)
             .ConfigureAwait(false);

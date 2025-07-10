@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.MySqlql.Configuration;
+﻿namespace MassTransit.Dapper.MySql.Configuration;
 
 using System.Data;
 

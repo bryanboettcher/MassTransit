@@ -1,5 +1,6 @@
 namespace MassTransit.Dapper.Integration.Saga
 {
+    using System.Data.Common;
     using System.Linq.Expressions;
     using System.Runtime.CompilerServices;
     using SqlBuilders;
@@ -14,20 +15,28 @@ namespace MassTransit.Dapper.Integration.Saga
     {
         readonly ISagaConnection<TSaga> _connection;
         readonly ISagaSqlFormatter<TSaga> _formatter;
+        readonly Action<DbParameterCollection>? _callback;
 
         public SagaDatabaseContext(ISagaConnection<TSaga> connection, ISagaSqlFormatter<TSaga> formatter)
         {
             _connection = connection;
             _formatter = formatter;
+
+            _callback = (_formatter is IParameterCallback c)
+                ? c.Modify
+                : null;
         }
     
         public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
         {
+            var sql = _formatter.BuildLoadSql();
+            
             var results = _connection.ReadAsync(
-                _formatter.BuildLoadSql(),
+                sql,
                 new { correlationId },
-                null,
-                cancellationToken
+                adapter: null,
+                parameterCallback: _callback,
+                cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
             // intentionally returning inside the foreach,
@@ -46,8 +55,9 @@ namespace MassTransit.Dapper.Integration.Saga
             var results = _connection.ReadAsync(
                 sql,
                 parameters,
-                null,
-                cancellationToken
+                adapter: null,
+                parameterCallback: _callback,
+                cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
             await foreach (var result in results)
@@ -110,7 +120,8 @@ namespace MassTransit.Dapper.Integration.Saga
             var effected = await _connection.RunAsync(
                 sql,
                 parameters,
-                cancellationToken
+                parameterCallback: _callback,
+                cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
             return effected;

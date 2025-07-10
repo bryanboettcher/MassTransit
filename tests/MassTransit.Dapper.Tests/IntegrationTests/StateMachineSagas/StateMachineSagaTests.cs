@@ -14,7 +14,6 @@
     [TestFixture(typeof(PessimisticSqlServerConnector))]
     [TestFixture(typeof(PessimisticPostgresConnector))]
     [TestFixture(typeof(PessimisticMySqlConnector))]
-    [TestFixture]
     public class StateMachineSagaTests<TConnector> : SagaTests<TConnector>
         where TConnector : BehaviorSaga, TestConnector, new()
     {
@@ -44,6 +43,7 @@
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
+            await InMemoryTestHarness.InactivityTask;
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
@@ -61,10 +61,11 @@
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga 0" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
-            await Task.Delay(250);
+            await InMemoryTestHarness.InactivityTask;
 
             await InputQueueSendEndpoint.Send<UpdateSaga>(new { CorrelationId = SagaId, Name = "my saga 1" });
             await BusTestHarness.Consumed.Any<UpdateSaga>();
+            await InMemoryTestHarness.InactivityTask;
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
@@ -82,13 +83,14 @@
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
-            await Task.Delay(250);
+            await InMemoryTestHarness.InactivityTask;
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
 
             await InputQueueSendEndpoint.Send<DeleteSagaByName>(new { Name = "my saga" });
             await BusTestHarness.Consumed.Any<DeleteSagaByName>();
+            await InMemoryTestHarness.InactivityTask;
 
             sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);

@@ -2,8 +2,8 @@
 
 using System.Data;
 using ClaimChecks;
+using global::MySql.Data.MySqlClient;
 using MassTransit.Configuration;
-using MySql.Data.MySqlClient;
 
 public static class MessageDataRepositorySelectorExtensions
 {
