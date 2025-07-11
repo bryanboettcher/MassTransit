@@ -1,6 +1,8 @@
-﻿namespace MassTransit.Dapper.MySql.Configuration;
+﻿namespace MassTransit.Persistence.MySql.Configuration;
 
 using System.Data;
+using System.Linq.Expressions;
+
 
 /// <summary>
 /// Configures MySql-specific settings for an individual saga repository.
@@ -25,10 +27,9 @@ public interface IMySqlRepositoryConfigurator<TSaga>
     IMySqlRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName);
 
     /// <summary>
-    /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `DateTime RowVersion` in the model.
+    /// Use optimistic concurrency for saga operations.  Requires a versioning column in the model.
     /// </summary>
-    IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion");
+    IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector, string versionColumnName = "RowVersion");
 
     /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
@@ -56,6 +57,11 @@ public interface IMySqlRepositoryConfigurator<TSaga>
     /// Gets/sets the version column for optimistic concurrency.
     /// </summary>
     string VersionColumnName { get; set; }
+
+    /// <summary>
+    /// Gets/sets the model version property for optimistic concurrency.
+    /// </summary>
+    string VersionPropertyName { get; set; }
 
     /// <summary>
     /// Gets/sets the name of the table.  Defaults to the plural form of the saga name if

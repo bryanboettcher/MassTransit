@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Tests.IntegrationTests.Connectors;
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.Connectors;
 
 using Configuration;
 

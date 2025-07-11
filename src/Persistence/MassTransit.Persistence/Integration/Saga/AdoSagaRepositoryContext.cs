@@ -1,9 +1,9 @@
-namespace MassTransit.Dapper.Integration.Saga
+namespace MassTransit.Persistence.Integration.Saga
 {
-    using Context;
-    using Internals;
+    using MassTransit.Context;
+    using MassTransit.Internals;
+    using MassTransit.Middleware;
     using MassTransit.Saga;
-    using Middleware;
 
 
     public class AdoSagaRepositoryContext<TSaga, TMessage> :

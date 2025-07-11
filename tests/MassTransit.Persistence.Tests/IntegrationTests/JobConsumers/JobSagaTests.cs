@@ -1,20 +1,17 @@
-﻿namespace MassTransit.Dapper.Tests.IntegrationTests.JobConsumers
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.JobConsumers
 {
     using Configuration;
     using Connectors;
-    using Contracts.JobService;
+    using MassTransit.Contracts.JobService;
+    using MassTransit.TestFramework;
+    using MassTransit.Testing;
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Extensions.DependencyInjection;
     using NUnit.Framework;
-    using TestFramework;
-    using Testing;
 
 
     namespace JobConsumerTests
     {
-        using Contracts.JobService;
-
-
         public interface OddJob
         {
             TimeSpan Duration { get; }

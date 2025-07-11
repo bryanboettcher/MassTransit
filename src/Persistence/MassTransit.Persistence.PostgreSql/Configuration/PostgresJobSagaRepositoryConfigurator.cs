@@ -1,14 +1,13 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 using System.Data;
 using Connections;
-using Formatting;
 using Integration.JobSagas;
 using Integration.Saga;
 using Integration.SqlBuilders;
-using MassTransit.Dapper.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Persistence.Configuration;
 
 
 public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryConfigurator, ISpecification
@@ -41,32 +40,33 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
 
     void RegisterDependencies(IServiceCollection services)
     {
-        services.TryAddScoped<JobSagaDatabaseContext>();
-        services.TryAddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
-        services.TryAddScoped<ISagaSqlFormatter<JobSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
-        );
-        services.TryAddScoped<ISagaConnectionProvider<JobSagaDatabaseContext.DbModel>>(
-            _ => new PostgresSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        );
+        // TODO: Fix registrations
+        //services.TryAddScoped<JobSagaDatabaseContext>();
+        //services.TryAddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
+        //services.TryAddScoped<ISagaSqlFormatter<JobSagaDatabaseContext.DbModel>>(
+        //    _ => new PessimisticPostgresSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
+        //);
+        //services.TryAddScoped<ISagaConnectionProvider<JobSagaDatabaseContext.DbModel>>(
+        //    _ => new PostgresSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+        //);
 
-        services.TryAddScoped<JobAttemptSagaDatabaseContext>();
-        services.TryAddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
-        services.TryAddScoped<ISagaSqlFormatter<JobAttemptSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
-        );
-        services.TryAddScoped<ISagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
-            _ => new PostgresSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        );
+        //services.TryAddScoped<JobAttemptSagaDatabaseContext>();
+        //services.TryAddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
+        //services.TryAddScoped<ISagaSqlFormatter<JobAttemptSagaDatabaseContext.DbModel>>(
+        //    _ => new PessimisticPostgresSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
+        //);
+        //services.TryAddScoped<ISagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
+        //    _ => new PostgresSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+        //);
 
-        services.TryAddScoped<JobTypeSagaDatabaseContext>();
-        services.TryAddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
-        services.TryAddScoped<ISagaSqlFormatter<JobTypeSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
-        );
-        services.TryAddScoped<ISagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
-            _ => new PostgresSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        );
+        //services.TryAddScoped<JobTypeSagaDatabaseContext>();
+        //services.TryAddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
+        //services.TryAddScoped<ISagaSqlFormatter<JobTypeSagaDatabaseContext.DbModel>>(
+        //    _ => new PessimisticPostgresSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
+        //);
+        //services.TryAddScoped<ISagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
+        //    _ => new PostgresSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
+        //);
     }
 
     static DatabaseContextFactory<TSaga> Create<TSaga, TContext, TModel>()
@@ -74,15 +74,16 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
         where TContext : DatabaseContext<TSaga>
         where TModel : class, ISaga
     {
-        return async serviceProvider =>
-        {
-            var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TModel>>();
-            var serializer = serviceProvider.GetRequiredService<SagaSerializer<TSaga, TModel>>();
-            var provider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TModel>>();
+        // TODO: Fix registrations
+        return async serviceProvider => null;
+        //{
+        //    var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TModel>>();
+        //    var serializer = serviceProvider.GetRequiredService<SagaSerializer<TSaga, TModel>>();
+        //    var provider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TModel>>();
 
-            var connection = await provider.CreateConnection();
-            var context = new SagaDatabaseContext<TModel>(connection, formatter);
-            return (TContext)Activator.CreateInstance(typeof(TContext), context, serializer)!;
-        };
+        //    var connection = await provider.CreateConnection();
+        //    var context = new SagaDatabaseContext<TModel>(connection, formatter);
+        //    return (TContext)Activator.CreateInstance(typeof(TContext), context, serializer)!;
+        //};
     }
 }

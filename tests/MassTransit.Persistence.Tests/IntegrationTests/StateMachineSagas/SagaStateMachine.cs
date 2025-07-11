@@ -1,7 +1,7 @@
 ﻿// ReSharper disable UnassignedGetOnlyAutoProperty
 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 #pragma warning disable CS8618
-namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
+namespace MassTransit.Persistence.Tests.IntegrationTests.StateMachineSagas
 {
     using Common;
 

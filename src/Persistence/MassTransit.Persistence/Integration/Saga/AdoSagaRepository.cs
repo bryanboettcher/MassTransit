@@ -1,9 +1,10 @@
-﻿namespace MassTransit.Dapper.Integration.Saga
+﻿namespace MassTransit.Persistence.Integration.Saga
 {
     using Configuration;
-    using DependencyInjection.Registration;
+    using MassTransit.DependencyInjection.Registration;
     using MassTransit.Saga;
     using Microsoft.Extensions.DependencyInjection;
+
 
     public class AdoSagaRepository<TSaga>
         where TSaga : class, ISaga

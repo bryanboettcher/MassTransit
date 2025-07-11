@@ -1,4 +1,4 @@
-namespace MassTransit.Dapper.Integration.Saga
+namespace MassTransit.Persistence.Integration.Saga
 {
     using System.Linq.Expressions;
 

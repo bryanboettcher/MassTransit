@@ -1,9 +1,9 @@
-﻿namespace MassTransit.Dapper.Integration.Saga
+﻿namespace MassTransit.Persistence.Integration.Saga
 {
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Linq.Expressions;
     using System.Reflection;
-    using Internals;
+    using MassTransit.Internals;
 
 
     public static class SqlExpressionVisitor

@@ -1,7 +1,7 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
-using MassTransit.Dapper.Configuration;
 using Npgsql;
+using Persistence.Configuration;
 
 
 public static class AdoJobSagaRepositoryConfiguratorExtensions

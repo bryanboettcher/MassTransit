@@ -1,17 +1,30 @@
-﻿using MassTransit.Dapper.Integration.Saga;
-using System.Linq.Expressions;
-
-
-namespace MassTransit.Dapper.MySql.Connections
+﻿namespace MassTransit.Persistence.MySql.Connections
 {
+    using System.Data;
+    using System.Runtime.CompilerServices;
+    using global::MySql.Data.MySqlClient;
+    using Integration.Saga;
+    using Integration.SqlBuilders;
+
+
     public abstract class MySqlDatabaseContext<TSaga> : SagaDatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
+        protected readonly string ConnectionString;
+
         protected readonly string TableName;
         protected readonly string IdColumnName;
 
-        protected MySqlDatabaseContext(string tableName, string idColumnName)
+        protected MySqlConnection? Connection;
+        protected MySqlTransaction? Transaction;
+
+        bool _disposed;
+
+        protected MySqlDatabaseContext(string connectionString, string tableName, string idColumnName)
         {
+            ConnectionString = connectionString;
+            TableName = tableName;
+            IdColumnName = idColumnName;
         }
 
         public static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object?> parameterCallback)
@@ -28,127 +41,110 @@ namespace MassTransit.Dapper.MySql.Connections
 
             return string.Join(" AND ", queryPredicates);
         }
-    }
 
-    public class OptimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>
-        where TSaga : class, ISaga
-    {
-        protected string _versionColumnName;
-
-        public OptimisticMySqlDatabaseContext(ISagaConnection<TSaga> connection)
+        protected override async IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
+            var readerAdapter = CreateReaderAdapter();
+            var writerAdapter = CreateWriterAdapter();
+
+            Connection = await CreateConnection(cancellationToken)
+                .ConfigureAwait(false);
+
+            await using var command = Connection.CreateCommand();
+
+            if (Transaction is not null)
+                command.Transaction = Transaction;
+
+            command.CommandText = sql;
+
+            writerAdapter(parameters, command.Parameters);
+
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                yield return readerAdapter(reader);
+            }
         }
 
-        protected override string BuildLoadSql()
+        protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
-            return $"SELECT * FROM {TableName} WHERE {IdColumnName} = @correlationid LIMIT 1";
+            var writerAdapter = CreateWriterAdapter();
+
+            Connection = await CreateConnection(cancellationToken)
+                .ConfigureAwait(false);
+
+            await using var command = Connection.CreateCommand();
+
+            if (Transaction is not null)
+                command.Transaction = Transaction;
+
+            command.CommandText = sql;
+
+            writerAdapter(parameters, command.Parameters);
+
+            var rows = await command.ExecuteNonQueryAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return rows;
         }
 
-        protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
+        protected virtual async Task<MySqlConnection> CreateConnection(CancellationToken cancellationToken)
         {
-            var sqlRoot = $"SELECT * FROM {TableName}";
+            var connection = new MySqlConnection(ConnectionString);
+            await connection.OpenAsync(cancellationToken);
 
-            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+            await OnConnectionOpened(connection, cancellationToken);
 
-            if (predicates.Count == 0) // good luck...
-                return sqlRoot;
-
-            var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
-            return string.Concat(sqlRoot, " WHERE ", queryPredicate);
+            return connection;
         }
 
-        protected override string BuildInsertSql()
+        protected virtual Func<IDataReader, TSaga> CreateReaderAdapter() => ReflectionsAdapter.CreateFor<TSaga>();
+
+        protected virtual Action<object?, MySqlParameterCollection> CreateWriterAdapter()
         {
-            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { IdColumnName, _versionColumnName };
-            var properties = BuildProperties(ModelType, forbidden).ToList();
-
-            properties.Insert(0, (col: IdColumnName, prop: "correlationid"));
-
-            var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
-            var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
-
-            var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
-
-            return sql;
+            return AssignParameters;
         }
 
-        protected override string BuildUpdateSql()
+        protected abstract ValueTask OnConnectionOpened(MySqlConnection connection, CancellationToken cancellationToken);
+
+        static void AssignParameters(object? parameters, MySqlParameterCollection collection)
         {
-            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { IdColumnName, _versionColumnName };
-            var properties = BuildProperties(ModelType, forbidden).ToList();
-
-            var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
-
-            var sql = $"UPDATE {TableName} SET {updateExpression} WHERE {IdColumnName} = @correlationid AND {_versionColumnName} = @{_versionColumnName.ToLowerInvariant()}";
-
-            return sql;
+            foreach (var (name, value) in ParameterReader.Read(parameters))
+            {
+                collection.AddWithValue(name, value ?? DBNull.Value);
+            }
         }
 
-        protected override string BuildDeleteSql()
-        {
-            var sql = $"DELETE FROM {TableName} WHERE {IdColumnName} = @correlationid AND {_versionColumnName} = @{_versionColumnName.ToLowerInvariant()}";
+        public virtual Task CommitAsync(CancellationToken cancellationToken = default)
+            => Transaction is null
+                ? Task.CompletedTask
+                : Transaction.CommitAsync(cancellationToken);
 
-            return sql;
-        }
-    }
-
-    public class PessimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>
-        where TSaga : class, ISaga
-    {
-        public PessimisticMySqlDatabaseContext(ISagaConnection<TSaga> connection)
+        public virtual void Dispose()
         {
-        }
+            if (_disposed)
+                return;
 
-        protected override string BuildLoadSql()
-        {
-            return $"SELECT * FROM {TableName} WHERE {IdColumnName} = @correlationid LIMIT 1 FOR UPDATE";
+            _disposed = true;
+
+            Transaction?.Dispose();
+            Connection?.Dispose();
         }
 
-        protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
+        public virtual async ValueTask DisposeAsync()
         {
-            var sqlRoot = $"SELECT * FROM {TableName}";
-            var sqlLock = " FOR UPDATE";
+            if (_disposed)
+                return;
 
-            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+            _disposed = true;
 
-            if (predicates.Count == 0) // good luck...
-                return string.Concat(sqlRoot, sqlLock);
+            if (Transaction is not null)
+                await Transaction.DisposeAsync().ConfigureAwait(false);
 
-            var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
-            return string.Concat(sqlRoot, " WHERE ", queryPredicate, sqlLock);
-        }
-
-        protected override string BuildInsertSql()
-        {
-            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { IdColumnName };
-            var properties = BuildProperties(ModelType, forbidden).ToList();
-            properties.Insert(0, (col: IdColumnName, prop: "correlationid"));
-
-            var columns = string.Join(", ", properties.Select(p => $"{p.col}"));
-            var values = string.Join(", ", properties.Select(p => $"@{p.prop.ToLowerInvariant()}"));
-
-            var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
-
-            return sql;
-        }
-
-        protected override string BuildUpdateSql()
-        {
-            var forbidden = new HashSet<string?>(StringComparer.OrdinalIgnoreCase) { IdColumnName };
-            var properties = BuildProperties(ModelType, forbidden).ToList();
-
-            var updateExpression = string.Join(", ", properties.Select(p => $"{p.col} = @{p.prop.ToLowerInvariant()}"));
-
-            var sql = $"UPDATE {TableName} SET {updateExpression} WHERE {IdColumnName} = @correlationid";
-
-            return sql;
-        }
-
-        protected override string BuildDeleteSql()
-        {
-            var sql = $"DELETE FROM {TableName} WHERE {IdColumnName} = @correlationid";
-
-            return sql;
+            if (Connection is not null)
+                await Connection.DisposeAsync().ConfigureAwait(false);
         }
     }
 }

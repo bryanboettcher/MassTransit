@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Tests.ComponentTests.SqlServer;
+﻿namespace MassTransit.Persistence.Tests.ComponentTests.SqlServer;
 
 public class SqlServer_Tests
 {

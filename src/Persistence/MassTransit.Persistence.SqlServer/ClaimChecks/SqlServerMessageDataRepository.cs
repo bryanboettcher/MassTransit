@@ -1,7 +1,8 @@
-﻿namespace MassTransit.Dapper.SqlServer.ClaimChecks
+﻿namespace MassTransit.Persistence.SqlServer.ClaimChecks
 {
     using System.Data;
     using Microsoft.Data.SqlClient;
+
 
     public class SqlServerMessageDataRepository : IMessageDataRepository
     {

@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Integration.JobSagas
+﻿namespace MassTransit.Persistence.Integration.JobSagas
 {
     /// <summary>
     /// Used to adapt certain saga types to a format the underlying data store is more suited for.

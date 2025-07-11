@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Configuration
+﻿namespace MassTransit.Persistence.Configuration
 {
     /// <summary>
     /// Enables an ADO.NET-based saga repository for precise control over the persistence process.

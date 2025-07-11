@@ -1,7 +1,7 @@
-﻿namespace MassTransit.Dapper.SqlServer.Configuration;
+﻿namespace MassTransit.Persistence.SqlServer.Configuration;
 
-using Dapper.Configuration;
 using Microsoft.Data.SqlClient;
+using Persistence.Configuration;
 
 
 public static class AdoJobSagaRepositoryConfiguratorExtensions

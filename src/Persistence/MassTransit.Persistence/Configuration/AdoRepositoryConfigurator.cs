@@ -1,9 +1,9 @@
-﻿namespace MassTransit.Dapper.Configuration;
+﻿namespace MassTransit.Persistence.Configuration;
 
 using Integration.Saga;
 using MassTransit.Configuration;
+using MassTransit.Saga;
 using Microsoft.Extensions.DependencyInjection;
-using Saga;
 
 
 public class AdoRepositoryConfigurator<TSaga> : IAdoRepositoryConfigurator<TSaga>, ISpecification

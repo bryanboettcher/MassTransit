@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Tests.ComponentTests.Postgres;
+﻿namespace MassTransit.Persistence.Tests.ComponentTests.Postgres;
 
 public class Postgres_Tests
 {

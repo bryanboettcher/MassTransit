@@ -1,10 +1,10 @@
-﻿namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.StateMachineSagas
 {
     using Common;
     using Connectors;
     using Integration.Saga;
+    using MassTransit.Testing;
     using NUnit.Framework;
-    using Testing;
 
 
     [Category("Integration")]

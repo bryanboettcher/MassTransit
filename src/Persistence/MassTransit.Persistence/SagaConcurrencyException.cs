@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper
+﻿namespace MassTransit.Persistence
 {
     [Serializable]
     public class SagaConcurrencyException :

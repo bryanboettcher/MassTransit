@@ -1,6 +1,8 @@
-﻿namespace MassTransit.Dapper.SqlServer.Configuration;
+﻿namespace MassTransit.Persistence.SqlServer.Configuration;
 
 using System.Data;
+using System.Linq.Expressions;
+
 
 /// <summary>
 /// Configures SQL Server-specific settings for an individual saga repository.
@@ -25,10 +27,9 @@ public interface ISqlServerRepositoryConfigurator<TSaga>
     ISqlServerRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName);
 
     /// <summary>
-    /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `byte[] RowVersion` in the model.
+    /// Use optimistic concurrency for saga operations.  Requires a versioning column in the model.
     /// </summary>
-    ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "RowVersion");
+    ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector, string versionColumnName = "RowVersion");
 
     /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
@@ -56,6 +57,11 @@ public interface ISqlServerRepositoryConfigurator<TSaga>
     /// Gets/sets the version column for optimistic concurrency.
     /// </summary>
     string VersionColumnName { get; set; }
+
+    /// <summary>
+    /// Gets/sets the model version property for optimistic concurrency.
+    /// </summary>
+    string VersionPropertyName { get; set; }
 
     /// <summary>
     /// Gets/sets the name of the table.  Defaults to the plural form of the saga name if

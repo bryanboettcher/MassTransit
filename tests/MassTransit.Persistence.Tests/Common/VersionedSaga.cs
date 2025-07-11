@@ -1,3 +1,3 @@
-﻿namespace MassTransit.Dapper.Tests.Common
+﻿namespace MassTransit.Persistence.Tests.Common
 {
 }

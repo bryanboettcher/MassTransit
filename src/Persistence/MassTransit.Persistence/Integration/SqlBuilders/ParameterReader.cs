@@ -1,6 +1,7 @@
-namespace MassTransit.Dapper.Integration.SqlBuilders;
+namespace MassTransit.Persistence.Integration.SqlBuilders;
 
 using System.Data.Common;
+
 
 /// <summary>
 /// Picks apart various "parameters" objects into a sequence of key/value pairs,

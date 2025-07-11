@@ -1,7 +1,7 @@
-﻿namespace MassTransit.Dapper.Configuration;
+﻿namespace MassTransit.Persistence.Configuration;
 
-using DependencyInjection.Registration;
 using MassTransit.Configuration;
+using MassTransit.DependencyInjection.Registration;
 using Microsoft.Extensions.DependencyInjection;
 
 

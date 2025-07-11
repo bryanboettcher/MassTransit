@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Tests.ComponentTests.MySql;
+﻿namespace MassTransit.Persistence.Tests.ComponentTests.MySql;
 
 public class MySql_Tests
 {

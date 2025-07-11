@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Configuration;
+﻿namespace MassTransit.Persistence.Configuration;
 
 public static class SagaRegistrationConfiguratorExtensions
 {

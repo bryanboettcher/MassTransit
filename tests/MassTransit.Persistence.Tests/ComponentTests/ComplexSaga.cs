@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Tests.ComponentTests
+﻿namespace MassTransit.Persistence.Tests.ComponentTests
 {
     using System.ComponentModel.DataAnnotations.Schema;
 

@@ -1,7 +1,7 @@
-namespace MassTransit.Dapper.Integration.Saga
+namespace MassTransit.Persistence.Integration.Saga
 {
     using Configuration;
-    using Internals;
+    using MassTransit.Internals;
     using MassTransit.Saga;
     using Microsoft.Extensions.DependencyInjection;
 

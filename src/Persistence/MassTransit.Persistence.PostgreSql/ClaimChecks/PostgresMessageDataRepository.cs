@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.SqlServer.ClaimChecks
+﻿namespace MassTransit.Persistence.PostgreSql.ClaimChecks
 {
     using System.Data;
     using Npgsql;

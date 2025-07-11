@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.SqlServer.Configuration;
+﻿namespace MassTransit.Persistence.SqlServer.Configuration;
 
 using System.Data;
 using ClaimChecks;

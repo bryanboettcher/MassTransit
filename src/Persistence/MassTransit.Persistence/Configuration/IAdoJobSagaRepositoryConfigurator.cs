@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Configuration;
+﻿namespace MassTransit.Persistence.Configuration;
 
 /// <summary>
 /// Enables JobConsumer support via preconfigured saga repositories.

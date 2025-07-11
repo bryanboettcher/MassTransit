@@ -11,7 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MassTransit.Dapper\MassTransit.Persistence.csproj" />
+    <ProjectReference Include="..\MassTransit.Persistence\MassTransit.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

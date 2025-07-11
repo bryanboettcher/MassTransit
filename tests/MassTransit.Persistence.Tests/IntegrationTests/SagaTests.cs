@@ -1,8 +1,8 @@
-﻿namespace MassTransit.Dapper.Tests.IntegrationTests
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests
 {
     using Connectors;
+    using MassTransit.TestFramework;
     using NUnit.Framework;
-    using TestFramework;
 
 
     public abstract class SagaTests<TConnector> : InMemoryTestFixture

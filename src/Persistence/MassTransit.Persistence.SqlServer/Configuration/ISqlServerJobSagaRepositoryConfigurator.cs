@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.SqlServer.Configuration;
+﻿namespace MassTransit.Persistence.SqlServer.Configuration;
 
 /// <summary>
 /// Builds the appropriate components for a SQL Server-based DatabaseContext, specific to JobConsumers.

@@ -1,7 +1,7 @@
-﻿namespace MassTransit.Dapper.Tests.IntegrationTests.Connectors;
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.Connectors;
 
 using Configuration;
-using global::Dapper;
+using Dapper;
 using MassTransit.Tests;
 using Microsoft.Data.SqlClient;
 using SqlServer.Configuration;

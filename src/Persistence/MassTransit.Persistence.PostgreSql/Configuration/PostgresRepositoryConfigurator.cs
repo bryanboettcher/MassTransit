@@ -1,12 +1,11 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 using System.Data;
+using System.Linq.Expressions;
 using Connections;
-using Formatting;
 using Integration.Saga;
-using Integration.SqlBuilders;
-using MassTransit.Dapper.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Persistence.Configuration;
 
 
 public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigurator<TSaga>, ISpecification
@@ -20,9 +19,9 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
 
     /// <inheritdoc />
     public ConcurrencyMode ConcurrencyMode { get; set; } = ConcurrencyMode.Pessimistic;
-
+    
     /// <inheritdoc />
-    public string VersionColumnName { get; set; }
+    public string VersionPropertyName { get; set; }
 
     /// <inheritdoc />
     public string? TableName { get; set; }
@@ -36,8 +35,11 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
         if (string.IsNullOrWhiteSpace(ConnectionString))
             yield return this.Failure($"{nameof(ConnectionString)} must be set");
 
-        if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionColumnName))
-            yield return this.Failure($"{nameof(VersionColumnName)} must be set when using Optimistic concurrency");
+        if (string.IsNullOrWhiteSpace(TableName))
+            yield return this.Failure($"{nameof(TableName)} must be set");
+
+        if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionPropertyName))
+            yield return this.Failure($"{nameof(VersionPropertyName)} must be set when using Optimistic concurrency");
     }
 
     /// <inheritdoc />
@@ -62,10 +64,10 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
     }
 
     /// <inheritdoc />
-    public IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin")
+    public IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector)
     {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
-        VersionColumnName = versionColumnName;
+        VersionPropertyName = ExtractPropertyName(versionPropertySelector);
         return this;
     }
 
@@ -84,28 +86,23 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
 
         sagaConfigurator.SetContextFactory(ConfiguredContextFactory);
     }
-    
-    ISagaSqlFormatter<TSaga> ConfiguredFormatter() => ConcurrencyMode == ConcurrencyMode.Optimistic
-        ? new OptimisticPostgresSagaFormatter<TSaga>(TableName, IdentityColumnName, VersionColumnName)
-        : new PessimisticPostgresSagaFormatter<TSaga>(TableName, IdentityColumnName);
 
-    ISagaConnectionProvider<TSaga> ConfiguredConnectionProvider() =>
-        new PostgresSagaConnectionProvider<TSaga>(ConnectionString!, ConcurrencyMode == ConcurrencyMode.Optimistic ? null : IsolationLevel);
-
-    static async Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
+    Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
     {
-        var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TSaga>>();
-        var connectionProvider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TSaga>>();
-
-        var connection = await connectionProvider.CreateConnection();
-        return new SagaDatabaseContext<TSaga>(connection, formatter);
+        return ConcurrencyMode == ConcurrencyMode.Optimistic
+            ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticPostgresDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, VersionPropertyName))
+            : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticPostgresDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, IsolationLevel));
     }
 
     void RegisterServices(IServiceCollection services)
     {
-        services.AddScoped<DatabaseContext<TSaga>, SagaDatabaseContext<TSaga>>();
+    }
 
-        services.AddSingleton(ConfiguredFormatter());
-        services.AddSingleton(ConfiguredConnectionProvider());
+    static string ExtractPropertyName<TProp>(Expression<Func<TSaga, TProp>> selector)
+    {
+        if (selector.Body is MemberExpression memberExpression)
+            return memberExpression.Member.Name;
+
+        throw new ArgumentException("The lambda expression must be a member access expression.");
     }
 }

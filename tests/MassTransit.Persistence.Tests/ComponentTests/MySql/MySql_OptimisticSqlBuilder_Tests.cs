@@ -1,8 +1,7 @@
-﻿namespace MassTransit.Dapper.Tests.ComponentTests.MySql
+﻿namespace MassTransit.Persistence.Tests.ComponentTests.MySql
 {
     using Common;
     using Integration.SqlBuilders;
-    using Dapper.MySql.Formatting;
     using NUnit.Framework;
 
 

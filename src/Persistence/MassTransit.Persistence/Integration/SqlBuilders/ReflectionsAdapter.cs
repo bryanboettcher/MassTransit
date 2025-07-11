@@ -1,4 +1,4 @@
-namespace MassTransit.Dapper.Integration.SqlBuilders;
+namespace MassTransit.Persistence.Integration.SqlBuilders;
 
 using System.Data;
 

@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Tests.IntegrationTests.StateMachineSagas
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.StateMachineSagas
 {
     public abstract class BehaviorSaga : SagaStateMachineInstance
     {

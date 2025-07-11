@@ -1,9 +1,10 @@
-﻿namespace MassTransit.Dapper.SqlServer.Configuration;
+﻿namespace MassTransit.Persistence.MySql.Configuration;
 
 using System.Data;
 using ClaimChecks;
 using global::MySql.Data.MySqlClient;
 using MassTransit.Configuration;
+
 
 public static class MessageDataRepositorySelectorExtensions
 {

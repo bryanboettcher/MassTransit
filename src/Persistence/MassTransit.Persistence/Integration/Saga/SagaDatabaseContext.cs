@@ -1,9 +1,11 @@
-namespace MassTransit.Dapper.Integration.Saga
+namespace MassTransit.Persistence.Integration.Saga
 {
     using System.ComponentModel.DataAnnotations.Schema;
+    using System.Data;
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Runtime.CompilerServices;
+
 
     /// <summary>
     /// Contains saga-specific logic as well as respecting ISagaVersion
@@ -12,23 +14,20 @@ namespace MassTransit.Dapper.Integration.Saga
     public abstract class SagaDatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        protected readonly ISagaConnection<TSaga> Connection;
         protected readonly Type ModelType = typeof(TSaga);
         protected readonly List<SqlPropertyMapping> Mappings = new();
         
-        protected SagaDatabaseContext(ISagaConnection<TSaga> connection)
+        protected SagaDatabaseContext()
         {
-            Connection = connection;
         }
 
         public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
         {
             var sql = BuildLoadSql();
 
-            var results = Connection.ReadAsync(
+            var results = ReadAsync(
                 sql,
                 new { correlationId },
-                adapter: null,
                 cancellationToken: cancellationToken
             ).ConfigureAwait(false);
 
@@ -45,11 +44,10 @@ namespace MassTransit.Dapper.Integration.Saga
             var parameters = new Dictionary<string, object?>();
             var sql = BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
 
-            var results = Connection.ReadAsync(
+            var results = ReadAsync(
                 sql,
                 parameters,
-                adapter: null,
-                cancellationToken: cancellationToken
+                cancellationToken
             ).ConfigureAwait(false);
 
             await foreach (var result in results)
@@ -60,7 +58,7 @@ namespace MassTransit.Dapper.Integration.Saga
         {
             var sql = BuildInsertSql();
 
-            var rows = await ExecuteSql(
+            var rows = await ExecuteAsync(
                 sql,
                 instance,
                 cancellationToken
@@ -74,7 +72,7 @@ namespace MassTransit.Dapper.Integration.Saga
         {
             var sql = BuildUpdateSql();
 
-            var rows = await ExecuteSql(
+            var rows = await ExecuteAsync(
                 sql,
                 instance,
                 cancellationToken
@@ -88,7 +86,7 @@ namespace MassTransit.Dapper.Integration.Saga
         {
             var sql = BuildDeleteSql();
 
-            var rows = await ExecuteSql(
+            var rows = await ExecuteAsync(
                 sql,
                 instance,
                 cancellationToken
@@ -98,26 +96,10 @@ namespace MassTransit.Dapper.Integration.Saga
                 throw new SagaConcurrencyException("Saga Delete failed", instance);
         }
 
-        public Task CommitAsync(CancellationToken cancellationToken = default)
-            => Connection.CommitAsync(cancellationToken);
+        protected abstract IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, CancellationToken cancellationToken);
 
-        public ValueTask DisposeAsync()
-            => Connection.DisposeAsync();
-
-        public void Dispose()
-            => Connection.Dispose();
-
-        async Task<int> ExecuteSql(string sql, object parameters, CancellationToken cancellationToken)
-        {
-            var effected = await Connection.RunAsync(
-                sql,
-                parameters,
-                cancellationToken: cancellationToken
-            ).ConfigureAwait(false);
-
-            return effected;
-        }
-
+        protected abstract Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken);
+        
         protected abstract string BuildLoadSql();
 
         protected abstract string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback);
@@ -184,13 +166,14 @@ namespace MassTransit.Dapper.Integration.Saga
             return columnAttribute.Name;
         }
 
-        protected virtual IEnumerable<(string col, string prop)> BuildProperties(Type sagaType, HashSet<string?> forbiddenColumns)
+        protected virtual IDictionary<string, string> BuildProperties(Type modelType)
         {
-            return from prop in sagaType.GetProperties()
-                   let columnName = GetColumnName(sagaType, prop)
+            return (from prop in modelType.GetProperties()
+                   let columnName = GetColumnName(modelType, prop)
                    let propertyName = CamelCase(prop.Name)
-                   where !forbiddenColumns.Contains(columnName)
-                   select (columnName, propertyName);
+                   select (columnName, propertyName))
+                .DistinctBy(m => m.columnName, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(m => m.columnName, m => m.propertyName, StringComparer.OrdinalIgnoreCase);
 
             string CamelCase(string name)
             {
@@ -213,6 +196,7 @@ namespace MassTransit.Dapper.Integration.Saga
                 return string.Concat(parts);
             }
         }
+
         protected void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
         {
             if (mappingExpression.NodeType != ExpressionType.Lambda)

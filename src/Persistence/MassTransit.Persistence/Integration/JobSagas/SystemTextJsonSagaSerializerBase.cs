@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.Integration.JobSagas;
+﻿namespace MassTransit.Persistence.Integration.JobSagas;
 
 using System.Text;
 using System.Text.Json;

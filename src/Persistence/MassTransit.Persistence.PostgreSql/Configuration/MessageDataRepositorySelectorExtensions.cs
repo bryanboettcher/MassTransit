@@ -1,9 +1,10 @@
-﻿namespace MassTransit.Dapper.SqlServer.Configuration;
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 using System.Data;
 using ClaimChecks;
 using MassTransit.Configuration;
 using Npgsql;
+
 
 public static class MessageDataRepositorySelectorExtensions
 {

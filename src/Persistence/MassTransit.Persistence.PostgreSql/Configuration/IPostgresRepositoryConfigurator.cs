@@ -1,6 +1,8 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 using System.Data;
+using System.Linq.Expressions;
+
 
 /// <summary>
 /// Configures Postgres-specific settings for an individual saga repository.
@@ -25,10 +27,9 @@ public interface IPostgresRepositoryConfigurator<TSaga>
     IPostgresRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName);
 
     /// <summary>
-    /// Use optimistic concurrency for saga operations.  Requires a versioning column, defaulted
-    /// to `int XMin` in the model.
+    /// Use optimistic concurrency for saga operations.  Requires a versioning column in the model.
     /// </summary>
-    IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionColumnName = "xmin");
+    IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector);
 
     /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
@@ -53,9 +54,9 @@ public interface IPostgresRepositoryConfigurator<TSaga>
     IsolationLevel IsolationLevel { get; set; }
 
     /// <summary>
-    /// Gets/sets the version column for optimistic concurrency.
+    /// Gets/sets the model version property for optimistic concurrency.
     /// </summary>
-    string VersionColumnName { get; set; }
+    string VersionPropertyName { get; set; }
 
     /// <summary>
     /// Gets/sets the name of the table.  Defaults to the plural form of the saga name if

@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.PostgreSql.Configuration;
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 /// <summary>
 /// Builds the appropriate components for a Postgres-based DatabaseContext, specific to JobConsumers.

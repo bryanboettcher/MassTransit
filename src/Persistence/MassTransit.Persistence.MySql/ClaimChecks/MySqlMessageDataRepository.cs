@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Dapper.SqlServer.ClaimChecks
+﻿namespace MassTransit.Persistence.MySql.ClaimChecks
 {
     using System.Data;
     using global::MySql.Data.MySqlClient;
