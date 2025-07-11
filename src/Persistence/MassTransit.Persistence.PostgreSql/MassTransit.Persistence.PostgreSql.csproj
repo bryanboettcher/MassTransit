@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MySql.Data" />
+    <PackageReference Include="Npgsql" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MassTransit.Dapper\MassTransit.Dapper.csproj" />
+    <ProjectReference Include="..\MassTransit.Dapper\MassTransit.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

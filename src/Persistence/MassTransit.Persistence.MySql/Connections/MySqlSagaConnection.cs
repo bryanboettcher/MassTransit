@@ -25,13 +25,10 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
         _disposed = false;
     }
 
-    public async IAsyncEnumerable<TModel> ReadAsync(
-        string query,
+    public async IAsyncEnumerable<TModel> ReadAsync(string query,
         object? parameters = null,
         Func<IDataReader, TModel>? adapter = null,
-        Action<DbParameterCollection>? parameterCallback = null,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default
-    )
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         adapter ??= ReflectionsAdapter.CreateFor<TModel>();
 
@@ -53,12 +50,9 @@ public class MySqlSagaConnection<TModel> : ISagaConnection<TModel>
         }
     }
 
-    public async Task<int> RunAsync(
-        string query,
+    public async Task<int> RunAsync(string query,
         object? parameters = null,
-        Action<DbParameterCollection>? parameterCallback = null,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         await using var command = _connection.CreateCommand();
         command.Transaction = _transaction;

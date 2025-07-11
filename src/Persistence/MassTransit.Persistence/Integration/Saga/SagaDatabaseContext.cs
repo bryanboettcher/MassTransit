@@ -1,18 +1,133 @@
-namespace MassTransit.Dapper.Integration.SqlBuilders
+namespace MassTransit.Dapper.Integration.Saga
 {
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Linq.Expressions;
     using System.Reflection;
-    using Saga;
-
+    using System.Runtime.CompilerServices;
 
     /// <summary>
-    /// Contains overridable members to help build queries
+    /// Contains saga-specific logic as well as respecting ISagaVersion
     /// </summary>
-    public abstract class SagaFormatterBase
+    /// <typeparam name="TSaga"></typeparam>
+    public abstract class SagaDatabaseContext<TSaga>
+        where TSaga : class, ISaga
     {
+        protected readonly ISagaConnection<TSaga> Connection;
+        protected readonly Type ModelType = typeof(TSaga);
         protected readonly List<SqlPropertyMapping> Mappings = new();
         
+        protected SagaDatabaseContext(ISagaConnection<TSaga> connection)
+        {
+            Connection = connection;
+        }
+
+        public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
+        {
+            var sql = BuildLoadSql();
+
+            var results = Connection.ReadAsync(
+                sql,
+                new { correlationId },
+                adapter: null,
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
+
+            // intentionally returning inside the foreach,
+            // since we only need at most one result
+            await foreach (var result in results)
+                return result;
+
+            return null;
+        }
+
+        public async IAsyncEnumerable<TSaga> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            var parameters = new Dictionary<string, object?>();
+            var sql = BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
+
+            var results = Connection.ReadAsync(
+                sql,
+                parameters,
+                adapter: null,
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
+
+            await foreach (var result in results)
+                yield return result;
+        }
+
+        public async Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default)
+        {
+            var sql = BuildInsertSql();
+
+            var rows = await ExecuteSql(
+                sql,
+                instance,
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            if (rows == 0)
+                throw new SagaConcurrencyException("Saga Insert failed", instance);
+        }
+
+        public async Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default)
+        {
+            var sql = BuildUpdateSql();
+
+            var rows = await ExecuteSql(
+                sql,
+                instance,
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            if (rows == 0)
+                throw new SagaConcurrencyException("Saga Update failed", instance);
+        }
+
+        public async Task DeleteAsync(TSaga instance, CancellationToken cancellationToken)
+        {
+            var sql = BuildDeleteSql();
+
+            var rows = await ExecuteSql(
+                sql,
+                instance,
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            if (rows == 0)
+                throw new SagaConcurrencyException("Saga Delete failed", instance);
+        }
+
+        public Task CommitAsync(CancellationToken cancellationToken = default)
+            => Connection.CommitAsync(cancellationToken);
+
+        public ValueTask DisposeAsync()
+            => Connection.DisposeAsync();
+
+        public void Dispose()
+            => Connection.Dispose();
+
+        async Task<int> ExecuteSql(string sql, object parameters, CancellationToken cancellationToken)
+        {
+            var effected = await Connection.RunAsync(
+                sql,
+                parameters,
+                cancellationToken: cancellationToken
+            ).ConfigureAwait(false);
+
+            return effected;
+        }
+
+        protected abstract string BuildLoadSql();
+
+        protected abstract string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback);
+
+        protected abstract string BuildInsertSql();
+
+        protected abstract string BuildUpdateSql();
+
+        protected abstract string BuildDeleteSql();
+
         protected virtual string GetTableName(Type type)
         {
             var tableName = AttributeValue(type, "TableAttribute", "Name");
@@ -40,7 +155,7 @@ namespace MassTransit.Dapper.Integration.SqlBuilders
 
             throw new InvalidOperationException("Only CorrelationId can be auto-detected as the key column.  Use constructor if necessary to override.");
         }
-        
+
         protected virtual string? GetVersionColumnName<TProp>(Type type, string defaultName)
         {
             var candidate = type.GetProperties()
@@ -72,10 +187,10 @@ namespace MassTransit.Dapper.Integration.SqlBuilders
         protected virtual IEnumerable<(string col, string prop)> BuildProperties(Type sagaType, HashSet<string?> forbiddenColumns)
         {
             return from prop in sagaType.GetProperties()
-                let columnName = GetColumnName(sagaType, prop)
-                let propertyName = CamelCase(prop.Name)
-                where !forbiddenColumns.Contains(columnName)
-                select (columnName, propertyName);
+                   let columnName = GetColumnName(sagaType, prop)
+                   let propertyName = CamelCase(prop.Name)
+                   where !forbiddenColumns.Contains(columnName)
+                   select (columnName, propertyName);
 
             string CamelCase(string name)
             {

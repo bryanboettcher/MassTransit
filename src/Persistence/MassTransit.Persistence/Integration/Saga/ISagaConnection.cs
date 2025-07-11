@@ -17,15 +17,11 @@ public interface ISagaConnection<TSaga> : IAsyncDisposable, IDisposable
     /// <param name="query">The SQL to execute</param>
     /// <param name="parameters">Any parameters needed for the SQL</param>
     /// <param name="adapter">A converter to rehydrate an instance of <typeparamref name="TSaga"/>.  Defaults to a reflections-based converter.</param>
-    /// <param name="parameterCallback"></param>
     /// <param name="cancellationToken">A cancellationToken to abort the operation</param>
-    IAsyncEnumerable<TSaga> ReadAsync(
-        string query,
+    IAsyncEnumerable<TSaga> ReadAsync(string query,
         object? parameters = null,
         Func<IDataReader, TSaga>? adapter = null,
-        Action<DbParameterCollection>? parameterCallback = null,
-        CancellationToken cancellationToken = default
-    );
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Builds and runs a command against the database without returning anything but
@@ -33,14 +29,10 @@ public interface ISagaConnection<TSaga> : IAsyncDisposable, IDisposable
     /// </summary>
     /// <param name="query">The SQL to execute</param>
     /// <param name="parameters">Any parameters needed for the SQL</param>
-    /// <param name="parameterCallback"></param>
     /// <param name="cancellationToken">A cancellationToken to abort the operation</param>
-    Task<int> RunAsync(
-        string query,
+    Task<int> RunAsync(string query,
         object? parameters = null,
-        Action<DbParameterCollection>? parameterCallback = null,
-        CancellationToken cancellationToken = default
-    );
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Commits any underlying transactions that may have been started.

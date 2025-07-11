@@ -141,15 +141,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.MessagePack", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dapper", "Dapper", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper", "src\Persistence\MassTransit.Dapper\MassTransit.Dapper.csproj", "{C5D90D46-C3CA-803F-7E69-8140756087B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Persistence", "src\Persistence\MassTransit.Dapper\MassTransit.Persistence.csproj", "{C5D90D46-C3CA-803F-7E69-8140756087B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.SqlServer", "src\Persistence\MassTransit.Dapper.SqlServer\MassTransit.Dapper.SqlServer.csproj", "{22AE54FB-4A32-1407-5788-988484C88DAF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Persistence.SqlServer", "src\Persistence\MassTransit.Persistence.SqlServer\MassTransit.Persistence.SqlServer.csproj", "{22AE54FB-4A32-1407-5788-988484C88DAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.Tests", "tests\MassTransit.Dapper.Tests\MassTransit.Dapper.Tests.csproj", "{00EA0B23-F076-6A55-218F-6EBDA6F33436}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Persistence.Tests", "tests\MassTransit.Persistence.Tests\MassTransit.Persistence.Tests.csproj", "{00EA0B23-F076-6A55-218F-6EBDA6F33436}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.PostgreSql", "src\Persistence\MassTransit.Dapper.PostgreSql\MassTransit.Dapper.PostgreSql.csproj", "{59023D72-9EE3-462A-A200-CA3184F74307}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Persistence.PostgreSql", "src\Persistence\MassTransit.Persistence.PostgreSql\MassTransit.Persistence.PostgreSql.csproj", "{59023D72-9EE3-462A-A200-CA3184F74307}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Dapper.MySql", "src\Persistence\MassTransit.Dapper.MySql\MassTransit.Dapper.MySql.csproj", "{295D3C5E-7CB4-4888-A629-8346241E29CF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTransit.Persistence.MySql", "src\Persistence\MassTransit.Persistence.MySql\MassTransit.Persistence.MySql.csproj", "{295D3C5E-7CB4-4888-A629-8346241E29CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
