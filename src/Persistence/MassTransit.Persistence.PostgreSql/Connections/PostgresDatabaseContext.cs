@@ -63,7 +63,7 @@
             await using var reader = await command.ExecuteReaderAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            while (await reader.ReadAsync(cancellationToken))
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
             {
                 yield return readerAdapter(reader);
             }
@@ -94,19 +94,20 @@
         protected virtual async Task<NpgsqlConnection> CreateConnection(CancellationToken cancellationToken)
         {
             var connection = new NpgsqlConnection(ConnectionString);
-            await connection.OpenAsync(cancellationToken);
+            await connection.OpenAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            await OnConnectionOpened(connection, cancellationToken);
+            await OnConnectionOpened(connection, cancellationToken)
+                .ConfigureAwait(false);
 
             return connection;
         }
 
-        protected virtual Func<IDataReader, TSaga> CreateReaderAdapter() => ReflectionsAdapter.CreateFor<TSaga>();
+        protected virtual Func<IDataReader, TSaga> CreateReaderAdapter()
+            => ReflectionsAdapter.CreateFor<TSaga>();
 
         protected virtual Action<object?, NpgsqlParameterCollection> CreateWriterAdapter()
-        {
-            return AssignParameters;
-        }
+            => AssignParameters;
 
         protected abstract ValueTask OnConnectionOpened(NpgsqlConnection connection, CancellationToken cancellationToken);
 

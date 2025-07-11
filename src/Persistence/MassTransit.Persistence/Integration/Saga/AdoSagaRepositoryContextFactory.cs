@@ -65,7 +65,7 @@ namespace MassTransit.Persistence.Integration.Saga
             await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
 
-            var instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync()
+            var instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             var repositoryContext = new AdoSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
@@ -91,6 +91,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
             await databaseContext.CommitAsync(cancellationToken)
                 .ConfigureAwait(false);
+
             return result;
         }
 

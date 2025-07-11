@@ -38,7 +38,11 @@ namespace MassTransit.Persistence.Integration.Saga
 
         public async Task<SagaConsumeContext<TSaga, TMessage>> Insert(TSaga instance)
         {
-            await _context.InsertAsync(instance, CancellationToken).ConfigureAwait(false);
+            await _context.InsertAsync(instance, CancellationToken)
+                .ConfigureAwait(false);
+
+            await _context.CommitAsync(CancellationToken)
+                .ConfigureAwait(false);
             
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Insert).ConfigureAwait(false);
         }
@@ -46,8 +50,8 @@ namespace MassTransit.Persistence.Integration.Saga
         public async Task<SagaConsumeContext<TSaga, TMessage>> Load(Guid correlationId)
         {
             var instance = await _context.LoadAsync(correlationId, CancellationToken).ConfigureAwait(false);
-            if (instance == default)
-                return default;
+            if (instance == null)
+                return null;
 
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Load).ConfigureAwait(false);
         }
