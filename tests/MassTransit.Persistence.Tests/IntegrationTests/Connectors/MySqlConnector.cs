@@ -6,7 +6,6 @@ using global::MySql.Data.MySqlClient;
 using MySql.Configuration;
 using StateMachineSagas;
 
-
 public class OptimisticMySqlConnector : MySqlConnector, TestConnector
 {
     public DateTime RowVersion { get; set; }

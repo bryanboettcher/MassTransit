@@ -66,8 +66,14 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
     /// <inheritdoc />
     public IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector)
     {
+        return SetOptimisticConcurrency(ExtractPropertyName(versionPropertySelector));
+    }
+
+    /// <inheritdoc />
+    public IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionPropertyName = "XMin")
+    {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
-        VersionPropertyName = ExtractPropertyName(versionPropertySelector);
+        VersionPropertyName = versionPropertyName;
         return this;
     }
 
@@ -89,6 +95,9 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
 
     Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+        ArgumentException.ThrowIfNullOrEmpty(TableName);
+
         return ConcurrencyMode == ConcurrencyMode.Optimistic
             ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticPostgresDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, VersionPropertyName))
             : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticPostgresDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, IsolationLevel));

@@ -40,8 +40,6 @@ public class PessimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext
     {
         var properties = BuildProperties(ModelType);
 
-        properties.Remove(IdColumnName);
-
         var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
         var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
 
@@ -53,7 +51,8 @@ public class PessimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext
     protected override string BuildUpdateSql()
     {
         var properties = BuildProperties(ModelType);
-        properties.Remove(IdColumnName);
+
+        properties.Remove(nameof(ISaga.CorrelationId));
 
         var updateExpression = string.Join(", ", properties.Select(p => $"{p.Key} = @{p.Value}"));
 

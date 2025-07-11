@@ -32,6 +32,11 @@ public interface IMySqlRepositoryConfigurator<TSaga>
     IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector, string versionColumnName = "RowVersion");
 
     /// <summary>
+    /// Use optimistic concurrency for saga operations.  Requires a versioning column in the model.
+    /// </summary>
+    IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionPropertyName = "RowVersion", string versionColumnName = "RowVersion");
+
+    /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
     /// but will lock rows being used.  <see cref="IsolationLevel"/> sets the isolation for the
     /// transaction.
@@ -56,12 +61,12 @@ public interface IMySqlRepositoryConfigurator<TSaga>
     /// <summary>
     /// Gets/sets the version column for optimistic concurrency.
     /// </summary>
-    string VersionColumnName { get; set; }
+    string? VersionColumnName { get; set; }
 
     /// <summary>
     /// Gets/sets the model version property for optimistic concurrency.
     /// </summary>
-    string VersionPropertyName { get; set; }
+    string? VersionPropertyName { get; set; }
 
     /// <summary>
     /// Gets/sets the name of the table.  Defaults to the plural form of the saga name if

@@ -22,7 +22,7 @@ public class OptimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContex
         
     protected override string BuildLoadSql()
     {
-        return $"SELECT TOP 1 * FROM {TableName} WHERE [{IdColumnName}] = @correlationId";
+        return $"SELECT TOP 1 * FROM {TableName} WHERE [{IdColumnName}] = @correlationid";
     }
 
     protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -42,7 +42,7 @@ public class OptimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContex
     {
         var properties = BuildProperties(ModelType);
 
-        properties.Remove(IdColumnName);
+        properties.Remove(_versionProperty.Name);
 
         var columns = string.Join(", ", properties.Select(p => $"[{p.Key}]"));
         var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
@@ -55,18 +55,20 @@ public class OptimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContex
     protected override string BuildUpdateSql()
     {
         var properties = BuildProperties(ModelType);
-        properties.Remove(IdColumnName);
+
+        properties.Remove(nameof(ISaga.CorrelationId));
+        properties.Remove(_versionProperty.Name);
 
         var updateExpression = string.Join(", ", properties.Select(p => $"[{p.Key}] = @{p.Value}"));
 
-        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationId AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
+        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationid AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
 
         return sql;
     }
 
     protected override string BuildDeleteSql()
     {
-        var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationId AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
+        var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationid AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
 
         return sql;
     }

@@ -22,12 +22,12 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
 
     protected override string BuildLoadSql()
     {
-        return $"SELECT *, xmin AS {_versionProperty.Name.ToLowerInvariant()} FROM {TableName} WHERE {IdColumnName} = @correlationid LIMIT 1";
+        return $"SELECT *, xmin AS {_versionProperty.Name} FROM {TableName} WHERE {IdColumnName} = @correlationid LIMIT 1";
     }
 
     protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
     {
-        var sqlRoot = $"SELECT *, xmin AS {_versionProperty.Name.ToLowerInvariant()} FROM {TableName}";
+        var sqlRoot = $"SELECT *, xmin AS {_versionProperty.Name} FROM {TableName}";
 
         var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
@@ -42,7 +42,7 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
     {
         var properties = BuildProperties(ModelType);
 
-        properties.Remove(IdColumnName);
+        properties.Remove(_versionProperty.Name);
 
         var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
         var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
@@ -55,7 +55,9 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
     protected override string BuildUpdateSql()
     {
         var properties = BuildProperties(ModelType);
-        properties.Remove(IdColumnName);
+
+        properties.Remove(nameof(ISaga.CorrelationId));
+        properties.Remove(_versionProperty.Name);
 
         var updateExpression = string.Join(", ", properties.Select(p => $"{p.Key} = @{p.Value}"));
 

@@ -1,7 +1,6 @@
 namespace MassTransit.Persistence.Integration.Saga
 {
     using System.ComponentModel.DataAnnotations.Schema;
-    using System.Data;
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Runtime.CompilerServices;
@@ -99,16 +98,16 @@ namespace MassTransit.Persistence.Integration.Saga
         protected abstract IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, CancellationToken cancellationToken);
 
         protected abstract Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken);
-        
-        protected abstract string BuildLoadSql();
 
-        protected abstract string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback);
+        protected internal abstract string BuildLoadSql();
 
-        protected abstract string BuildInsertSql();
+        protected internal abstract string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback);
 
-        protected abstract string BuildUpdateSql();
+        protected internal abstract string BuildInsertSql();
 
-        protected abstract string BuildDeleteSql();
+        protected internal abstract string BuildUpdateSql();
+
+        protected internal abstract string BuildDeleteSql();
 
         protected virtual string GetTableName(Type type)
         {
@@ -170,31 +169,10 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             return (from prop in modelType.GetProperties()
                    let columnName = GetColumnName(modelType, prop)
-                   let propertyName = CamelCase(prop.Name)
+                   let propertyName = NormalizeName(prop.Name)
                    select (columnName, propertyName))
                 .DistinctBy(m => m.columnName, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(m => m.columnName, m => m.propertyName, StringComparer.OrdinalIgnoreCase);
-
-            string CamelCase(string name)
-            {
-                var parts = name.Split([' ', '_']);
-
-                // property name is something like `Name` or `CorrelationId`
-                if (parts.Length == 1)
-                    parts[0] = char.ToLowerInvariant(parts[0][0]) + parts[0].Substring(1);
-                else
-                    parts[0] = parts[0].ToLowerInvariant();
-
-                if (parts.Length > 1)
-                {
-                    for (var index = 1; index < parts.Length; index++)
-                    {
-                        parts[index] = char.ToUpperInvariant(parts[index][0]) + parts[index].Substring(1).ToLowerInvariant();
-                    }
-                }
-
-                return string.Concat(parts);
-            }
         }
 
         protected void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
@@ -212,6 +190,11 @@ namespace MassTransit.Persistence.Integration.Saga
                 Name = name ?? body.Member.Name,
                 Exact = exact,
             });
+        }
+
+        protected static string NormalizeName(string original)
+        {
+            return new string(original.ToLowerInvariant().Where(char.IsAsciiLetterOrDigit).ToArray());
         }
 
         static string? AttributeValue(Type type, string attributeName, string propertyName)

@@ -19,7 +19,7 @@ public class PessimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseConte
         
     protected override string BuildLoadSql()
     {
-        return $"SELECT TOP 1 * FROM {TableName} WITH (UPDLOCK, ROWLOCK) WHERE [{IdColumnName}] = @correlationId";
+        return $"SELECT TOP 1 * FROM {TableName} WITH (UPDLOCK, ROWLOCK) WHERE [{IdColumnName}] = @correlationid";
     }
 
     protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -39,8 +39,6 @@ public class PessimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseConte
     {
         var properties = BuildProperties(ModelType);
 
-        properties.Remove(IdColumnName);
-
         var columns = string.Join(", ", properties.Select(p => $"[{p.Key}]"));
         var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
 
@@ -52,18 +50,19 @@ public class PessimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseConte
     protected override string BuildUpdateSql()
     {
         var properties = BuildProperties(ModelType);
-        properties.Remove(IdColumnName);
+
+        properties.Remove(nameof(ISaga.CorrelationId));
 
         var updateExpression = string.Join(", ", properties.Select(p => $"[{p.Key}] = @{p.Value}"));
 
-        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationId";
+        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationid";
 
         return sql;
     }
 
     protected override string BuildDeleteSql()
     {
-        var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationId";
+        var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationid";
 
         return sql;
     }

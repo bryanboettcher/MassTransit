@@ -69,9 +69,18 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
     /// <inheritdoc />
     public ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector, string versionColumnName = "RowVersion")
     {
+        return SetOptimisticConcurrency(
+            ExtractPropertyName(versionPropertySelector),
+            versionColumnName
+        );
+    }
+
+    /// <inheritdoc />
+    public ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionPropertyName = "RowVersion", string versionColumnName = "RowVersion")
+    {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
         VersionColumnName = versionColumnName;
-        VersionPropertyName = ExtractPropertyName(versionPropertySelector);
+        VersionPropertyName = versionPropertyName;
         return this;
     }
 
@@ -93,6 +102,9 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
 
     Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+        ArgumentException.ThrowIfNullOrEmpty(TableName);
+        
         return ConcurrencyMode == ConcurrencyMode.Optimistic
             ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticSqlServerDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, VersionColumnName, VersionPropertyName))
             : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticSqlServerDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, IsolationLevel));

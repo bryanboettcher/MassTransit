@@ -32,6 +32,11 @@ public interface IPostgresRepositoryConfigurator<TSaga>
     IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector);
 
     /// <summary>
+    /// Use optimistic concurrency for saga operations.  Requires a versioning column in the model.
+    /// </summary>
+    IPostgresRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionPropertyName = "XMin");
+
+    /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
     /// but will lock rows being used.  <see cref="IsolationLevel"/> sets the isolation for the
     /// transaction.

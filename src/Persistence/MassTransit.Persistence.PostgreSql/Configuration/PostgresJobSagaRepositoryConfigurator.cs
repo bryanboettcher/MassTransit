@@ -1,12 +1,10 @@
 ﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 using System.Data;
-using Connections;
 using Integration.JobSagas;
 using Integration.Saga;
-using Integration.SqlBuilders;
+using MassTransit.Persistence.PostgreSql.Connections;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Persistence.Configuration;
 
 
@@ -16,11 +14,7 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
     public string? ConnectionString { get; set; }
 
     /// <inheritdoc />
-    public IEnumerable<ValidationResult> Validate()
-    {
-        if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return this.Failure("ConnectionString must be specified");
-    }
+    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
     /// <inheritdoc />
     public IPostgresJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
@@ -29,61 +23,46 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
         return this;
     }
 
+    /// <inheritdoc />
+    public IPostgresJobSagaRepositoryConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+    {
+        IsolationLevel = isolationLevel;
+        return this;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<ValidationResult> Validate()
+    {
+        if (string.IsNullOrWhiteSpace(ConnectionString))
+            yield return this.Failure("ConnectionString must be specified");
+    }
+
     public void Configure(IAdoJobSagaRepositoryConfigurator configurator)
     {
         (configurator as AdoJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
 
-        configurator.SetJobContextFactory(Create<JobSaga, JobSagaDatabaseContext, JobSagaDatabaseContext.DbModel>());
-        configurator.SetJobTypeContextFactory(Create<JobTypeSaga, JobTypeSagaDatabaseContext, JobTypeSagaDatabaseContext.DbModel>());
-        configurator.SetJobAttemptContextFactory(Create<JobAttemptSaga, JobAttemptSagaDatabaseContext, JobAttemptSagaDatabaseContext.DbModel>());
+        configurator.SetJobContextFactory(sp => Task.FromResult<DatabaseContext<JobSaga>>(sp.GetRequiredService<JobSagaDatabaseContext>()));
+        configurator.SetJobTypeContextFactory(sp => Task.FromResult<DatabaseContext<JobTypeSaga>>(sp.GetRequiredService<JobTypeSagaDatabaseContext>()));
+        configurator.SetJobAttemptContextFactory(sp => Task.FromResult<DatabaseContext<JobAttemptSaga>>(sp.GetRequiredService<JobAttemptSagaDatabaseContext>()));
     }
 
     void RegisterDependencies(IServiceCollection services)
     {
-        // TODO: Fix registrations
-        //services.TryAddScoped<JobSagaDatabaseContext>();
-        //services.TryAddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
-        //services.TryAddScoped<ISagaSqlFormatter<JobSagaDatabaseContext.DbModel>>(
-        //    _ => new PessimisticPostgresSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
-        //);
-        //services.TryAddScoped<ISagaConnectionProvider<JobSagaDatabaseContext.DbModel>>(
-        //    _ => new PostgresSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        //);
+        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
 
-        //services.TryAddScoped<JobAttemptSagaDatabaseContext>();
-        //services.TryAddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
-        //services.TryAddScoped<ISagaSqlFormatter<JobAttemptSagaDatabaseContext.DbModel>>(
-        //    _ => new PessimisticPostgresSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
-        //);
-        //services.TryAddScoped<ISagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
-        //    _ => new PostgresSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        //);
+        services.AddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
+        services.AddScoped<DatabaseContext<JobSagaDatabaseContext.DbModel>>(
+            _ => new PessimisticPostgresDatabaseContext<JobSagaDatabaseContext.DbModel>(ConnectionString, "Jobs", nameof(ISaga.CorrelationId), IsolationLevel)
+        );
 
-        //services.TryAddScoped<JobTypeSagaDatabaseContext>();
-        //services.TryAddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
-        //services.TryAddScoped<ISagaSqlFormatter<JobTypeSagaDatabaseContext.DbModel>>(
-        //    _ => new PessimisticPostgresSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
-        //);
-        //services.TryAddScoped<ISagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
-        //    _ => new PostgresSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        //);
-    }
+        services.AddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
+        services.AddScoped<DatabaseContext<JobTypeSagaDatabaseContext.DbModel>>(
+            _ => new PessimisticPostgresDatabaseContext<JobTypeSagaDatabaseContext.DbModel>(ConnectionString, "JobTypes", nameof(ISaga.CorrelationId), IsolationLevel)
+        );
 
-    static DatabaseContextFactory<TSaga> Create<TSaga, TContext, TModel>()
-        where TSaga : class, ISaga
-        where TContext : DatabaseContext<TSaga>
-        where TModel : class, ISaga
-    {
-        // TODO: Fix registrations
-        return async serviceProvider => null;
-        //{
-        //    var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TModel>>();
-        //    var serializer = serviceProvider.GetRequiredService<SagaSerializer<TSaga, TModel>>();
-        //    var provider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TModel>>();
-
-        //    var connection = await provider.CreateConnection();
-        //    var context = new SagaDatabaseContext<TModel>(connection, formatter);
-        //    return (TContext)Activator.CreateInstance(typeof(TContext), context, serializer)!;
-        //};
+        services.AddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
+        services.AddScoped<DatabaseContext<JobAttemptSagaDatabaseContext.DbModel>>(
+            _ => new PessimisticPostgresDatabaseContext<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString, "JobAttempts", nameof(ISaga.CorrelationId), IsolationLevel)
+        );
     }
 }

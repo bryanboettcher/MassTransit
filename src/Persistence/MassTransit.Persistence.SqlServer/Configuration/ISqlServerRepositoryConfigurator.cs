@@ -32,6 +32,11 @@ public interface ISqlServerRepositoryConfigurator<TSaga>
     ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector, string versionColumnName = "RowVersion");
 
     /// <summary>
+    /// Use optimistic concurrency for saga operations.  Requires a versioning column in the model.
+    /// </summary>
+    ISqlServerRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionPropertyName = "RowVersion", string versionColumnName = "RowVersion");
+
+    /// <summary>
     /// Use pessimistic concurrency for saga operations, the default.  Does not require versioning,
     /// but will lock rows being used.  <see cref="IsolationLevel"/> sets the isolation for the
     /// transaction.

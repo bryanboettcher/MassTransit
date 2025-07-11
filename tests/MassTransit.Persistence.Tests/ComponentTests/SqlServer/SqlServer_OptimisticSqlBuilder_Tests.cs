@@ -1,8 +1,8 @@
 ﻿namespace MassTransit.Persistence.Tests.ComponentTests.SqlServer
 {
-    using Common;
-    using Integration.SqlBuilders;
+    using Integration.Saga;
     using NUnit.Framework;
+    using Persistence.SqlServer.Connections;
 
 
     [TestFixture]
@@ -10,13 +10,13 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected ISagaSqlFormatter<VersionedSaga> Subject = new OptimisticSqlServerSagaFormatter<VersionedSaga>();
+            protected SagaDatabaseContext<VersionedSaga> Subject = new OptimisticSqlServerDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "RowVersion", "RowVersion");
 
             [Test]
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO VersionedSagas ([CorrelationId], [Name], [Age], [PhoneNumber], [Zip_Code]) VALUES (@correlationId, @name, @age, @phoneNumber, @zipCode)";
+                var expected = "INSERT INTO VersionedSagas ([CorrelationId], [Name], [Age], [PhoneNumber], [Zip_Code]) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -25,7 +25,7 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET [Name] = @name, [Age] = @age, [PhoneNumber] = @phoneNumber, [Zip_Code] = @zipCode WHERE [CorrelationId] = @correlationId AND [RowVersion] = @rowversion";
+                var expected = "UPDATE VersionedSagas SET [Name] = @name, [Age] = @age, [PhoneNumber] = @phonenumber, [Zip_Code] = @zipcode WHERE [CorrelationId] = @correlationid AND [RowVersion] = @rowversion";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -34,7 +34,7 @@
             public void Delete_builds_correct_sql()
             {
                 var actual = Subject.BuildDeleteSql();
-                var expected = "DELETE FROM VersionedSagas WHERE [CorrelationId] = @correlationId AND [RowVersion] = @rowversion";
+                var expected = "DELETE FROM VersionedSagas WHERE [CorrelationId] = @correlationid AND [RowVersion] = @rowversion";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -43,7 +43,7 @@
             public void Load_builds_correct_sql()
             {
                 var actual = Subject.BuildLoadSql();
-                var expected = "SELECT TOP 1 * FROM VersionedSagas WHERE [CorrelationId] = @correlationId";
+                var expected = "SELECT TOP 1 * FROM VersionedSagas WHERE [CorrelationId] = @correlationid";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -57,27 +57,5 @@
                 Assert.That(actual, Is.EqualTo(expected));
             }
         }
-
-        public class UnversionedSaga_SqlBuilder
-        {
-            protected ISagaSqlFormatter<UnversionedSaga> Subject;
-
-            [Test]
-            public void Unversioned_properly_errors()
-            {
-                try
-                {
-                    Subject = new OptimisticSqlServerSagaFormatter<UnversionedSaga>();
-                }
-                catch (InvalidOperationException e)
-                {
-                    Assert.That(e.Message, Contains.Substring("ROWVERSION column was not auto-detected").IgnoreCase);
-                    return;
-                }
-
-                Assert.Fail("Exception should have been thrown");
-            }
-        }
-
     }
 }

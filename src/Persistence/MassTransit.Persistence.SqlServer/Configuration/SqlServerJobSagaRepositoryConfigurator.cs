@@ -4,9 +4,7 @@ using System.Data;
 using Connections;
 using Integration.JobSagas;
 using Integration.Saga;
-using Integration.SqlBuilders;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Persistence.Configuration;
 
 
@@ -16,9 +14,19 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
     public string? ConnectionString { get; set; }
 
     /// <inheritdoc />
+    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
+
+    /// <inheritdoc />
     public ISqlServerJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
     {
         ConnectionString = connectionString;
+        return this;
+    }
+
+    /// <inheritdoc />
+    public ISqlServerJobSagaRepositoryConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+    {
+        IsolationLevel = isolationLevel;
         return this;
     }
 
@@ -32,59 +40,28 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
     {
         (configurator as AdoJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
 
-        configurator.SetJobContextFactory(Create<JobSaga, JobSagaDatabaseContext, JobSagaDatabaseContext.DbModel>());
-        configurator.SetJobTypeContextFactory(Create<JobTypeSaga, JobTypeSagaDatabaseContext, JobTypeSagaDatabaseContext.DbModel>());
-        configurator.SetJobAttemptContextFactory(Create<JobAttemptSaga, JobAttemptSagaDatabaseContext, JobAttemptSagaDatabaseContext.DbModel>());
+        configurator.SetJobContextFactory(sp => Task.FromResult<DatabaseContext<JobSaga>>(sp.GetRequiredService<JobSagaDatabaseContext>()));
+        configurator.SetJobTypeContextFactory(sp => Task.FromResult<DatabaseContext<JobTypeSaga>>(sp.GetRequiredService<JobTypeSagaDatabaseContext>()));
+        configurator.SetJobAttemptContextFactory(sp => Task.FromResult<DatabaseContext<JobAttemptSaga>>(sp.GetRequiredService<JobAttemptSagaDatabaseContext>()));
     }
 
     void RegisterDependencies(IServiceCollection services)
     {
-        // TODO: Fix registrations for JobConsumer sagas
+        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
 
-        //services.TryAddScoped<JobSagaDatabaseContext>();
-        //services.TryAddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
-        //services.TryAddScoped<ISagaSqlFormatter<JobSagaDatabaseContext.DbModel>>(
-        //    _ => new PessimisticSqlServerSagaFormatter<JobSagaDatabaseContext.DbModel>("Jobs")
-        //);
-        //services.TryAddScoped<ISagaConnectionProvider<JobSagaDatabaseContext.DbModel>>(
-        //    _ => new SqlServerSagaConnectionProvider<JobSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        //);
+        services.AddScoped<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
+        services.AddScoped<DatabaseContext<JobSagaDatabaseContext.DbModel>>(
+            _ => new PessimisticSqlServerDatabaseContext<JobSagaDatabaseContext.DbModel>(ConnectionString, "Jobs", nameof(ISaga.CorrelationId), IsolationLevel)
+        );
 
-        //services.TryAddScoped<JobAttemptSagaDatabaseContext>();
-        //services.TryAddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
-        //services.TryAddScoped<ISagaSqlFormatter<JobAttemptSagaDatabaseContext.DbModel>>(
-        //    _ => new PessimisticSqlServerSagaFormatter<JobAttemptSagaDatabaseContext.DbModel>("JobAttempts")
-        //);
-        //services.TryAddScoped<ISagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>>(
-        //    _ => new SqlServerSagaConnectionProvider<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        //);
+        services.AddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
+        services.AddScoped<DatabaseContext<JobTypeSagaDatabaseContext.DbModel>>(
+            _ => new PessimisticSqlServerDatabaseContext<JobTypeSagaDatabaseContext.DbModel>(ConnectionString, "JobTypes", nameof(ISaga.CorrelationId), IsolationLevel)
+        );
 
-        //services.TryAddScoped<JobTypeSagaDatabaseContext>();
-        //services.TryAddScoped<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
-        //services.TryAddScoped<ISagaSqlFormatter<JobTypeSagaDatabaseContext.DbModel>>(
-        //    _ => new PessimisticSqlServerSagaFormatter<JobTypeSagaDatabaseContext.DbModel>("JobTypes")
-        //);
-        //services.TryAddScoped<ISagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>>(
-        //    _ => new SqlServerSagaConnectionProvider<JobTypeSagaDatabaseContext.DbModel>(ConnectionString!, IsolationLevel.ReadCommitted)
-        //);
-    }
-
-    static DatabaseContextFactory<TSaga> Create<TSaga, TContext, TModel>()
-        where TSaga : class, ISaga
-        where TContext : DatabaseContext<TSaga>
-        where TModel : class, ISaga
-    {
-        // TODO: Fix registrations for JobConsumer sagas
-
-        return async serviceProvider => null;
-        //{
-        //    var formatter = serviceProvider.GetRequiredService<ISagaSqlFormatter<TModel>>();
-        //    var serializer = serviceProvider.GetRequiredService<SagaSerializer<TSaga, TModel>>();
-        //    var provider = serviceProvider.GetRequiredService<ISagaConnectionProvider<TModel>>();
-
-        //    var connection = await provider.CreateConnection();
-        //    var context = new SagaDatabaseContext<TModel>(connection, formatter);
-        //    return (TContext)Activator.CreateInstance(typeof(TContext), context, serializer)!;
-        //};
+        services.AddScoped<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
+        services.AddScoped<DatabaseContext<JobAttemptSagaDatabaseContext.DbModel>>(
+            _ => new PessimisticSqlServerDatabaseContext<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString, "JobAttempts", nameof(ISaga.CorrelationId), IsolationLevel)
+        );
     }
 }

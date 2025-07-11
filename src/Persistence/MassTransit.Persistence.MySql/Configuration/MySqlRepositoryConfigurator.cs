@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using Connections;
 using Integration.Saga;
 using Microsoft.Extensions.DependencyInjection;
-using Org.BouncyCastle.Pqc.Crypto.Bike;
 using Persistence.Configuration;
 
 
@@ -22,10 +21,10 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
     public ConcurrencyMode ConcurrencyMode { get; set; } = ConcurrencyMode.Pessimistic;
 
     /// <inheritdoc />
-    public string VersionColumnName { get; set; }
+    public string? VersionColumnName { get; set; }
 
     /// <inheritdoc />
-    public string VersionPropertyName { get; set; }
+    public string? VersionPropertyName { get; set; }
 
     /// <inheritdoc />
     public string? TableName { get; set; }
@@ -70,9 +69,18 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
     /// <inheritdoc />
     public IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency<TProp>(Expression<Func<TSaga, TProp>> versionPropertySelector, string versionColumnName = "RowVersion")
     {
+        return SetOptimisticConcurrency(
+            ExtractPropertyName(versionPropertySelector),
+            versionColumnName
+        );
+    }
+
+    /// <inheritdoc />
+    public IMySqlRepositoryConfigurator<TSaga> SetOptimisticConcurrency(string versionPropertyName = "RowVersion", string versionColumnName = "RowVersion")
+    {
         ConcurrencyMode = ConcurrencyMode.Optimistic;
         VersionColumnName = versionColumnName;
-        VersionPropertyName = ExtractPropertyName(versionPropertySelector);
+        VersionPropertyName = versionPropertyName;
         return this;
     }
 
@@ -94,6 +102,9 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
 
     Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+        ArgumentException.ThrowIfNullOrEmpty(TableName);
+
         return ConcurrencyMode == ConcurrencyMode.Optimistic
             ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, VersionColumnName, VersionPropertyName))
             : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, IsolationLevel));
