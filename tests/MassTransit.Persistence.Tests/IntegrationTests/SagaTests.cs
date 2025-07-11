@@ -10,7 +10,7 @@
     {
         protected readonly TConnector Connector;
 
-        protected readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(3);
+        protected readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(2);
         
         protected static readonly Guid SagaId = Guid.Parse("d747db39-0d64-49b5-85f4-2a796ba82130");
 

@@ -43,7 +43,7 @@
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
-            await InMemoryTestHarness.InactivityTask;
+            await Task.Delay(50);
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
@@ -61,11 +61,11 @@
 
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga 0" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
-            await InMemoryTestHarness.InactivityTask;
+            await Task.Delay(50);
 
             await InputQueueSendEndpoint.Send<UpdateSaga>(new { CorrelationId = SagaId, Name = "my saga 1" });
             await BusTestHarness.Consumed.Any<UpdateSaga>();
-            await InMemoryTestHarness.InactivityTask;
+            await Task.Delay(50);
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
@@ -80,17 +80,17 @@
         {
             var sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);
-
+            
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
-            await InMemoryTestHarness.InactivityTask;
+            await Task.Delay(50);
 
             var found = await _repository.ShouldContainSaga(SagaId, DefaultTimeout);
             Assert.That(found, Is.EqualTo(SagaId));
 
             await InputQueueSendEndpoint.Send<DeleteSagaByName>(new { Name = "my saga" });
             await BusTestHarness.Consumed.Any<DeleteSagaByName>();
-            await InMemoryTestHarness.InactivityTask;
+            await Task.Delay(50);
 
             sagas = await GetSagas<TConnector>();
             Assert.That(sagas, Is.Empty);

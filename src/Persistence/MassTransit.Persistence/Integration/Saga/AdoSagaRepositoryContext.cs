@@ -68,7 +68,6 @@ namespace MassTransit.Persistence.Integration.Saga
             => Task.CompletedTask;
     }
 
-
     public class AdoSagaRepositoryContext<TSaga> :
         BasePipeContext,
         QuerySagaRepositoryContext<TSaga>,

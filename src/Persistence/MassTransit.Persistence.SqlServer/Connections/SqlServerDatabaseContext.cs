@@ -1,6 +1,7 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Connections
 {
     using System.Data;
+    using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using Integration.Saga;
     using Integration.SqlBuilders;
@@ -10,7 +11,7 @@
     public abstract class SqlServerDatabaseContext<TSaga> : SagaDatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        protected readonly string ConnectionString;
+        readonly string _connectionString;
 
         protected readonly string TableName;
         protected readonly string IdColumnName;
@@ -22,7 +23,7 @@
 
         protected SqlServerDatabaseContext(string connectionString, string tableName, string idColumnName)
         {
-            ConnectionString = connectionString;
+            _connectionString = connectionString;
 
             TableName = tableName;
             IdColumnName = idColumnName;
@@ -91,7 +92,10 @@
 
         protected virtual async Task<SqlConnection> CreateConnection(CancellationToken cancellationToken)
         {
-            var connection = new SqlConnection(ConnectionString);
+            if (_disposed)
+                Debugger.Break();
+
+            var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken);
 
             await OnConnectionOpened(connection, cancellationToken);

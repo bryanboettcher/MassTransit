@@ -22,7 +22,8 @@
 
         public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken = default)
         {
-            var model = await _databaseContext.LoadAsync(correlationId, cancellationToken);
+            var model = await _databaseContext.LoadAsync(correlationId, cancellationToken)
+                .ConfigureAwait(false);
             return _serializer.FromModel(model);
         }
 
