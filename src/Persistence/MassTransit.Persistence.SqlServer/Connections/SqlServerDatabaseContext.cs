@@ -48,16 +48,9 @@
             var readerAdapter = CreateReaderAdapter();
             var writerAdapter = CreateWriterAdapter();
 
-            Connection = await CreateConnection(cancellationToken)
+            await using var command = await CreateCommand(sql, cancellationToken)
                 .ConfigureAwait(false);
-
-            await using var command = Connection.CreateCommand();
-
-            if (Transaction is not null)
-                command.Transaction = Transaction;
-
-            command.CommandText = sql;
-
+            
             writerAdapter(parameters, command.Parameters);
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken)
@@ -71,15 +64,8 @@
 
         protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
-            Connection = await CreateConnection(cancellationToken)
+            await using var command = await CreateCommand(sql, cancellationToken)
                 .ConfigureAwait(false);
-
-            await using var command = Connection.CreateCommand();
-
-            if (Transaction is not null)
-                command.Transaction = Transaction;
-
-            command.CommandText = sql;
 
             if (parameters is not null)
                 AssignParameters(parameters, command.Parameters);
@@ -90,11 +76,23 @@
             return rows;
         }
 
+        protected virtual async Task<SqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
+        {
+            Connection ??= await CreateConnection(cancellationToken)
+                .ConfigureAwait(false);
+
+            var command = Connection.CreateCommand();
+
+            if (Transaction is not null)
+                command.Transaction = Transaction;
+
+            command.CommandText = sql;
+
+            return command;
+        }
+
         protected virtual async Task<SqlConnection> CreateConnection(CancellationToken cancellationToken)
         {
-            if (_disposed)
-                Debugger.Break();
-
             var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -105,9 +103,17 @@
             return connection;
         }
 
+        /// <summary>
+        /// Reader adapters are to convert from an individual IDataReader row from a
+        /// database reader to a hydrated model instance.
+        /// </summary>
         protected virtual Func<IDataReader, TSaga> CreateReaderAdapter()
             => ReflectionsAdapter.CreateFor<TSaga>();
 
+        /// <summary>
+        /// Writer adapters are to convert an object (usually model instance) to a
+        /// parameter collection for sending to the database.
+        /// </summary>
         protected virtual Action<object?, SqlParameterCollection> CreateWriterAdapter()
             => AssignParameters;
         

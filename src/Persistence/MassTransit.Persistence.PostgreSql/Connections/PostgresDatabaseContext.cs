@@ -10,7 +10,7 @@
     public abstract class PostgresDatabaseContext<TSaga> : SagaDatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        protected readonly string ConnectionString;
+        readonly string _connectionString;
 
         protected readonly string TableName;
         protected readonly string IdColumnName;
@@ -22,7 +22,7 @@
 
         protected PostgresDatabaseContext(string connectionString, string tableName, string idColumnName)
         {
-            ConnectionString = connectionString;
+            _connectionString = connectionString;
             TableName = tableName;
             IdColumnName = idColumnName;
         }
@@ -51,12 +51,8 @@
             Connection = await CreateConnection(cancellationToken)
                 .ConfigureAwait(false);
 
-            await using var command = Connection.CreateCommand();
-
-            if (Transaction is not null)
-                command.Transaction = Transaction;
-
-            command.CommandText = sql;
+            await using var command = await CreateCommand(sql, cancellationToken)
+                .ConfigureAwait(false);
 
             writerAdapter(parameters, command.Parameters);
 
@@ -72,16 +68,9 @@
         protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
             var writerAdapter = CreateWriterAdapter();
-            
-            Connection = await CreateConnection(cancellationToken)
+
+            await using var command = await CreateCommand(sql, cancellationToken)
                 .ConfigureAwait(false);
-
-            await using var command = Connection.CreateCommand();
-
-            if (Transaction is not null)
-                command.Transaction = Transaction;
-
-            command.CommandText = sql;
 
             writerAdapter(parameters, command.Parameters);
 
@@ -91,9 +80,24 @@
             return rows;
         }
 
+        protected virtual async Task<NpgsqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
+        {
+            Connection ??= await CreateConnection(cancellationToken)
+                .ConfigureAwait(false);
+
+            var command = Connection.CreateCommand();
+
+            if (Transaction is not null)
+                command.Transaction = Transaction;
+
+            command.CommandText = sql;
+
+            return command;
+        }
+
         protected virtual async Task<NpgsqlConnection> CreateConnection(CancellationToken cancellationToken)
         {
-            var connection = new NpgsqlConnection(ConnectionString);
+            var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -103,9 +107,17 @@
             return connection;
         }
 
+        /// <summary>
+        /// Reader adapters are to convert from an individual IDataReader row from a
+        /// database reader to a hydrated model instance.
+        /// </summary>
         protected virtual Func<IDataReader, TSaga> CreateReaderAdapter()
             => ReflectionsAdapter.CreateFor<TSaga>();
 
+        /// <summary>
+        /// Writer adapters are to convert an object (usually model instance) to a
+        /// parameter collection for sending to the database.
+        /// </summary>
         protected virtual Action<object?, NpgsqlParameterCollection> CreateWriterAdapter()
             => AssignParameters;
 

@@ -7,7 +7,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
 
     /// <summary>
-    /// Contains saga-specific logic as well as respecting ISagaVersion
+    /// Handles the base logic for connectors to plug into.
     /// </summary>
     /// <typeparam name="TSaga"></typeparam>
     public abstract class SagaDatabaseContext<TSaga>

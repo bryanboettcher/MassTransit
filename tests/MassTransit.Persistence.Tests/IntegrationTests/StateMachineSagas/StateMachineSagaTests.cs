@@ -62,7 +62,7 @@
             await InputQueueSendEndpoint.Send<CreateSaga>(new { CorrelationId = SagaId, Name = "my saga 0" });
             await BusTestHarness.Consumed.Any<CreateSaga>();
             await Task.Delay(50);
-
+            
             await InputQueueSendEndpoint.Send<UpdateSaga>(new { CorrelationId = SagaId, Name = "my saga 1" });
             await BusTestHarness.Consumed.Any<UpdateSaga>();
             await Task.Delay(50);

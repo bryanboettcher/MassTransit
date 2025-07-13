@@ -28,7 +28,7 @@ public class AdoJobSagaRepositoryConfigurator : IAdoJobSagaRepositoryConfigurato
         configurator.Repository(services => _callbacks.ForEach(c => c.Invoke(services)));
         _callbacks.Clear();
 
-        switch ( configurator )
+        switch (configurator)
         {
             case SagaRegistrationConfigurator<JobSaga> job:
                 job.Repository(services => Register(

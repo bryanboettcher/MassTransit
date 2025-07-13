@@ -13,13 +13,16 @@ namespace MassTransit.Persistence.Integration.Saga
         where TSaga : class, ISaga
     {
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
+        readonly DatabaseContext<TSaga> _databaseContext;
         readonly IServiceProvider _serviceProvider;
 
         public AdoSagaRepositoryContextFactory(
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory,
+            DatabaseContext<TSaga> databaseContext,
             IServiceProvider serviceProvider)
         {
             _factory = factory;
+            _databaseContext = databaseContext;
             _serviceProvider = serviceProvider;
         }
 
@@ -45,8 +48,8 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             var cancellationToken = context.CancellationToken;
 
-            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
-                .ConfigureAwait(false);
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
+            //var databaseContext = _databaseContext;
 
             var repositoryContext = new AdoSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
 
@@ -62,8 +65,8 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             var cancellationToken = context.CancellationToken;
 
-            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
-                .ConfigureAwait(false);
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
+            //var databaseContext = _databaseContext;
 
             var instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -98,9 +101,7 @@ namespace MassTransit.Persistence.Integration.Saga
         Task<DatabaseContext<TSaga>> CreateDatabaseContext(CancellationToken cancellationToken)
         {
             var contextFactory = _serviceProvider.GetRequiredService<DatabaseContextFactory<TSaga>>();
-            var context = contextFactory(_serviceProvider);
-
-            return context;
+            return contextFactory(_serviceProvider);
         }
     }
 }

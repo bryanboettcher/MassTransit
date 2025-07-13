@@ -1,6 +1,7 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Connections;
 
 using System.Data;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Integration.Saga;
 using Microsoft.Data.SqlClient;
@@ -16,7 +17,7 @@ public class PessimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseConte
     {
         _isolationLevel = isolationLevel;
     }
-        
+
     protected override string BuildLoadSql()
     {
         return $"SELECT TOP 1 * FROM {TableName} WITH (UPDLOCK, ROWLOCK) WHERE [{IdColumnName}] = @correlationid";

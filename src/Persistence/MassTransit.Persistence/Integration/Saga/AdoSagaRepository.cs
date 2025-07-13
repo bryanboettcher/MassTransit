@@ -29,7 +29,15 @@
 
             var consumeContextFactory = new SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>();
 
-            var repositoryContextFactory = new AdoSagaRepositoryContextFactory<TSaga>(consumeContextFactory, provider);
+            var databaseContextFactory = provider.GetRequiredService<DatabaseContextFactory<TSaga>>();
+
+            var databaseContext = databaseContextFactory(provider).GetAwaiter().GetResult();
+
+            var repositoryContextFactory = new AdoSagaRepositoryContextFactory<TSaga>(
+                consumeContextFactory,
+                databaseContext,
+                provider
+            );
 
             return new SagaRepository<TSaga>(
                 repositoryContextFactory,

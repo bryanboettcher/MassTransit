@@ -32,7 +32,7 @@ public class AdoRepositoryConfigurator<TSaga> : IAdoRepositoryConfigurator<TSaga
         _callbacks.ForEach(c => c.Invoke(services));
         _callbacks.Clear();
 
-        services.AddScoped(_ => _contextFactory!);
+        services.AddSingleton(_ => _contextFactory!);
 
         services.RegisterLoadSagaRepository<TSaga, AdoSagaRepositoryContextFactory<TSaga>>();
         services.RegisterQuerySagaRepository<TSaga, AdoSagaRepositoryContextFactory<TSaga>>();

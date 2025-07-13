@@ -16,7 +16,9 @@ namespace MassTransit.Persistence.Integration.Saga
         readonly DatabaseContext<TSaga> _context;
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
 
-        public AdoSagaRepositoryContext(DatabaseContext<TSaga> context, ConsumeContext<TMessage> consumeContext,
+        public AdoSagaRepositoryContext(
+            DatabaseContext<TSaga> context,
+            ConsumeContext<TMessage> consumeContext,
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory)
             : base(consumeContext, context)
         {
@@ -41,8 +43,8 @@ namespace MassTransit.Persistence.Integration.Saga
             await _context.InsertAsync(instance, CancellationToken)
                 .ConfigureAwait(false);
 
-            await _context.CommitAsync(CancellationToken)
-                .ConfigureAwait(false);
+            // await _context.CommitAsync(CancellationToken)
+            //     .ConfigureAwait(false);
             
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Insert).ConfigureAwait(false);
         }
