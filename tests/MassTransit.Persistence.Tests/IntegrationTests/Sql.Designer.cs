@@ -131,43 +131,23 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to TRUNCATE TABLE Jobs;
-        ///TRUNCATE TABLE JobAttempts;
-        ///TRUNCATE TABLE JobTypes;.
-        /// </summary>
-        internal static string MySql_ResetJobTables {
-            get {
-                return ResourceManager.GetString("MySql_ResetJobTables", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to TRUNCATE TABLE OptimisticSagas;
-        ///TRUNCATE TABLE PessimisticSagas;.
-        /// </summary>
-        internal static string MySql_ResetSagaTables {
-            get {
-                return ResourceManager.GetString("MySql_ResetSagaTables", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to CREATE TABLE IF NOT EXISTS &quot;JobAttempts&quot; (
-        ///    &quot;CorrelationId&quot; UUID NOT NULL,
-        ///    &quot;CurrentState&quot; INTEGER NOT NULL,
-        ///    &quot;JobId&quot; UUID NOT NULL,    
-        ///    &quot;Started&quot; TIMESTAMP NULL,
-        ///    &quot;Faulted&quot; TIMESTAMP NULL,
-        ///    &quot;StatusCheckTokenId&quot; UUID NULL,    
-        ///    &quot;RetryAttempt&quot; INTEGER NOT NULL,
-        ///    &quot;ServiceAddress&quot; VARCHAR(1000) NULL,
-        ///    &quot;InstanceAddress&quot; VARCHAR(1000) NULL,
-        ///    PRIMARY KEY (&quot;CorrelationId&quot;)
+        ///   Looks up a localized string similar to CREATE TABLE IF NOT EXISTS JobAttempts (
+        ///    CorrelationId UUID NOT NULL,
+        ///    CurrentState INTEGER NOT NULL,
+        ///    JobId UUID NOT NULL,    
+        ///    Started TIMESTAMP NULL,
+        ///    Faulted TIMESTAMP NULL,
+        ///    StatusCheckTokenId UUID NULL,    
+        ///    RetryAttempt INTEGER NOT NULL,
+        ///    ServiceAddress VARCHAR(1000) NULL,
+        ///    InstanceAddress VARCHAR(1000) NULL,
+        ///    PRIMARY KEY (CorrelationId)
         ///);
         ///
-        ///CREATE TABLE IF NOT EXISTS &quot;JobTypes&quot; (
-        ///    &quot;CorrelationId&quot; UUID NOT NULL,
-        ///    &quot;Name&quot; VARCHAR [rest of string was truncated]&quot;;.
+        ///CREATE TABLE IF NOT EXISTS JobTypes (
+        ///    CorrelationId UUID NOT NULL,
+        ///    Name VARCHAR(255) NOT NULL,
+        ///    Current [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Postgres_CreateJobTables {
             get {
@@ -213,24 +193,6 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         internal static string Postgres_DropSagaTables {
             get {
                 return ResourceManager.GetString("Postgres_DropSagaTables", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to TRUNCATE TABLE Jobs, JobAttempts, JobTypes;.
-        /// </summary>
-        internal static string Postgres_ResetJobTables {
-            get {
-                return ResourceManager.GetString("Postgres_ResetJobTables", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to TRUNCATE TABLE OptimisticSagas, PessimisticSagas;.
-        /// </summary>
-        internal static string Postgres_ResetSagaTables {
-            get {
-                return ResourceManager.GetString("Postgres_ResetSagaTables", resourceCulture);
             }
         }
         
@@ -300,27 +262,6 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         internal static string SqlServer_DropSagaTables {
             get {
                 return ResourceManager.GetString("SqlServer_DropSagaTables", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to TRUNCATE TABLE [dbo].[Jobs];
-        ///TRUNCATE TABLE [dbo].[JobAttempts];
-        ///TRUNCATE TABLE [dbo].[JobTypes];.
-        /// </summary>
-        internal static string SqlServer_ResetJobTables {
-            get {
-                return ResourceManager.GetString("SqlServer_ResetJobTables", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to TRUNCATE TABLE [dbo].[OptimisticSagas];
-        ///TRUNCATE TABLE [dbo].[PessimisticSagas];.
-        /// </summary>
-        internal static string SqlServer_ResetSagaTables {
-            get {
-                return ResourceManager.GetString("SqlServer_ResetSagaTables", resourceCulture);
             }
         }
     }

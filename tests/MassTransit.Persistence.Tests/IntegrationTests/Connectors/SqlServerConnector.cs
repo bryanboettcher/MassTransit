@@ -46,12 +46,6 @@ public abstract class SqlServerConnector : BehaviorSaga
         await RunSql(Sql.SqlServer_CreateSagaTables);
     }
 
-    public async Task Reset()
-    {
-        await RunSql(Sql.SqlServer_ResetJobTables);
-        await RunSql(Sql.SqlServer_ResetSagaTables);
-    }
-
     public async Task Teardown()
     {
         await RunSql(Sql.SqlServer_DropJobTables);

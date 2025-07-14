@@ -40,7 +40,7 @@ public abstract class MySqlConnector : BehaviorSaga
 
     public MySqlConnector()
     {
-        ConnectionString = "Server=localhost; Database=masstransit; Uid=root; Pwd=Password12!";
+        ConnectionString = "Server=localhost; Database=masstransit; Uid=sa; Pwd=Password12!";
     }
 
     public async Task Setup()
@@ -50,12 +50,6 @@ public abstract class MySqlConnector : BehaviorSaga
 
         await RunSql(Sql.MySql_CreateJobTables);
         await RunSql(Sql.MySql_CreateSagaTables);
-    }
-
-    public async Task Reset()
-    {
-        await RunSql(Sql.MySql_ResetJobTables);
-        await RunSql(Sql.MySql_ResetSagaTables);
     }
 
     public async Task Teardown()

@@ -1,6 +1,7 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Components.JobConsumers;
 
 using System.Data;
+using System.Data.Common;
 using System.Linq.Expressions;
 using Connections;
 using Extensions;
@@ -15,7 +16,7 @@ public class JobSagaDatabaseContext : PessimisticSqlServerDatabaseContext<JobSag
 
     protected override string BuildInsertSql()
     {
-        return @$"""
+        return @$"
 INSERT INTO {TableName} 
     (CorrelationId, CurrentState, Completed, Faulted, Started, Submitted, EndDate, NextStartDate,
     StartDate, AttemptId, JobTypeId, JobRetryDelayToken, JobSlotWaitToken, RetryAttempt, LastProgressLimit,
@@ -26,12 +27,12 @@ VALUES
     @startdate, @attemptid, @jobtypeid, @jobretrydelaytoken, @jobslotwaittoken, @retryattempt, @lastprogresslimit,
     @lastprogresssequencenumber, @lastprogressvalue, @cronexpression, @reason, @timezoneid,
     @duration, @jobtimeout, @serviceaddress, @incompleteattempts, @job, @jobproperties, @jobstate);
-""";
+";
     }
 
     protected override string BuildUpdateSql()
     {
-        return $@"""
+        return $@"
 UPDATE {TableName}
 SET
 	CurrentState = @currentstate,
@@ -62,7 +63,7 @@ SET
 	JobState = @jobstate
 WHERE
     CorrelationId = @correlationid;
-""";
+";
     }
 
     protected override string BuildDeleteSql()
@@ -125,35 +126,39 @@ WHERE
 
     static void ConvertTo(object? source, SqlParameterCollection collection)
     {
-        if (source is not JobSaga instance)
-            throw new NotSupportedException("ConvertTo only supports JobSaga");
+        if (source is JobSaga instance)
+        {
+            collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
+            collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
+            collection.Add("@completed", SqlDbType.DateTime).Value = instance.Completed.OrDbNull();
+            collection.Add("@faulted", SqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
+            collection.Add("@started", SqlDbType.DateTime).Value = instance.Started.OrDbNull();
+            collection.Add("@submitted", SqlDbType.DateTime).Value = instance.Submitted.OrDbNull();
+            collection.Add("@enddate", SqlDbType.DateTimeOffset).Value = instance.EndDate.OrDbNull();
+            collection.Add("@nextstartdate", SqlDbType.DateTimeOffset).Value = instance.NextStartDate.OrDbNull();
+            collection.Add("@startdate", SqlDbType.DateTimeOffset).Value = instance.StartDate.OrDbNull();
+            collection.Add("@attemptid", SqlDbType.UniqueIdentifier).Value = instance.AttemptId;
+            collection.Add("@jobtypeid", SqlDbType.UniqueIdentifier).Value = instance.JobTypeId;
+            collection.Add("@jobretrydelaytoken", SqlDbType.UniqueIdentifier).Value = instance.JobRetryDelayToken.OrDbNull();
+            collection.Add("@jobslotwaittoken", SqlDbType.UniqueIdentifier).Value = instance.JobSlotWaitToken.OrDbNull();
+            collection.Add("@retryattempt", SqlDbType.Int).Value = instance.RetryAttempt;
+            collection.Add("@lastprogresslimit", SqlDbType.BigInt).Value = instance.LastProgressLimit.OrDbNull();
+            collection.Add("@lastprogresssequencenumber", SqlDbType.BigInt).Value = instance.LastProgressSequenceNumber.OrDbNull();
+            collection.Add("@lastprogressvalue", SqlDbType.BigInt).Value = instance.LastProgressValue.OrDbNull();
+            collection.Add("@cronexpression", SqlDbType.NVarChar, 255).Value = instance.CronExpression.OrDbNull();
+            collection.Add("@reason", SqlDbType.NVarChar, -1).Value = instance.Reason.OrDbNull();
+            collection.Add("@timezoneid", SqlDbType.NVarChar, 100).Value = instance.TimeZoneId.OrDbNull();
+            collection.Add("@duration", SqlDbType.Time).Value = instance.Duration.OrDbNull();
+            collection.Add("@jobtimeout", SqlDbType.Time).Value = instance.JobTimeout.OrDbNull();
+            collection.Add("@serviceaddress", SqlDbType.NVarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+            collection.Add("@incompleteattempts", SqlDbType.VarChar, -1).Value = instance.IncompleteAttempts.ToJson().OrDbNull();
+            collection.Add("@job", SqlDbType.VarChar, -1).Value = instance.Job.ToJson().OrDbNull();
+            collection.Add("@jobproperties", SqlDbType.VarChar, -1).Value = instance.JobProperties.ToJson().OrDbNull();
+            collection.Add("@jobstate", SqlDbType.VarChar, -1).Value = instance.JobState.ToJson().OrDbNull();
 
-        collection.Add("@correlationId", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
-        collection.Add("@currentState", SqlDbType.Int).Value = instance.CurrentState;
-        collection.Add("@completed", SqlDbType.DateTime).Value = instance.Completed.OrDbNull();
-        collection.Add("@faulted", SqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
-        collection.Add("@started", SqlDbType.DateTime).Value = instance.Started.OrDbNull();
-        collection.Add("@submitted", SqlDbType.DateTime).Value = instance.Submitted.OrDbNull();
-        collection.Add("@endDate", SqlDbType.DateTimeOffset).Value = instance.EndDate.OrDbNull();
-        collection.Add("@nextStartDate", SqlDbType.DateTimeOffset).Value = instance.NextStartDate.OrDbNull();
-        collection.Add("@startDate", SqlDbType.DateTimeOffset).Value = instance.StartDate.OrDbNull();
-        collection.Add("@attemptId", SqlDbType.UniqueIdentifier).Value = instance.AttemptId;
-        collection.Add("@jobTypeId", SqlDbType.UniqueIdentifier).Value = instance.JobTypeId;
-        collection.Add("@jobRetryDelayToken", SqlDbType.UniqueIdentifier).Value = instance.JobRetryDelayToken.OrDbNull();
-        collection.Add("@jobSlotWaitToken", SqlDbType.UniqueIdentifier).Value = instance.JobSlotWaitToken.OrDbNull();
-        collection.Add("@retryAttempt", SqlDbType.Int).Value = instance.RetryAttempt;
-        collection.Add("@lastProgressLimit", SqlDbType.BigInt).Value = instance.LastProgressLimit.OrDbNull();
-        collection.Add("@lastProgressSequenceNumber", SqlDbType.BigInt).Value = instance.LastProgressSequenceNumber.OrDbNull();
-        collection.Add("@lastProgressValue", SqlDbType.BigInt).Value = instance.LastProgressValue.OrDbNull();
-        collection.Add("@cronExpression", SqlDbType.NVarChar, 255).Value = instance.CronExpression.OrDbNull();
-        collection.Add("@reason", SqlDbType.NVarChar, -1).Value = instance.Reason.OrDbNull();
-        collection.Add("@timeZoneId", SqlDbType.NVarChar, 100).Value = instance.TimeZoneId.OrDbNull();
-        collection.Add("@duration", SqlDbType.Time).Value = instance.Duration.OrDbNull();
-        collection.Add("@jobTimeout", SqlDbType.Time).Value = instance.JobTimeout.OrDbNull();
-        collection.Add("@serviceAddress", SqlDbType.NVarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
-        collection.Add("@incompleteAttempts", SqlDbType.VarChar, -1).Value = instance.IncompleteAttempts.ToJson().OrDbNull();
-        collection.Add("@job", SqlDbType.VarChar, -1).Value = instance.Job.ToJson().OrDbNull();
-        collection.Add("@jobProperties", SqlDbType.VarChar, -1).Value = instance.JobProperties.ToJson().OrDbNull();
-        collection.Add("@jobState", SqlDbType.VarChar, -1).Value = instance.JobState.ToJson().OrDbNull();
+            return;
+        }
+
+        AssignParameters(source, collection);
     }
 }

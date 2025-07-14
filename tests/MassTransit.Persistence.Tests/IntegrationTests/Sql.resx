@@ -204,73 +204,64 @@ DROP TABLE IF EXISTS JobAttempts;</value>
     <value>DROP TABLE IF EXISTS OptimisticSagas;
 DROP TABLE IF EXISTS PessimisticSagas;</value>
   </data>
-  <data name="MySql_ResetJobTables" xml:space="preserve">
-    <value>TRUNCATE TABLE Jobs;
-TRUNCATE TABLE JobAttempts;
-TRUNCATE TABLE JobTypes;</value>
-  </data>
-  <data name="MySql_ResetSagaTables" xml:space="preserve">
-    <value>TRUNCATE TABLE OptimisticSagas;
-TRUNCATE TABLE PessimisticSagas;</value>
-  </data>
   <data name="Postgres_CreateJobTables" xml:space="preserve">
-    <value>CREATE TABLE IF NOT EXISTS "JobAttempts" (
-    "CorrelationId" UUID NOT NULL,
-    "CurrentState" INTEGER NOT NULL,
-    "JobId" UUID NOT NULL,    
-    "Started" TIMESTAMP NULL,
-    "Faulted" TIMESTAMP NULL,
-    "StatusCheckTokenId" UUID NULL,    
-    "RetryAttempt" INTEGER NOT NULL,
-    "ServiceAddress" VARCHAR(1000) NULL,
-    "InstanceAddress" VARCHAR(1000) NULL,
-    PRIMARY KEY ("CorrelationId")
+    <value>CREATE TABLE IF NOT EXISTS JobAttempts (
+    CorrelationId UUID NOT NULL,
+    CurrentState INTEGER NOT NULL,
+    JobId UUID NOT NULL,    
+    Started TIMESTAMP NULL,
+    Faulted TIMESTAMP NULL,
+    StatusCheckTokenId UUID NULL,    
+    RetryAttempt INTEGER NOT NULL,
+    ServiceAddress VARCHAR(1000) NULL,
+    InstanceAddress VARCHAR(1000) NULL,
+    PRIMARY KEY (CorrelationId)
 );
 
-CREATE TABLE IF NOT EXISTS "JobTypes" (
-    "CorrelationId" UUID NOT NULL,
-    "Name" VARCHAR(255) NOT NULL,
-    "CurrentState" INTEGER NOT NULL,
-    "ActiveJobCount" INTEGER NOT NULL,
-    "ConcurrentJobLimit" INTEGER NOT NULL,
-    "OverrideJobLimit" INTEGER NULL,
-    "OverrideLimitExpiration" TIMESTAMP NULL,
-    "GlobalConcurrentJobLimit" INTEGER NULL,
-    "ActiveJobs" JSONB NULL,
-    "Instances" JSONB NULL,
-    "Properties" JSONB NULL,      
-    PRIMARY KEY ("CorrelationId")
+CREATE TABLE IF NOT EXISTS JobTypes (
+    CorrelationId UUID NOT NULL,
+    Name VARCHAR(255) NOT NULL,
+    CurrentState INTEGER NOT NULL,
+    ActiveJobCount INTEGER NOT NULL,
+    ConcurrentJobLimit INTEGER NOT NULL,
+    OverrideJobLimit INTEGER NULL,
+    OverrideLimitExpiration TIMESTAMP NULL,
+    GlobalConcurrentJobLimit INTEGER NULL,
+    ActiveJobs JSONB NULL,
+    Instances JSONB NULL,
+    Properties JSONB NULL,      
+    PRIMARY KEY (CorrelationId)
 );
 
-CREATE TABLE IF NOT EXISTS "Jobs" (
-    "CorrelationId" UUID NOT NULL,
-    "CurrentState" INTEGER NOT NULL,    
-    "Completed" TIMESTAMP NULL,
-    "Faulted" TIMESTAMP NULL,
-    "Started" TIMESTAMP NULL,
-    "Submitted" TIMESTAMP NULL,    
-    "EndDate" TIMESTAMPTZ NULL,
-    "NextStartDate" TIMESTAMPTZ NULL,
-    "StartDate" TIMESTAMPTZ NULL,    
-    "AttemptId" UUID NOT NULL,
-    "JobTypeId" UUID NOT NULL,
-    "JobRetryDelayToken" UUID NULL,
-    "JobSlotWaitToken" UUID NULL,    
-    "RetryAttempt" INTEGER NOT NULL,
-    "LastProgressLimit" BIGINT NULL,
-    "LastProgressSequenceNumber" BIGINT NULL,
-    "LastProgressValue" BIGINT NULL,
-    "CronExpression" VARCHAR(255) NULL,
-    "Reason" TEXT NULL,
-    "TimeZoneId" VARCHAR(100) NULL,    
-    "Duration" INTERVAL NULL,
-    "JobTimeout" INTERVAL NULL,
-    "ServiceAddress" VARCHAR(1000) NULL,    
-    "IncompleteAttempts" JSONB NULL,    
-    "Job" JSONB NULL,
-    "JobProperties" JSONB NULL,
-    "JobState" JSONB NULL,    
-    PRIMARY KEY ("CorrelationId")
+CREATE TABLE IF NOT EXISTS Jobs (
+    CorrelationId UUID NOT NULL,
+    CurrentState INTEGER NOT NULL,    
+    Completed TIMESTAMP NULL,
+    Faulted TIMESTAMP NULL,
+    Started TIMESTAMP NULL,
+    Submitted TIMESTAMP NULL,    
+    EndDate TIMESTAMPTZ NULL,
+    NextStartDate TIMESTAMPTZ NULL,
+    StartDate TIMESTAMPTZ NULL,    
+    AttemptId UUID NOT NULL,
+    JobTypeId UUID NOT NULL,
+    JobRetryDelayToken UUID NULL,
+    JobSlotWaitToken UUID NULL,    
+    RetryAttempt INTEGER NOT NULL,
+    LastProgressLimit BIGINT NULL,
+    LastProgressSequenceNumber BIGINT NULL,
+    LastProgressValue BIGINT NULL,
+    CronExpression VARCHAR(255) NULL,
+    Reason TEXT NULL,
+    TimeZoneId VARCHAR(100) NULL,    
+    Duration INTERVAL NULL,
+    JobTimeout INTERVAL NULL,
+    ServiceAddress VARCHAR(1000) NULL,    
+    IncompleteAttempts JSONB NULL,    
+    Job JSONB NULL,
+    JobProperties JSONB NULL,
+    JobState JSONB NULL,    
+    PRIMARY KEY (CorrelationId)
 );</value>
   </data>
   <data name="Postgres_CreateSagaTables" xml:space="preserve">
@@ -295,12 +286,6 @@ CREATE TABLE IF NOT EXISTS PessimisticSagas (
   </data>
   <data name="Postgres_DropSagaTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS OptimisticSagas, PessimisticSagas;</value>
-  </data>
-  <data name="Postgres_ResetJobTables" xml:space="preserve">
-    <value>TRUNCATE TABLE Jobs, JobAttempts, JobTypes;</value>
-  </data>
-  <data name="Postgres_ResetSagaTables" xml:space="preserve">
-    <value>TRUNCATE TABLE OptimisticSagas, PessimisticSagas;</value>
   </data>
   <data name="SqlServer_CreateJobTables" xml:space="preserve">
     <value>CREATE TABLE [dbo].[Jobs] (
@@ -390,14 +375,5 @@ DROP TABLE IF EXISTS [dbo].[JobTypes];</value>
   <data name="SqlServer_DropSagaTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS [dbo].[OptimisticSagas];
 DROP TABLE IF EXISTS [dbo].[PessimisticSagas];</value>
-  </data>
-  <data name="SqlServer_ResetJobTables" xml:space="preserve">
-    <value>TRUNCATE TABLE [dbo].[Jobs];
-TRUNCATE TABLE [dbo].[JobAttempts];
-TRUNCATE TABLE [dbo].[JobTypes];</value>
-  </data>
-  <data name="SqlServer_ResetSagaTables" xml:space="preserve">
-    <value>TRUNCATE TABLE [dbo].[OptimisticSagas];
-TRUNCATE TABLE [dbo].[PessimisticSagas];</value>
   </data>
 </root>

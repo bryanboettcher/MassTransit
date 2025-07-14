@@ -137,7 +137,7 @@
         protected virtual ValueTask OnParametersWritten(SqlCommand command, CancellationToken cancellationToken)
             => ValueTask.CompletedTask;
 
-        static void AssignParameters(object? parameters, SqlParameterCollection collection)
+        internal static void AssignParameters(object? parameters, SqlParameterCollection collection)
         {
             foreach (var (name, value) in ParameterReader.Read(parameters))
             {

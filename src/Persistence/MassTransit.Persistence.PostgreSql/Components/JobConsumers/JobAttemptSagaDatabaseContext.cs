@@ -19,42 +19,42 @@ public class JobAttemptSagaDatabaseContext : PessimisticPostgresDatabaseContext<
 
     protected override string BuildInsertSql()
     {
-        return @$"""
+        return @$"
 INSERT INTO {TableName} 
-    (""CorrelationId"", ""CurrentState"", ""JobId"", ""Started"", ""Faulted"",
-    ""StatusCheckTokenId"", ""RetryAttempt"", ""ServiceAddress"", ""InstanceAddress"") 
+    (CorrelationId, CurrentState, JobId, Started, Faulted,
+    StatusCheckTokenId, RetryAttempt, ServiceAddress, InstanceAddress) 
 VALUES
     (@correlationid, @currentstate, @jobid, @started, @faulted,
     @statuschecktokenid, @retryattempt, @serviceaddress, @instanceaddress);
-""";
+";
     }
 
     protected override string BuildUpdateSql()
     {
-        return $@"""
+        return $@"
 UPDATE {TableName}
 SET
-    ""CurrentState"" = @currentstate,
-    ""JobId"" = @jobid,
-    ""Started"" = @started,
-    ""Faulted"" = @faulted,
-    ""StatusCheckTokenId"" = @statuschecktokenid,
-    ""RetryAttempt"" = @retryattempt,
-    ""ServiceAddress"" = @serviceaddress,
-    ""InstanceAddress"" = @instanceaddress
+    CurrentState = @currentstate,
+    JobId = @jobid,
+    Started = @started,
+    Faulted = @faulted,
+    StatusCheckTokenId = @statuschecktokenid,
+    RetryAttempt = @retryattempt,
+    ServiceAddress = @serviceaddress,
+    InstanceAddress = @instanceaddress
 WHERE
-    ""CorrelationId"" = @correlationid;
-""";
+    CorrelationId = @correlationid;
+";
     }
 
     protected override string BuildDeleteSql()
     {
-        return $@"DELETE FROM {TableName} WHERE ""CorrelationId"" = @correlationid;";
+        return $@"DELETE FROM {TableName} WHERE CorrelationId = @correlationid;";
     }
 
     protected override string BuildLoadSql()
     {
-        return $@"SELECT * FROM {TableName} WHERE ""CorrelationId"" = @correlationid FOR UPDATE;";
+        return $@"SELECT * FROM {TableName} WHERE CorrelationId = @correlationid FOR UPDATE;";
     }
 
     protected override string BuildQuerySql(Expression<Func<JobAttemptSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -89,17 +89,21 @@ WHERE
 
     static void ConvertTo(object? source, NpgsqlParameterCollection collection)
     {
-        if (source is not JobAttemptSaga instance)
-            throw new NotSupportedException("ConvertTo only supports JobAttemptSagas");
+        if (source is JobAttemptSaga instance)
+        {
+            collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
+            collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
+            collection.Add("@jobid", NpgsqlDbType.Uuid).Value = instance.JobId.OrDbNull();
+            collection.Add("@started", NpgsqlDbType.Timestamp).Value = instance.Started.StripKind().OrDbNull();
+            collection.Add("@faulted", NpgsqlDbType.Timestamp).Value = instance.Faulted.StripKind().OrDbNull();
+            collection.Add("@statuschecktokenid", NpgsqlDbType.Uuid).Value = instance.StatusCheckTokenId.OrDbNull();
+            collection.Add("@retryattempt", NpgsqlDbType.Integer).Value = instance.RetryAttempt;
+            collection.Add("@serviceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+            collection.Add("@instanceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
 
-        collection.Add("@correlationId", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
-        collection.Add("@currentState", NpgsqlDbType.Integer).Value = instance.CurrentState;
-        collection.Add("@jobId", NpgsqlDbType.Uuid).Value = instance.JobId;
-        collection.Add("@started", NpgsqlDbType.Timestamp).Value = instance.Started.OrDbNull();
-        collection.Add("@faulted", NpgsqlDbType.Timestamp).Value = instance.Faulted.OrDbNull();
-        collection.Add("@statusCheckTokenId", NpgsqlDbType.Uuid).Value = instance.StatusCheckTokenId.OrDbNull();
-        collection.Add("@retryAttempt", NpgsqlDbType.Integer).Value = instance.RetryAttempt;
-        collection.Add("@serviceAddress", NpgsqlDbType.Varchar, 1000).Value = instance.ServiceAddress?.ToString().OrDbNull();
-        collection.Add("@instanceAddress", NpgsqlDbType.Varchar, 1000).Value = instance.InstanceAddress?.ToString().OrDbNull();
+            return;
+        }
+
+        AssignParameters(source, collection);
     }
 }

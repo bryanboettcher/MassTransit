@@ -140,7 +140,7 @@
         protected virtual ValueTask OnParametersWritten(MySqlCommand command, CancellationToken cancellationToken)
             => ValueTask.CompletedTask;
 
-        static void AssignParameters(object? parameters, MySqlParameterCollection collection)
+        internal static void AssignParameters(object? parameters, MySqlParameterCollection collection)
         {
             foreach (var (name, value) in ParameterReader.Read(parameters))
             {

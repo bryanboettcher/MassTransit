@@ -19,15 +19,12 @@
             Connector = new TConnector();
         }
 
-        [OneTimeSetUp]
+        [SetUp]
         public Task Initialize() => Connector.Setup();
 
-        [OneTimeTearDown]
+        [TearDown]
         public Task Teardown() => Connector.Teardown();
-
-        [SetUp]
-        public Task Setup() => Connector.Reset();
-
+        
         protected Task<List<TSaga>> GetSagas<TSaga>()
             where TSaga : class, ISaga =>
             Connector.GetSagas<TSaga>();

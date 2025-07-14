@@ -110,13 +110,10 @@
             }
         }
 
-        [OneTimeSetUp]
+        [SetUp]
         public Task Setup() => _connector.Setup();
 
         [TearDown]
-        public Task Reset() => _connector.Reset();
-
-        [OneTimeTearDown]
         public Task TearDown() => _connector.Teardown();
 
     }

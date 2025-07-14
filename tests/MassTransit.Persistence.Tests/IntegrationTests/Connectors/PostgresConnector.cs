@@ -41,7 +41,7 @@ public abstract class PostgresConnector : BehaviorSaga
     
     public PostgresConnector()
     {
-        ConnectionString = "Host=localhost; Username=postgres; Password=Password12!; Database=masstransit";
+        ConnectionString = "Host=localhost; Username=sa; Password=Password12!; Database=masstransit";
     }
 
     public async Task Setup()
@@ -52,13 +52,7 @@ public abstract class PostgresConnector : BehaviorSaga
         await RunSql(Sql.Postgres_CreateJobTables);
         await RunSql(Sql.Postgres_CreateSagaTables);
     }
-
-    public async Task Reset()
-    {
-        await RunSql(Sql.Postgres_ResetJobTables);
-        await RunSql(Sql.Postgres_ResetSagaTables);
-    }
-
+    
     public async Task Teardown()
     {
         await RunSql(Sql.Postgres_DropJobTables);

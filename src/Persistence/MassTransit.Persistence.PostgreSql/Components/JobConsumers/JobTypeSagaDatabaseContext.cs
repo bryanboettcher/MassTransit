@@ -20,46 +20,46 @@ public class JobTypeSagaDatabaseContext : PessimisticPostgresDatabaseContext<Job
 
     protected override string BuildInsertSql()
     {
-        return @$"""
+        return @$"
 INSERT INTO {TableName} 
-    (""CorrelationId"", ""Name"", ""CurrentState"", ""ActiveJobCount"", ""ConcurrentJobLimit"",
-    ""OverrideJobLimit"", ""OverrideLimitExpiration"", ""GlobalConcurrentJobLimit"",
-    ""ActiveJobs"", ""Instances"", ""Properties"") 
+    (CorrelationId, Name, CurrentState, ActiveJobCount, ConcurrentJobLimit,
+    OverrideJobLimit, OverrideLimitExpiration, GlobalConcurrentJobLimit,
+    ActiveJobs, Instances, Properties) 
 VALUES
     (@correlationid, @name, @currentstate, @activejobcount, @concurrentjoblimit,
     @overridejoblimit, @overridelimitexpiration, @globalconcurrentjoblimit,
     @activejobs, @instances, @properties);
-""";
+";
     }
 
     protected override string BuildUpdateSql()
     {
-        return $@"""
+        return $@"
 UPDATE {TableName}
 SET
-	""Name"" = @name,
-    ""CurrentState"" = @currentstate,
-	""ActiveJobCount"" = @activejobcount,
-	""ConcurrentJobLimit"" = @concurrentjoblimit,
-	""OverrideJobLimit"" = @overridejoblimit,
-	""OverrideLimitExpiration"" = @overridelimitexpiration,
-	""GlobalConcurrentJobLimit"" = @globalconcurrentjoblimit,
-	""ActiveJobs"" = @activejobs,
-	""Instances"" = @instances,
-	""Properties"" = @properties
+	Name = @name,
+    CurrentState = @currentstate,
+	ActiveJobCount = @activejobcount,
+	ConcurrentJobLimit = @concurrentjoblimit,
+	OverrideJobLimit = @overridejoblimit,
+	OverrideLimitExpiration = @overridelimitexpiration,
+	GlobalConcurrentJobLimit = @globalconcurrentjoblimit,
+	ActiveJobs = @activejobs,
+	Instances = @instances,
+	Properties = @properties
 WHERE
-    ""CorrelationId"" = @correlationid;
-""";
+    CorrelationId = @correlationid;
+";
     }
 
     protected override string BuildDeleteSql()
     {
-        return $@"DELETE FROM {TableName} WHERE ""CorrelationId"" = @correlationid;";
+        return $@"DELETE FROM {TableName} WHERE CorrelationId = @correlationid;";
     }
 
     protected override string BuildLoadSql()
     {
-        return $@"SELECT * FROM {TableName} WHERE ""CorrelationId"" = @correlationid FOR UPDATE;";
+        return $@"SELECT * FROM {TableName} WHERE CorrelationId = @correlationid FOR UPDATE;";
     }
 
     protected override string BuildQuerySql(Expression<Func<JobTypeSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -96,19 +96,23 @@ WHERE
 
     static void ConvertTo(object? source, NpgsqlParameterCollection collection)
     {
-        if (source is not JobTypeSaga instance)
-            throw new NotSupportedException("ConvertTo only supports JobTypeSaga");
+        if (source is JobTypeSaga instance)
+        {
+            collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
+            collection.Add("@name", NpgsqlDbType.Varchar, 255).Value = instance.Name;
+            collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
+            collection.Add("@activejobcount", NpgsqlDbType.Integer).Value = instance.ActiveJobCount;
+            collection.Add("@concurrentjoblimit", NpgsqlDbType.Integer).Value = instance.ConcurrentJobLimit;
+            collection.Add("@overridejoblimit", NpgsqlDbType.Integer).Value = instance.OverrideJobLimit.OrDbNull();
+            collection.Add("@overridelimitexpiration", NpgsqlDbType.Timestamp).Value = instance.OverrideLimitExpiration.StripKind().OrDbNull();
+            collection.Add("@globalconcurrentjoblimit", NpgsqlDbType.Integer).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
+            collection.Add("@activejobs", NpgsqlDbType.Jsonb).Value = instance.ActiveJobs.ToJson().OrDbNull();
+            collection.Add("@instances", NpgsqlDbType.Jsonb).Value = instance.Instances.ToJson().OrDbNull();
+            collection.Add("@properties", NpgsqlDbType.Jsonb).Value = instance.Properties.ToJson().OrDbNull();
 
-        collection.Add("@correlationId", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
-        collection.Add("@name", NpgsqlDbType.Varchar, 255).Value = instance.Name;
-        collection.Add("@currentState", NpgsqlDbType.Integer).Value = instance.CurrentState;
-        collection.Add("@activeJobCount", NpgsqlDbType.Integer).Value = instance.ActiveJobCount;
-        collection.Add("@concurrentJobLimit", NpgsqlDbType.Integer).Value = instance.ConcurrentJobLimit;
-        collection.Add("@overrideJobLimit", NpgsqlDbType.Integer).Value = instance.OverrideJobLimit.OrDbNull();
-        collection.Add("@overrideLimitExpiration", NpgsqlDbType.Timestamp).Value = instance.OverrideLimitExpiration.OrDbNull();
-        collection.Add("@globalConcurrentJobLimit", NpgsqlDbType.Integer).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
-        collection.Add("@activeJobs", NpgsqlDbType.Jsonb).Value = instance.ActiveJobs.ToJson().OrDbNull();
-        collection.Add("@instances", NpgsqlDbType.Jsonb).Value = instance.Instances.ToJson().OrDbNull();
-        collection.Add("@properties", NpgsqlDbType.Jsonb).Value = instance.Properties.ToJson().OrDbNull();
+            return;
+        }
+
+        AssignParameters(source, collection);
     }
 }

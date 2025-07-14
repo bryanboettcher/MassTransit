@@ -6,7 +6,6 @@ using Configuration;
 public interface TestConnector
 {
     Task Setup();
-    Task Reset();
     Task Teardown();
 
     void Connect(IAdoJobSagaRepositoryConfigurator conf);

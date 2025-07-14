@@ -20,66 +20,66 @@ public class JobSagaDatabaseContext : PessimisticPostgresDatabaseContext<JobSaga
 
     protected override string BuildInsertSql()
     {
-        return @$"""
+        return @$"
 INSERT INTO {TableName} 
-    (""CorrelationId"", ""CurrentState"", ""Completed"", ""Faulted"", ""Started"", ""Submitted"",
-    ""EndDate"", ""NextStartDate"", ""StartDate"", ""AttemptId"", ""JobTypeId"", ""JobRetryDelayToken"",
-    ""JobSlotWaitToken"", ""RetryAttempt"", ""LastProgressLimit"", ""LastProgressSequenceNumber"",
-    ""LastProgressValue"", ""CronExpression"", ""Reason"", ""TimeZoneId"", ""Duration"", ""JobTimeout"",
-    ""ServiceAddress"", ""IncompleteAttempts"", ""Job"", ""JobProperties"", ""JobState"") 
+    (CorrelationId, CurrentState, Completed, Faulted, Started, Submitted,
+    EndDate, NextStartDate, StartDate, AttemptId, JobTypeId, JobRetryDelayToken,
+    JobSlotWaitToken, RetryAttempt, LastProgressLimit, LastProgressSequenceNumber,
+    LastProgressValue, CronExpression, Reason, TimeZoneId, Duration, JobTimeout,
+    ServiceAddress, IncompleteAttempts, Job, JobProperties, JobState) 
 VALUES
     (@correlationid, @currentstate, @completed, @faulted, @started, @submitted,
     @enddate, @nextstartdate, @startdate, @attemptid, @jobtypeid, @jobretrydelaytoken,
     @jobslotwaittoken, @retryattempt, @lastprogresslimit, @lastprogresssequencenumber,
     @lastprogressvalue, @cronexpression, @reason, @timezoneid, @duration, @jobtimeout,
     @serviceaddress, @incompleteattempts, @job, @jobproperties, @jobstate);
-""";
+";
     }
 
     protected override string BuildUpdateSql()
     {
-        return $@"""
+        return $@"
 UPDATE {TableName}
 SET
-	""CurrentState"" = @currentstate,
-    ""Completed"" = @completed,
-	""Faulted"" = @faulted,
-	""Started"" = @started,
-	""Submitted"" = @submitted,
-	""EndDate"" = @enddate,
-	""NextStartDate"" = @nextstartdate,
-	""StartDate"" = @startdate,
-	""AttemptId"" = @attemptid,
-	""JobTypeId"" = @jobtypeid,
-	""JobRetryDelayToken"" = @jobretrydelaytoken,
-	""JobSlotWaitToken"" = @jobslotwaittoken,
-	""RetryAttempt"" = @retryattempt,
-	""LastProgressLimit"" = @lastprogresslimit,
-	""LastProgressSequenceNumber"" = @lastprogresssequencenumber,
-	""LastProgressValue"" = @lastprogressvalue,
-	""CronExpression"" = @cronexpression,
-	""Reason"" = @reason,
-	""TimeZoneId"" = @timezoneid,
-	""Duration"" = @duration,
-	""JobTimeout"" = @jobtimeout,
-	""ServiceAddress"" = @serviceaddress,
-	""IncompleteAttempts"" = @incompleteattempts,
-	""Job"" = @job,
-	""JobProperties"" = @jobproperties,
-	""JobState"" = @jobstate
+	CurrentState = @currentstate,
+    Completed = @completed,
+	Faulted = @faulted,
+	Started = @started,
+	Submitted = @submitted,
+	EndDate = @enddate,
+	NextStartDate = @nextstartdate,
+	StartDate = @startdate,
+	AttemptId = @attemptid,
+	JobTypeId = @jobtypeid,
+	JobRetryDelayToken = @jobretrydelaytoken,
+	JobSlotWaitToken = @jobslotwaittoken,
+	RetryAttempt = @retryattempt,
+	LastProgressLimit = @lastprogresslimit,
+	LastProgressSequenceNumber = @lastprogresssequencenumber,
+	LastProgressValue = @lastprogressvalue,
+	CronExpression = @cronexpression,
+	Reason = @reason,
+	TimeZoneId = @timezoneid,
+	Duration = @duration,
+	JobTimeout = @jobtimeout,
+	ServiceAddress = @serviceaddress,
+	IncompleteAttempts = @incompleteattempts,
+	Job = @job,
+	JobProperties = @jobproperties,
+	JobState = @jobstate
 WHERE
-    ""CorrelationId"" = @correlationid;
-""";
+    CorrelationId = @correlationid;
+";
     }
 
     protected override string BuildDeleteSql()
     {
-        return $@"DELETE FROM {TableName} WHERE ""CorrelationId"" = @correlationid;";
+        return $@"DELETE FROM {TableName} WHERE CorrelationId = @correlationid;";
     }
 
     protected override string BuildLoadSql()
     {
-        return $@"SELECT * FROM {TableName} WHERE ""CorrelationId"" = @correlationid FOR UPDATE;";
+        return $@"SELECT * FROM {TableName} WHERE CorrelationId = @correlationid FOR UPDATE;";
     }
 
     protected override string BuildQuerySql(Expression<Func<JobSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
@@ -132,35 +132,39 @@ WHERE
 
     static void ConvertTo(object? source, NpgsqlParameterCollection collection)
     {
-        if (source is not JobSaga instance)
-            throw new NotSupportedException("ConvertTo only supports JobSaga");
+        if (source is JobSaga instance)
+        {
+            collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
+            collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
+            collection.Add("@completed", NpgsqlDbType.Timestamp).Value = instance.Completed.StripKind().OrDbNull();
+            collection.Add("@faulted", NpgsqlDbType.Timestamp).Value = instance.Faulted.StripKind().OrDbNull();
+            collection.Add("@started", NpgsqlDbType.Timestamp).Value = instance.Started.StripKind().OrDbNull();
+            collection.Add("@submitted", NpgsqlDbType.Timestamp).Value = instance.Submitted.StripKind().OrDbNull();
+            collection.Add("@enddate", NpgsqlDbType.TimestampTz).Value = instance.EndDate.OrDbNull();
+            collection.Add("@nextstartdate", NpgsqlDbType.TimestampTz).Value = instance.NextStartDate.OrDbNull();
+            collection.Add("@startdate", NpgsqlDbType.TimestampTz).Value = instance.StartDate.OrDbNull();
+            collection.Add("@attemptid", NpgsqlDbType.Uuid).Value = instance.AttemptId;
+            collection.Add("@jobTypeid", NpgsqlDbType.Uuid).Value = instance.JobTypeId;
+            collection.Add("@jobretrydelaytoken", NpgsqlDbType.Uuid).Value = instance.JobRetryDelayToken.OrDbNull();
+            collection.Add("@jobslotwaittoken", NpgsqlDbType.Uuid).Value = instance.JobSlotWaitToken.OrDbNull();
+            collection.Add("@retryattempt", NpgsqlDbType.Integer).Value = instance.RetryAttempt;
+            collection.Add("@lastprogresslimit", NpgsqlDbType.Bigint).Value = instance.LastProgressLimit.OrDbNull();
+            collection.Add("@lastprogresssequenceNumber", NpgsqlDbType.Bigint).Value = instance.LastProgressSequenceNumber.OrDbNull();
+            collection.Add("@lastprogressvalue", NpgsqlDbType.Bigint).Value = instance.LastProgressValue.OrDbNull();
+            collection.Add("@cronexpression", NpgsqlDbType.Varchar, 255).Value = instance.CronExpression.OrDbNull();
+            collection.Add("@reason", NpgsqlDbType.Text).Value = instance.Reason.OrDbNull();
+            collection.Add("@timezoneid", NpgsqlDbType.Varchar, 100).Value = instance.TimeZoneId.OrDbNull();
+            collection.Add("@duration", NpgsqlDbType.Interval).Value = instance.Duration.OrDbNull();
+            collection.Add("@jobtimeout", NpgsqlDbType.Interval).Value = instance.JobTimeout.OrDbNull();
+            collection.Add("@serviceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+            collection.Add("@incompleteattempts", NpgsqlDbType.Jsonb).Value = instance.IncompleteAttempts.ToJson().OrDbNull();
+            collection.Add("@job", NpgsqlDbType.Jsonb).Value = instance.Job.ToJson().OrDbNull();
+            collection.Add("@jobproperties", NpgsqlDbType.Jsonb).Value = instance.JobProperties.ToJson().OrDbNull();
+            collection.Add("@jobstate", NpgsqlDbType.Jsonb).Value = instance.JobState.ToJson().OrDbNull();
 
-        collection.Add("@correlationId", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
-        collection.Add("@currentState", NpgsqlDbType.Integer).Value = instance.CurrentState;
-        collection.Add("@completed", NpgsqlDbType.Timestamp).Value = instance.Completed.OrDbNull();
-        collection.Add("@faulted", NpgsqlDbType.Timestamp).Value = instance.Faulted;
-        collection.Add("@started", NpgsqlDbType.Timestamp).Value = instance.Started;
-        collection.Add("@submitted", NpgsqlDbType.Timestamp).Value = instance.Submitted;
-        collection.Add("@endDate", NpgsqlDbType.TimestampTz).Value = instance.EndDate;
-        collection.Add("@nextStartDate", NpgsqlDbType.TimestampTz).Value = instance.NextStartDate;
-        collection.Add("@startDate", NpgsqlDbType.TimestampTz).Value = instance.StartDate;
-        collection.Add("@attemptId", NpgsqlDbType.Uuid).Value = instance.AttemptId;
-        collection.Add("@jobTypeId", NpgsqlDbType.Uuid).Value = instance.JobTypeId;
-        collection.Add("@jobRetryDelayToken", NpgsqlDbType.Uuid).Value = instance.JobRetryDelayToken;
-        collection.Add("@jobSlotWaitToken", NpgsqlDbType.Uuid).Value = instance.JobSlotWaitToken;
-        collection.Add("@retryAttempt", NpgsqlDbType.Integer).Value = instance.RetryAttempt;
-        collection.Add("@lastProgressLimit", NpgsqlDbType.Bigint).Value = instance.LastProgressLimit;
-        collection.Add("@lastProgressSequenceNumber", NpgsqlDbType.Bigint).Value = instance.LastProgressSequenceNumber;
-        collection.Add("@lastProgressValue", NpgsqlDbType.Bigint).Value = instance.LastProgressValue;
-        collection.Add("@cronExpression", NpgsqlDbType.Varchar, 255).Value = instance.CronExpression;
-        collection.Add("@reason", NpgsqlDbType.Text).Value = instance.Reason;
-        collection.Add("@timeZoneId", NpgsqlDbType.Varchar, 100).Value = instance.TimeZoneId;
-        collection.Add("@duration", NpgsqlDbType.Interval).Value = instance.Duration;
-        collection.Add("@jobTimeout", NpgsqlDbType.Interval).Value = instance.JobTimeout;
-        collection.Add("@serviceAddress", NpgsqlDbType.Varchar, 1000).Value = instance.ServiceAddress?.ToString();
-        collection.Add("@incompleteAttempts", NpgsqlDbType.Jsonb).Value = instance.IncompleteAttempts.ToJson();
-        collection.Add("@job", NpgsqlDbType.Jsonb).Value = instance.Job.ToJson();
-        collection.Add("@jobProperties", NpgsqlDbType.Jsonb).Value = instance.JobProperties.ToJson();
-        collection.Add("@jobState", NpgsqlDbType.Jsonb).Value = instance.JobState.ToJson();
+            return;
+        }
+
+        AssignParameters(source, collection);
     }
 }

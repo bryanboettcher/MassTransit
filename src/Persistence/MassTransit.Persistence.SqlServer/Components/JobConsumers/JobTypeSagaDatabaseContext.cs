@@ -16,17 +16,17 @@ public class JobTypeSagaDatabaseContext : PessimisticSqlServerDatabaseContext<Jo
 
     protected override string BuildInsertSql()
     {
-        return @$"""
-INSERT INTO {TableName} 
+        return @$"
+INSERT INTO {TableName}
     (CorrelationId, Name, CurrentState, ActiveJobCount, ConcurrentJobLimit, OverrideJobLimit, OverrideLimitExpiration, GlobalConcurrentJobLimit, ActiveJobs, Instances, Properties) 
 VALUES
     (@correlationid, @name, @currentstate, @activejobcount, @concurrentjoblimit, @overridejoblimit, @overridelimitexpiration, @globalconcurrentjoblimit, @activejobs, @instances, @properties);
-""";
+";
     }
 
     protected override string BuildUpdateSql()
     {
-        return $@"""
+        return $@"
 UPDATE {TableName}
 SET
 	Name = @name,
@@ -41,7 +41,7 @@ SET
 	Properties = @properties
 WHERE
     CorrelationId = @correlationid;
-""";
+";
     }
 
     protected override string BuildDeleteSql()
@@ -88,19 +88,23 @@ WHERE
 
     static void ConvertTo(object? source, SqlParameterCollection collection)
     {
-        if (source is not JobTypeSaga instance)
-            throw new NotSupportedException("ConvertTo only supports JobTypeSaga");
+        if (source is JobTypeSaga instance)
+        {
+            collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
+            collection.Add("@name", SqlDbType.NVarChar, 255).Value = instance.Name;
+            collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
+            collection.Add("@activejobcount", SqlDbType.Int).Value = instance.ActiveJobCount;
+            collection.Add("@concurrentjoblimit", SqlDbType.Int).Value = instance.ConcurrentJobLimit;
+            collection.Add("@overridejoblimit", SqlDbType.Int).Value = instance.OverrideJobLimit.OrDbNull();
+            collection.Add("@overridelimitexpiration", SqlDbType.DateTime).Value = instance.OverrideLimitExpiration.OrDbNull();
+            collection.Add("@globalconcurrentjoblimit", SqlDbType.Int).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
+            collection.Add("@activejobs", SqlDbType.VarChar, -1).Value = instance.ActiveJobs.ToJson().OrDbNull();
+            collection.Add("@instances", SqlDbType.VarChar, -1).Value = instance.Instances.ToJson().OrDbNull();
+            collection.Add("@properties", SqlDbType.VarChar, -1).Value = instance.Properties.ToJson().OrDbNull();
 
-        collection.Add("@correlationId", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
-        collection.Add("@name", SqlDbType.NVarChar, 255).Value = instance.Name;
-        collection.Add("@currentState", SqlDbType.Int).Value = instance.CurrentState;
-        collection.Add("@activeJobCount", SqlDbType.Int).Value = instance.ActiveJobCount;
-        collection.Add("@concurrentJobLimit", SqlDbType.Int).Value = instance.ConcurrentJobLimit;
-        collection.Add("@overrideJobLimit", SqlDbType.Int).Value = instance.OverrideJobLimit.OrDbNull();
-        collection.Add("@overrideLimitExpiration", SqlDbType.DateTime).Value = instance.OverrideLimitExpiration.OrDbNull();
-        collection.Add("@globalConcurrentJobLimit", SqlDbType.Int).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
-        collection.Add("@activeJobs", SqlDbType.VarChar, -1).Value = instance.ActiveJobs.ToJson().OrDbNull();
-        collection.Add("@instances", SqlDbType.VarChar, -1).Value = instance.Instances.ToJson().OrDbNull();
-        collection.Add("@properties", SqlDbType.VarChar, -1).Value = instance.Properties.ToJson().OrDbNull();
+            return;
+        }
+
+        AssignParameters(source, collection);
     }
 }

@@ -45,4 +45,7 @@ public static class ObjectExtensions
 
     public static object OrDbNull(this object? input)
         => input ?? DBNull.Value;
+
+    public static DateTime? StripKind(this DateTime? input)
+        => input is null ? null : DateTime.SpecifyKind(input.Value, DateTimeKind.Unspecified);
 }

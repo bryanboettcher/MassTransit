@@ -16,17 +16,17 @@
 
         protected override string BuildInsertSql()
         {
-            return @$"""
+            return @$"
 INSERT INTO {TableName} 
     (CorrelationId, CurrentState, JobId, Started, Faulted, StatusCheckTokenId, RetryAttempt, ServiceAddress, InstanceAddress) 
 VALUES
     (@correlationid, @currentstate, @jobid, @started, @faulted, @statuschecktokenid, @retryattempt, @serviceaddress, @instanceaddress);
-""";
+";
         }
 
         protected override string BuildUpdateSql()
         {
-            return $@"""
+            return $@"
 UPDATE {TableName}
 SET
 	CurrentState = @currentstate,
@@ -39,7 +39,7 @@ SET
 	InstanceAddress = @instanceaddress
 WHERE
     CorrelationId = @correlationid;
-""";
+";
         }
 
         protected override string BuildDeleteSql()
@@ -84,18 +84,22 @@ WHERE
 
         static void ConvertTo(object? source, SqlParameterCollection collection)
         {
-            if (source is not JobAttemptSaga instance)
-                throw new NotSupportedException("ConvertTo only supports JobAttemptSagas");
+            if (source is JobAttemptSaga instance)
+            {
+                collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
+                collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
+                collection.Add("@jobid", SqlDbType.UniqueIdentifier).Value = instance.JobId;
+                collection.Add("@started", SqlDbType.DateTime).Value = instance.Started.OrDbNull();
+                collection.Add("@faulted", SqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
+                collection.Add("@statuschecktokenid", SqlDbType.UniqueIdentifier).Value = instance.StatusCheckTokenId.OrDbNull();
+                collection.Add("@retryattempt", SqlDbType.Int).Value = instance.RetryAttempt;
+                collection.Add("@serviceaddress", SqlDbType.NVarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+                collection.Add("@instanceaddress", SqlDbType.NVarChar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
 
-            collection.Add("@correlationId", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
-            collection.Add("@currentState", SqlDbType.Int).Value = instance.CurrentState;
-            collection.Add("@jobId", SqlDbType.UniqueIdentifier).Value = instance.JobId;
-            collection.Add("@started", SqlDbType.DateTime).Value = instance.Started.OrDbNull();
-            collection.Add("@faulted", SqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
-            collection.Add("@statusCheckTokenId", SqlDbType.UniqueIdentifier).Value = instance.StatusCheckTokenId.OrDbNull();
-            collection.Add("@retryAttempt", SqlDbType.Int).Value = instance.RetryAttempt;
-            collection.Add("@serviceAddress", SqlDbType.NVarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
-            collection.Add("@instanceAddress", SqlDbType.NVarChar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
+                return;
+            }
+
+            AssignParameters(source, collection);
         }
     }
 }
