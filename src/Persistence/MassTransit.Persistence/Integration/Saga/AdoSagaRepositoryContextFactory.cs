@@ -13,16 +13,13 @@ namespace MassTransit.Persistence.Integration.Saga
         where TSaga : class, ISaga
     {
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
-        readonly DatabaseContext<TSaga> _databaseContext;
         readonly IServiceProvider _serviceProvider;
 
         public AdoSagaRepositoryContextFactory(
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory,
-            DatabaseContext<TSaga> databaseContext,
             IServiceProvider serviceProvider)
         {
             _factory = factory;
-            _databaseContext = databaseContext;
             _serviceProvider = serviceProvider;
         }
 
@@ -40,7 +37,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
         public void Probe(ProbeContext context)
         {
-            context.Add("persistence", "dapper");
+            context.CreateScope("ado-saga-repository");
         }
 
         public async Task Send<T>(ConsumeContext<T> context, IPipe<SagaRepositoryContext<TSaga, T>> next)
@@ -48,9 +45,9 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             var cancellationToken = context.CancellationToken;
 
-            await using var databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
-            //var databaseContext = _databaseContext;
-
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
+                .ConfigureAwait(false);
+            
             var repositoryContext = new AdoSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
 
             await next.Send(repositoryContext)
@@ -65,8 +62,8 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             var cancellationToken = context.CancellationToken;
 
-            await using var databaseContext = await CreateDatabaseContext(cancellationToken).ConfigureAwait(false);
-            //var databaseContext = _databaseContext;
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
+                .ConfigureAwait(false);
 
             var instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
