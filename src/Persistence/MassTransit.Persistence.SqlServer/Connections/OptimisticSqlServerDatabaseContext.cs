@@ -72,7 +72,4 @@ public class OptimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContex
 
         return sql;
     }
-
-    protected override ValueTask OnConnectionOpened(SqlConnection connection, CancellationToken cancellationToken)
-        => ValueTask.CompletedTask;
 }

@@ -43,9 +43,6 @@ namespace MassTransit.Persistence.Integration.Saga
             await _context.InsertAsync(instance, CancellationToken)
                 .ConfigureAwait(false);
 
-            // await _context.CommitAsync(CancellationToken)
-            //     .ConfigureAwait(false);
-            
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Insert).ConfigureAwait(false);
         }
 

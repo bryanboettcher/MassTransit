@@ -3,7 +3,9 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Integration.Saga;
+using Internals;
 using Npgsql;
+using NpgsqlTypes;
 
 
 public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<TSaga>, DatabaseContext<TSaga>
@@ -73,6 +75,17 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
         return sql;
     }
 
-    protected override ValueTask OnConnectionOpened(NpgsqlConnection connection, CancellationToken cancellationToken)
-        => ValueTask.CompletedTask;
+    protected override ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
+    {
+        var param = command.Parameters.FirstOrDefault(p => string.Equals(
+            p.ParameterName,
+            _versionProperty.Name.ToLowerInvariant(),
+            StringComparison.OrdinalIgnoreCase
+        ));
+
+        if (param is not null)
+            param.NpgsqlDbType = NpgsqlDbType.Xid;
+
+        return base.OnParametersWritten(command, cancellationToken);
+    }
 }

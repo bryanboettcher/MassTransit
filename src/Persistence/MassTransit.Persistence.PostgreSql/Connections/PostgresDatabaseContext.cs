@@ -41,8 +41,7 @@
 
             return string.Join(" AND ", queryPredicates);
         }
-
-
+        
         protected override async IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var readerAdapter = CreateReaderAdapter();
@@ -55,6 +54,9 @@
                 .ConfigureAwait(false);
 
             writerAdapter(parameters, command.Parameters);
+
+            await OnParametersWritten(command, cancellationToken)
+                .ConfigureAwait(false);
 
             await using var reader = await command.ExecuteReaderAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -73,6 +75,9 @@
                 .ConfigureAwait(false);
 
             writerAdapter(parameters, command.Parameters);
+
+            await OnParametersWritten(command, cancellationToken)
+                .ConfigureAwait(false);
 
             var rows = await command.ExecuteNonQueryAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -109,19 +114,34 @@
 
         /// <summary>
         /// Reader adapters are to convert from an individual IDataReader row from a
-        /// database reader to a hydrated model instance.
+        /// database reader to a hydrated model instance.  Defaults to a generic runtime
+        /// adapter, but can be overridden for performance or complex mappings.
         /// </summary>
         protected virtual Func<IDataReader, TSaga> CreateReaderAdapter()
             => ReflectionsAdapter.CreateFor<TSaga>();
 
         /// <summary>
         /// Writer adapters are to convert an object (usually model instance) to a
-        /// parameter collection for sending to the database.
+        /// parameter collection for sending to the database.  The default writer will
+        /// have engine-specific logic, but a custom writer can be used for any saga
+        /// that needs non-trivial logic.
         /// </summary>
         protected virtual Action<object?, NpgsqlParameterCollection> CreateWriterAdapter()
             => AssignParameters;
 
-        protected abstract ValueTask OnConnectionOpened(NpgsqlConnection connection, CancellationToken cancellationToken);
+        /// <summary>
+        /// Called immediately after a new connection is opened.  Generally used to begin a transaction
+        /// or set additional properties on the connection, such as buffer sizes or attaching event handlers.
+        /// </summary>
+        protected virtual ValueTask OnConnectionOpened(NpgsqlConnection connection, CancellationToken cancellationToken)
+            => ValueTask.CompletedTask;
+
+        /// <summary>
+        /// Called immediately after parameters are written.  Generally used by specific types of database
+        /// engines to handle special property types.
+        /// </summary>
+        protected virtual ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
+            => ValueTask.CompletedTask;
 
         static void AssignParameters(object? parameters, NpgsqlParameterCollection collection)
         {

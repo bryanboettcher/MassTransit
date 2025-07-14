@@ -40,7 +40,7 @@ public abstract class MySqlConnector : BehaviorSaga
 
     public MySqlConnector()
     {
-        ConnectionString = "Server=localhost; Database=masstransit; Uid=root; Pwd=Password12!; OldGuids=true";
+        ConnectionString = "Server=localhost; Database=masstransit; Uid=root; Pwd=Password12!";
     }
 
     public async Task Setup()

@@ -72,7 +72,4 @@ public class OptimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>
 
         return sql;
     }
-
-    protected override ValueTask OnConnectionOpened(MySqlConnection connection, CancellationToken cancellationToken)
-        => ValueTask.CompletedTask;
 }
