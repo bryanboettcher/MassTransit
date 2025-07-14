@@ -93,22 +93,23 @@ WHERE
     static void ConvertTo(object? source, MySqlParameterCollection collection)
     {
         if (source is JobTypeSaga instance)
-        {
-            collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
-            collection.Add("@name", MySqlDbType.VarChar, 255).Value = instance.Name;
-            collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
-            collection.Add("@activejobcount", MySqlDbType.Int32).Value = instance.ActiveJobCount;
-            collection.Add("@concurrentjoblimit", MySqlDbType.Int32).Value = instance.ConcurrentJobLimit;
-            collection.Add("@overridejoblimit", MySqlDbType.Int32).Value = instance.OverrideJobLimit.OrDbNull();
-            collection.Add("@overridelimitexpiration", MySqlDbType.DateTime).Value = instance.OverrideLimitExpiration.OrDbNull();
-            collection.Add("@globalconcurrentjoblimit", MySqlDbType.Int32).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
-            collection.Add("@activejobs", MySqlDbType.Text).Value = instance.ActiveJobs.ToJson().OrDbNull();
-            collection.Add("@instances", MySqlDbType.Text).Value = instance.Instances.ToJson().OrDbNull();
-            collection.Add("@properties", MySqlDbType.Text).Value = instance.Properties.ToJson().OrDbNull();
+            ConvertJobType(collection, instance);
+        else
+            AssignParameters(source, collection);
+    }
 
-            return;
-        }
-
-        AssignParameters(source, collection);
+    static void ConvertJobType(MySqlParameterCollection collection, JobTypeSaga instance)
+    {
+        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
+        collection.Add("@name", MySqlDbType.VarChar, 255).Value = instance.Name;
+        collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
+        collection.Add("@activejobcount", MySqlDbType.Int32).Value = instance.ActiveJobCount;
+        collection.Add("@concurrentjoblimit", MySqlDbType.Int32).Value = instance.ConcurrentJobLimit;
+        collection.Add("@overridejoblimit", MySqlDbType.Int32).Value = instance.OverrideJobLimit.OrDbNull();
+        collection.Add("@overridelimitexpiration", MySqlDbType.DateTime).Value = instance.OverrideLimitExpiration.OrDbNull();
+        collection.Add("@globalconcurrentjoblimit", MySqlDbType.Int32).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
+        collection.Add("@activejobs", MySqlDbType.Text).Value = instance.ActiveJobs.ToJson().OrDbNull();
+        collection.Add("@instances", MySqlDbType.Text).Value = instance.Instances.ToJson().OrDbNull();
+        collection.Add("@properties", MySqlDbType.Text).Value = instance.Properties.ToJson().OrDbNull();
     }
 }

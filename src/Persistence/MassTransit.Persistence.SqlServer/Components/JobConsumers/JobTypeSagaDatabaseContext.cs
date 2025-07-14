@@ -89,22 +89,23 @@ WHERE
     static void ConvertTo(object? source, SqlParameterCollection collection)
     {
         if (source is JobTypeSaga instance)
-        {
-            collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
-            collection.Add("@name", SqlDbType.NVarChar, 255).Value = instance.Name;
-            collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
-            collection.Add("@activejobcount", SqlDbType.Int).Value = instance.ActiveJobCount;
-            collection.Add("@concurrentjoblimit", SqlDbType.Int).Value = instance.ConcurrentJobLimit;
-            collection.Add("@overridejoblimit", SqlDbType.Int).Value = instance.OverrideJobLimit.OrDbNull();
-            collection.Add("@overridelimitexpiration", SqlDbType.DateTime).Value = instance.OverrideLimitExpiration.OrDbNull();
-            collection.Add("@globalconcurrentjoblimit", SqlDbType.Int).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
-            collection.Add("@activejobs", SqlDbType.VarChar, -1).Value = instance.ActiveJobs.ToJson().OrDbNull();
-            collection.Add("@instances", SqlDbType.VarChar, -1).Value = instance.Instances.ToJson().OrDbNull();
-            collection.Add("@properties", SqlDbType.VarChar, -1).Value = instance.Properties.ToJson().OrDbNull();
+            ConvertJobType(collection, instance);
+        else
+            AssignParameters(source, collection);
+    }
 
-            return;
-        }
-
-        AssignParameters(source, collection);
+    static void ConvertJobType(SqlParameterCollection collection, JobTypeSaga instance)
+    {
+        collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
+        collection.Add("@name", SqlDbType.NVarChar, 255).Value = instance.Name;
+        collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
+        collection.Add("@activejobcount", SqlDbType.Int).Value = instance.ActiveJobCount;
+        collection.Add("@concurrentjoblimit", SqlDbType.Int).Value = instance.ConcurrentJobLimit;
+        collection.Add("@overridejoblimit", SqlDbType.Int).Value = instance.OverrideJobLimit.OrDbNull();
+        collection.Add("@overridelimitexpiration", SqlDbType.DateTime).Value = instance.OverrideLimitExpiration.OrDbNull();
+        collection.Add("@globalconcurrentjoblimit", SqlDbType.Int).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
+        collection.Add("@activejobs", SqlDbType.VarChar, -1).Value = instance.ActiveJobs.ToJson().OrDbNull();
+        collection.Add("@instances", SqlDbType.VarChar, -1).Value = instance.Instances.ToJson().OrDbNull();
+        collection.Add("@properties", SqlDbType.VarChar, -1).Value = instance.Properties.ToJson().OrDbNull();
     }
 }

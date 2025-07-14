@@ -18,9 +18,17 @@ public class JobSagaDatabaseContext : PessimisticMySqlDatabaseContext<JobSaga>
     {
         return @$"
 INSERT INTO {TableName} 
-    (`CorrelationId`, `CurrentState`, `Completed`, `Faulted`, `Started`, `Submitted`, `EndDate`, `NextStartDate`, `StartDate`, `AttemptId`, `JobTypeId`, `JobRetryDelayToken`, `JobSlotWaitToken`, `RetryAttempt`, `LastProgressLimit`, `LastProgressSequenceNumber`, `LastProgressValue`, `CronExpression`, `Reason`, `TimeZoneId`, `Duration`, `JobTimeout`, `ServiceAddress`, `IncompleteAttempts`, `Job`, `JobProperties`, `JobState`) 
+    (`CorrelationId`, `CurrentState`, `Completed`, `Faulted`, `Started`, `Submitted`, `EndDate`,
+    `NextStartDate`, `StartDate`, `AttemptId`, `JobTypeId`, `JobRetryDelayToken`, `JobSlotWaitToken`,
+    `RetryAttempt`, `LastProgressLimit`, `LastProgressSequenceNumber`, `LastProgressValue`,
+    `CronExpression`, `Reason`, `TimeZoneId`, `Duration`, `JobTimeout`, `ServiceAddress`,
+    `IncompleteAttempts`, `Job`, `JobProperties`, `JobState`) 
 VALUES
-    (@correlationid, @currentstate, @completed, @faulted, @started, @submitted, @enddate, @nextstartdate, @startdate, @attemptid, @jobtypeid, @jobretrydelaytoken, @jobslotwaittoken, @retryattempt, @lastprogresslimit, @lastprogresssequencenumber, @lastprogressvalue, @cronexpression, @reason, @timezoneid, @duration, @jobtimeout, @serviceaddress, @incompleteattempts, @job, @jobproperties, @jobstate);
+    (@correlationid, @currentstate, @completed, @faulted, @started, @submitted, @enddate,
+    @nextstartdate, @startdate, @attemptid, @jobtypeid, @jobretrydelaytoken, @jobslotwaittoken,
+    @retryattempt, @lastprogresslimit, @lastprogresssequencenumber, @lastprogressvalue,
+    @cronexpression, @reason, @timezoneid, @duration, @jobtimeout, @serviceaddress,
+    @incompleteattempts, @job, @jobproperties, @jobstate);
 ";
     }
 
@@ -121,38 +129,39 @@ WHERE
     static void ConvertTo(object? source, MySqlParameterCollection collection)
     {
         if (source is JobSaga instance)
-        {
-            collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
-            collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
-            collection.Add("@completed", MySqlDbType.DateTime).Value = instance.Completed.OrDbNull();
-            collection.Add("@faulted", MySqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
-            collection.Add("@started", MySqlDbType.DateTime).Value = instance.Started.OrDbNull();
-            collection.Add("@submitted", MySqlDbType.DateTime).Value = instance.Submitted.OrDbNull();
-            collection.Add("@enddate", MySqlDbType.DateTime).Value = instance.EndDate.OrDbNull();
-            collection.Add("@nextstartdate", MySqlDbType.DateTime).Value = instance.NextStartDate.OrDbNull();
-            collection.Add("@startdate", MySqlDbType.DateTime).Value = instance.StartDate.OrDbNull();
-            collection.Add("@attemptid", MySqlDbType.Guid).Value = instance.AttemptId;
-            collection.Add("@jobtypeid", MySqlDbType.Guid).Value = instance.JobTypeId;
-            collection.Add("@jobretrydelaytoken", MySqlDbType.Guid).Value = instance.JobRetryDelayToken.OrDbNull();
-            collection.Add("@jobslotwaittoken", MySqlDbType.Guid).Value = instance.JobSlotWaitToken.OrDbNull();
-            collection.Add("@retryattempt", MySqlDbType.Int32).Value = instance.RetryAttempt;
-            collection.Add("@lastprogresslimit", MySqlDbType.Int64).Value = instance.LastProgressLimit.OrDbNull();
-            collection.Add("@lastprogresssequencenumber", MySqlDbType.Int64).Value = instance.LastProgressSequenceNumber.OrDbNull();
-            collection.Add("@lastprogressvalue", MySqlDbType.Int64).Value = instance.LastProgressValue.OrDbNull();
-            collection.Add("@cronexpression", MySqlDbType.VarChar, 255).Value = instance.CronExpression.OrDbNull();
-            collection.Add("@reason", MySqlDbType.Text).Value = instance.Reason.OrDbNull();
-            collection.Add("@timezoneid", MySqlDbType.VarChar, 100).Value = instance.TimeZoneId.OrDbNull();
-            collection.Add("@duration", MySqlDbType.Time).Value = instance.Duration.OrDbNull();
-            collection.Add("@jobtimeout", MySqlDbType.Time).Value = instance.JobTimeout.OrDbNull();
-            collection.Add("@serviceaddress", MySqlDbType.VarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
-            collection.Add("@incompleteattempts", MySqlDbType.Text).Value = instance.IncompleteAttempts.ToJson().OrDbNull();
-            collection.Add("@job", MySqlDbType.Text).Value = instance.Job.ToJson().OrDbNull();
-            collection.Add("@jobproperties", MySqlDbType.Text).Value = instance.JobProperties.ToJson().OrDbNull();
-            collection.Add("@jobstate", MySqlDbType.Text).Value = instance.JobState.ToJson().OrDbNull();
+            ConvertJob(collection, instance);
+        else
+            AssignParameters(source, collection);
+    }
 
-            return;
-        }
-
-        AssignParameters(source, collection);
+    static void ConvertJob(MySqlParameterCollection collection, JobSaga instance)
+    {
+        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
+        collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
+        collection.Add("@completed", MySqlDbType.DateTime).Value = instance.Completed.OrDbNull();
+        collection.Add("@faulted", MySqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
+        collection.Add("@started", MySqlDbType.DateTime).Value = instance.Started.OrDbNull();
+        collection.Add("@submitted", MySqlDbType.DateTime).Value = instance.Submitted.OrDbNull();
+        collection.Add("@enddate", MySqlDbType.DateTime).Value = instance.EndDate.OrDbNull();
+        collection.Add("@nextstartdate", MySqlDbType.DateTime).Value = instance.NextStartDate.OrDbNull();
+        collection.Add("@startdate", MySqlDbType.DateTime).Value = instance.StartDate.OrDbNull();
+        collection.Add("@attemptid", MySqlDbType.Guid).Value = instance.AttemptId;
+        collection.Add("@jobtypeid", MySqlDbType.Guid).Value = instance.JobTypeId;
+        collection.Add("@jobretrydelaytoken", MySqlDbType.Guid).Value = instance.JobRetryDelayToken.OrDbNull();
+        collection.Add("@jobslotwaittoken", MySqlDbType.Guid).Value = instance.JobSlotWaitToken.OrDbNull();
+        collection.Add("@retryattempt", MySqlDbType.Int32).Value = instance.RetryAttempt;
+        collection.Add("@lastprogresslimit", MySqlDbType.Int64).Value = instance.LastProgressLimit.OrDbNull();
+        collection.Add("@lastprogresssequencenumber", MySqlDbType.Int64).Value = instance.LastProgressSequenceNumber.OrDbNull();
+        collection.Add("@lastprogressvalue", MySqlDbType.Int64).Value = instance.LastProgressValue.OrDbNull();
+        collection.Add("@cronexpression", MySqlDbType.VarChar, 255).Value = instance.CronExpression.OrDbNull();
+        collection.Add("@reason", MySqlDbType.Text).Value = instance.Reason.OrDbNull();
+        collection.Add("@timezoneid", MySqlDbType.VarChar, 100).Value = instance.TimeZoneId.OrDbNull();
+        collection.Add("@duration", MySqlDbType.Time).Value = instance.Duration.OrDbNull();
+        collection.Add("@jobtimeout", MySqlDbType.Time).Value = instance.JobTimeout.OrDbNull();
+        collection.Add("@serviceaddress", MySqlDbType.VarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+        collection.Add("@incompleteattempts", MySqlDbType.Text).Value = instance.IncompleteAttempts.ToJson().OrDbNull();
+        collection.Add("@job", MySqlDbType.Text).Value = instance.Job.ToJson().OrDbNull();
+        collection.Add("@jobproperties", MySqlDbType.Text).Value = instance.JobProperties.ToJson().OrDbNull();
+        collection.Add("@jobstate", MySqlDbType.Text).Value = instance.JobState.ToJson().OrDbNull();
     }
 }

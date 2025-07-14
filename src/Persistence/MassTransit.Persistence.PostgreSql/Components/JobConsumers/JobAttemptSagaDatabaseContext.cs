@@ -90,20 +90,21 @@ WHERE
     static void ConvertTo(object? source, NpgsqlParameterCollection collection)
     {
         if (source is JobAttemptSaga instance)
-        {
-            collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
-            collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
-            collection.Add("@jobid", NpgsqlDbType.Uuid).Value = instance.JobId.OrDbNull();
-            collection.Add("@started", NpgsqlDbType.Timestamp).Value = instance.Started.StripKind().OrDbNull();
-            collection.Add("@faulted", NpgsqlDbType.Timestamp).Value = instance.Faulted.StripKind().OrDbNull();
-            collection.Add("@statuschecktokenid", NpgsqlDbType.Uuid).Value = instance.StatusCheckTokenId.OrDbNull();
-            collection.Add("@retryattempt", NpgsqlDbType.Integer).Value = instance.RetryAttempt;
-            collection.Add("@serviceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
-            collection.Add("@instanceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
+            ConvertJobAttempt(collection, instance);
+        else
+            AssignParameters(source, collection);
+    }
 
-            return;
-        }
-
-        AssignParameters(source, collection);
+    static void ConvertJobAttempt(NpgsqlParameterCollection collection, JobAttemptSaga instance)
+    {
+        collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
+        collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
+        collection.Add("@jobid", NpgsqlDbType.Uuid).Value = instance.JobId.OrDbNull();
+        collection.Add("@started", NpgsqlDbType.Timestamp).Value = instance.Started.StripKind().OrDbNull();
+        collection.Add("@faulted", NpgsqlDbType.Timestamp).Value = instance.Faulted.StripKind().OrDbNull();
+        collection.Add("@statuschecktokenid", NpgsqlDbType.Uuid).Value = instance.StatusCheckTokenId.OrDbNull();
+        collection.Add("@retryattempt", NpgsqlDbType.Integer).Value = instance.RetryAttempt;
+        collection.Add("@serviceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+        collection.Add("@instanceaddress", NpgsqlDbType.Varchar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
     }
 }

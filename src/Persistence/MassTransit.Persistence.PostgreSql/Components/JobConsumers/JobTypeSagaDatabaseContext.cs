@@ -97,22 +97,23 @@ WHERE
     static void ConvertTo(object? source, NpgsqlParameterCollection collection)
     {
         if (source is JobTypeSaga instance)
-        {
-            collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
-            collection.Add("@name", NpgsqlDbType.Varchar, 255).Value = instance.Name;
-            collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
-            collection.Add("@activejobcount", NpgsqlDbType.Integer).Value = instance.ActiveJobCount;
-            collection.Add("@concurrentjoblimit", NpgsqlDbType.Integer).Value = instance.ConcurrentJobLimit;
-            collection.Add("@overridejoblimit", NpgsqlDbType.Integer).Value = instance.OverrideJobLimit.OrDbNull();
-            collection.Add("@overridelimitexpiration", NpgsqlDbType.Timestamp).Value = instance.OverrideLimitExpiration.StripKind().OrDbNull();
-            collection.Add("@globalconcurrentjoblimit", NpgsqlDbType.Integer).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
-            collection.Add("@activejobs", NpgsqlDbType.Jsonb).Value = instance.ActiveJobs.ToJson().OrDbNull();
-            collection.Add("@instances", NpgsqlDbType.Jsonb).Value = instance.Instances.ToJson().OrDbNull();
-            collection.Add("@properties", NpgsqlDbType.Jsonb).Value = instance.Properties.ToJson().OrDbNull();
+            ConvertJobType(collection, instance);
+        else
+            AssignParameters(source, collection);
+    }
 
-            return;
-        }
-
-        AssignParameters(source, collection);
+    static void ConvertJobType(NpgsqlParameterCollection collection, JobTypeSaga instance)
+    {
+        collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = instance.CorrelationId;
+        collection.Add("@name", NpgsqlDbType.Varchar, 255).Value = instance.Name;
+        collection.Add("@currentstate", NpgsqlDbType.Integer).Value = instance.CurrentState;
+        collection.Add("@activejobcount", NpgsqlDbType.Integer).Value = instance.ActiveJobCount;
+        collection.Add("@concurrentjoblimit", NpgsqlDbType.Integer).Value = instance.ConcurrentJobLimit;
+        collection.Add("@overridejoblimit", NpgsqlDbType.Integer).Value = instance.OverrideJobLimit.OrDbNull();
+        collection.Add("@overridelimitexpiration", NpgsqlDbType.Timestamp).Value = instance.OverrideLimitExpiration.StripKind().OrDbNull();
+        collection.Add("@globalconcurrentjoblimit", NpgsqlDbType.Integer).Value = instance.GlobalConcurrentJobLimit.OrDbNull();
+        collection.Add("@activejobs", NpgsqlDbType.Jsonb).Value = instance.ActiveJobs.ToJson().OrDbNull();
+        collection.Add("@instances", NpgsqlDbType.Jsonb).Value = instance.Instances.ToJson().OrDbNull();
+        collection.Add("@properties", NpgsqlDbType.Jsonb).Value = instance.Properties.ToJson().OrDbNull();
     }
 }

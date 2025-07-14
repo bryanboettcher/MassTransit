@@ -85,21 +85,22 @@ WHERE
         static void ConvertTo(object? source, SqlParameterCollection collection)
         {
             if (source is JobAttemptSaga instance)
-            {
-                collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
-                collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
-                collection.Add("@jobid", SqlDbType.UniqueIdentifier).Value = instance.JobId;
-                collection.Add("@started", SqlDbType.DateTime).Value = instance.Started.OrDbNull();
-                collection.Add("@faulted", SqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
-                collection.Add("@statuschecktokenid", SqlDbType.UniqueIdentifier).Value = instance.StatusCheckTokenId.OrDbNull();
-                collection.Add("@retryattempt", SqlDbType.Int).Value = instance.RetryAttempt;
-                collection.Add("@serviceaddress", SqlDbType.NVarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
-                collection.Add("@instanceaddress", SqlDbType.NVarChar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
+                ConvertJobAttempt(collection, instance);
+            else
+                AssignParameters(source, collection);
+        }
 
-                return;
-            }
-
-            AssignParameters(source, collection);
+        static void ConvertJobAttempt(SqlParameterCollection collection, JobAttemptSaga instance)
+        {
+            collection.Add("@correlationid", SqlDbType.UniqueIdentifier).Value = instance.CorrelationId;
+            collection.Add("@currentstate", SqlDbType.Int).Value = instance.CurrentState;
+            collection.Add("@jobid", SqlDbType.UniqueIdentifier).Value = instance.JobId;
+            collection.Add("@started", SqlDbType.DateTime).Value = instance.Started.OrDbNull();
+            collection.Add("@faulted", SqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
+            collection.Add("@statuschecktokenid", SqlDbType.UniqueIdentifier).Value = instance.StatusCheckTokenId.OrDbNull();
+            collection.Add("@retryattempt", SqlDbType.Int).Value = instance.RetryAttempt;
+            collection.Add("@serviceaddress", SqlDbType.NVarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+            collection.Add("@instanceaddress", SqlDbType.NVarChar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
         }
     }
 }

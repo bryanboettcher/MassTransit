@@ -85,20 +85,21 @@ WHERE
     static void ConvertTo(object? source, MySqlParameterCollection collection)
     {
         if (source is JobAttemptSaga instance)
-        {
-            collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
-            collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
-            collection.Add("@jobid", MySqlDbType.Guid).Value = instance.JobId;
-            collection.Add("@started", MySqlDbType.DateTime).Value = instance.Started.OrDbNull();
-            collection.Add("@faulted", MySqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
-            collection.Add("@statuschecktokenid", MySqlDbType.Guid).Value = instance.StatusCheckTokenId.OrDbNull();
-            collection.Add("@retryattempt", MySqlDbType.Int32).Value = instance.RetryAttempt;
-            collection.Add("@serviceaddress", MySqlDbType.VarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
-            collection.Add("@instanceaddress", MySqlDbType.VarChar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
+            ConvertJobAttempt(collection, instance);
+        else
+            AssignParameters(source, collection);
+    }
 
-            return;
-        }
-
-        AssignParameters(source, collection);
+    static void ConvertJobAttempt(MySqlParameterCollection collection, JobAttemptSaga instance)
+    {
+        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
+        collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
+        collection.Add("@jobid", MySqlDbType.Guid).Value = instance.JobId;
+        collection.Add("@started", MySqlDbType.DateTime).Value = instance.Started.OrDbNull();
+        collection.Add("@faulted", MySqlDbType.DateTime).Value = instance.Faulted.OrDbNull();
+        collection.Add("@statuschecktokenid", MySqlDbType.Guid).Value = instance.StatusCheckTokenId.OrDbNull();
+        collection.Add("@retryattempt", MySqlDbType.Int32).Value = instance.RetryAttempt;
+        collection.Add("@serviceaddress", MySqlDbType.VarChar, 1000).Value = (instance.ServiceAddress?.ToString()).OrDbNull();
+        collection.Add("@instanceaddress", MySqlDbType.VarChar, 1000).Value = (instance.InstanceAddress?.ToString()).OrDbNull();
     }
 }
