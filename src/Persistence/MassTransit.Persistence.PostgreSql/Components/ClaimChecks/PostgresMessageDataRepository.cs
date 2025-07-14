@@ -1,10 +1,11 @@
-﻿namespace MassTransit.Persistence.SqlServer.ClaimChecks
+﻿namespace MassTransit.Persistence.PostgreSql.Components.ClaimChecks
 {
     using System.Data;
-    using Microsoft.Data.SqlClient;
+    using Npgsql;
+    using NpgsqlTypes;
 
 
-    public class SqlServerMessageDataRepository : IMessageDataRepository
+    public class PostgresMessageDataRepository : IMessageDataRepository
     {
         const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
         
@@ -15,14 +16,14 @@
         /// <summary>
         /// The SQL statement used to load a Claim Check from the database.  The {0} value is replaced with the table name.
         /// </summary>
-        public string SqlLoad { get; set; } = "SELECT TOP 1 Data FROM {0} WHERE Id = @id AND Expires >= @now;";
+        public string SqlLoad { get; set; } = "SELECT Data FROM {0} WHERE Id = @id AND Expires >= @now LIMIT 1";
 
         /// <summary>
         /// The SQL statement used to save a Claim Check to the database.  The {0} value is replaced with the table name.
         /// </summary>
-        public string SqlSave { get; set; } = "INSERT INTO {0} VALUES (@id, @created, @expires, @data);";
+        public string SqlSave { get; set; } = "INSERT INTO {0} VALUES (@id, @created, @expires, @data)";
 
-        public SqlServerMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
+        public PostgresMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
         {
             _connectionString = connectionString;
             _isolationLevel = isolationLevel;
@@ -42,8 +43,8 @@
             await using var command = await CreateCommand(SqlLoad, cancellationToken)
                 .ConfigureAwait(false);
 
-            command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
-            command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
+            command.Parameters.Add("@id", NpgsqlDbType.Uuid).Value = id;
+            command.Parameters.Add("@now", NpgsqlDbType.TimestampTz).Value = now;
 
             await using var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
                 .ConfigureAwait(false);
@@ -53,7 +54,7 @@
             if (! available)
                 throw new KeyNotFoundException($"No claim check available at {address}");
 
-            return reader.GetStream(0);
+            return await reader.GetStreamAsync(0, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -68,10 +69,10 @@
 
             await using var command = await CreateCommand(SqlSave, cancellationToken);
             
-            command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
-            command.Parameters.Add("@created", SqlDbType.DateTimeOffset).Value = now;
-            command.Parameters.Add("@expires", SqlDbType.DateTimeOffset).Value = expiration;
-            command.Parameters.Add("@data", SqlDbType.Binary, -1).Value = stream;
+            command.Parameters.Add("@id", NpgsqlDbType.Uuid).Value = id;
+            command.Parameters.Add("@created", NpgsqlDbType.TimestampTz).Value = now;
+            command.Parameters.Add("@expires", NpgsqlDbType.TimestampTz).Value = expiration;
+            command.Parameters.Add("@data", NpgsqlDbType.Bytea, -1).Value = stream;
             
             return Pack(id);
 
@@ -81,15 +82,15 @@
                     : DateTimeOffset.MaxValue; // C# DTO.MaxValue is the same as MSSQL DTO MaxValue
         }
 
-        async Task<SqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
+        async Task<NpgsqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
         {
-            SqlCommand? command = null;
+            NpgsqlCommand? command = null;
             try
             {
-                await using var connection = new SqlConnection(_connectionString);
+                await using var connection = new NpgsqlConnection(_connectionString);
                 await connection.OpenAsync(cancellationToken);
 
-                await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(
+                await using var transaction = await connection.BeginTransactionAsync(
                     _isolationLevel, cancellationToken).ConfigureAwait(false);
 
                 command = connection.CreateCommand();

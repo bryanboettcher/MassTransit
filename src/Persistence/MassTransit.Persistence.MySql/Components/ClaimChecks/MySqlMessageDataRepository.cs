@@ -1,4 +1,4 @@
-﻿namespace MassTransit.Persistence.MySql.ClaimChecks
+﻿namespace MassTransit.Persistence.MySql.Components.ClaimChecks
 {
     using System.Data;
     using global::MySql.Data.MySqlClient;
@@ -89,7 +89,7 @@
                 await using var connection = new MySqlConnection(_connectionString);
                 await connection.OpenAsync(cancellationToken);
 
-                await using var transaction = (MySqlTransaction)await connection.BeginTransactionAsync(
+                await using var transaction = await connection.BeginTransactionAsync(
                     _isolationLevel, cancellationToken).ConfigureAwait(false);
 
                 command = connection.CreateCommand();

@@ -61,22 +61,23 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CREATE TABLE Jobs (
-        ///    CorrelationId BINARY(16) NOT NULL,
-        ///    CurrentState INT NOT NULL,    
-        ///    Completed TIMESTAMP NULL,
-        ///    Faulted TIMESTAMP NULL,
-        ///    Started TIMESTAMP NULL,
-        ///    Submitted TIMESTAMP NULL,    
-        ///    EndDate TIMESTAMP NULL,
-        ///    NextStartDate TIMESTAMP NULL,
-        ///    StartDate TIMESTAMP NULL,    
-        ///    AttemptId BINARY(16) NOT NULL,
-        ///    JobTypeId BINARY(16) NOT NULL,
-        ///    JobRetryDelayToken BINARY(16) NULL,
-        ///    JobSlotWaitToken BINARY(16) NULL,    
-        ///    RetryAttempt INT NOT NULL,
-        ///     [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to CREATE TABLE `JobAttempts` (
+        ///    `CorrelationId` CHAR(36) NOT NULL,
+        ///    `CurrentState` INT NOT NULL,
+        ///    `JobId` CHAR(36) NOT NULL,    
+        ///    `Started` DATETIME NULL,
+        ///    `Faulted` DATETIME NULL,
+        ///    `StatusCheckTokenId` CHAR(36) NULL,    
+        ///    `RetryAttempt` INT NOT NULL,
+        ///    `ServiceAddress` VARCHAR(1000) NULL,
+        ///    `InstanceAddress` VARCHAR(1000) NULL,
+        ///    PRIMARY KEY (`CorrelationId`)
+        ///);
+        ///
+        ///CREATE TABLE `JobTypes` (
+        ///    `CorrelationId` CHAR(36) NOT NULL,
+        ///    `Name` VARCHAR(255) NOT NULL,
+        ///    ` [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MySql_CreateJobTables {
             get {
@@ -151,21 +152,22 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CREATE TABLE Jobs (
-        ///    CorrelationId UUID NOT NULL,
-        ///    CurrentState INT NOT NULL,    
-        ///    Completed TIMESTAMP NULL,
-        ///    Faulted TIMESTAMP NULL,
-        ///    Started TIMESTAMP NULL,
-        ///    Submitted TIMESTAMP NULL,    
-        ///    EndDate TIMESTAMP WITH TIME ZONE NULL,
-        ///    NextStartDate TIMESTAMP WITH TIME ZONE NULL,
-        ///    StartDate TIMESTAMP WITH TIME ZONE NULL,    
-        ///    AttemptId UUID NOT NULL,
-        ///    JobTypeId UUID NOT NULL,
-        ///    JobRetryDelayToken UUID NULL,
-        ///    JobSlotWaitToken UUID NULL,    
-        ///    RetryAttempt INT  [rest of string was truncated]&quot;;.
+        ///   Looks up a localized string similar to CREATE TABLE IF NOT EXISTS &quot;JobAttempts&quot; (
+        ///    &quot;CorrelationId&quot; UUID NOT NULL,
+        ///    &quot;CurrentState&quot; INTEGER NOT NULL,
+        ///    &quot;JobId&quot; UUID NOT NULL,    
+        ///    &quot;Started&quot; TIMESTAMP NULL,
+        ///    &quot;Faulted&quot; TIMESTAMP NULL,
+        ///    &quot;StatusCheckTokenId&quot; UUID NULL,    
+        ///    &quot;RetryAttempt&quot; INTEGER NOT NULL,
+        ///    &quot;ServiceAddress&quot; VARCHAR(1000) NULL,
+        ///    &quot;InstanceAddress&quot; VARCHAR(1000) NULL,
+        ///    PRIMARY KEY (&quot;CorrelationId&quot;)
+        ///);
+        ///
+        ///CREATE TABLE IF NOT EXISTS &quot;JobTypes&quot; (
+        ///    &quot;CorrelationId&quot; UUID NOT NULL,
+        ///    &quot;Name&quot; VARCHAR [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Postgres_CreateJobTables {
             get {
@@ -174,7 +176,7 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CREATE TABLE OptimisticSagas (
+        ///   Looks up a localized string similar to CREATE TABLE IF NOT EXISTS OptimisticSagas (
         ///    CorrelationId UUID NOT NULL,
         ///    CurrentState VARCHAR(20),
         ///    Name TEXT,
@@ -182,7 +184,7 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         ///    PRIMARY KEY (CorrelationId)
         ///);
         ///
-        ///CREATE TABLE PessimisticSagas (
+        ///CREATE TABLE IF NOT EXISTS PessimisticSagas (
         ///    CorrelationId UUID NOT NULL,
         ///    CurrentState VARCHAR(20),
         ///    Name TEXT,

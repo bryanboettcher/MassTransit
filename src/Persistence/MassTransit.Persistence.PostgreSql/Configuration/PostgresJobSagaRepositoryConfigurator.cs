@@ -1,9 +1,8 @@
 ﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
 
 using System.Data;
-using Integration.JobSagas;
+using Components.JobConsumers;
 using Integration.Saga;
-using MassTransit.Persistence.PostgreSql.Connections;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence.Configuration;
 
@@ -50,22 +49,16 @@ public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryC
     {
         ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
 
-        services.AddTransient<DatabaseContext<JobSaga>, JobSagaDatabaseContext>();
-        services.AddTransient<SagaSerializer<JobSaga, JobSagaDatabaseContext.DbModel>, JobSagaDatabaseContext.Serializer>();
-        services.AddTransient<DatabaseContext<JobSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresDatabaseContext<JobSagaDatabaseContext.DbModel>(ConnectionString, "Jobs", nameof(ISaga.CorrelationId), IsolationLevel)
+        services.AddTransient<DatabaseContext<JobSaga>>(_
+            => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
         );
 
-        services.AddTransient<DatabaseContext<JobTypeSaga>, JobTypeSagaDatabaseContext>();
-        services.AddTransient<SagaSerializer<JobTypeSaga, JobTypeSagaDatabaseContext.DbModel>, JobTypeSagaDatabaseContext.Serializer>();
-        services.AddTransient<DatabaseContext<JobTypeSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresDatabaseContext<JobTypeSagaDatabaseContext.DbModel>(ConnectionString, "JobTypes", nameof(ISaga.CorrelationId), IsolationLevel)
+        services.AddTransient<DatabaseContext<JobTypeSaga>>(_
+            => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
         );
 
-        services.AddTransient<DatabaseContext<JobAttemptSaga>, JobAttemptSagaDatabaseContext>();
-        services.AddTransient<SagaSerializer<JobAttemptSaga, JobAttemptSagaDatabaseContext.DbModel>, JobAttemptSagaDatabaseContext.Serializer>();
-        services.AddTransient<DatabaseContext<JobAttemptSagaDatabaseContext.DbModel>>(
-            _ => new PessimisticPostgresDatabaseContext<JobAttemptSagaDatabaseContext.DbModel>(ConnectionString, "JobAttempts", nameof(ISaga.CorrelationId), IsolationLevel)
+        services.AddTransient<DatabaseContext<JobAttemptSaga>>(_
+            => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
         );
     }
 }
