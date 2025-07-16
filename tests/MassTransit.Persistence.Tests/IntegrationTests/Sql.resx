@@ -129,7 +129,7 @@
     `ServiceAddress` VARCHAR(1000) NULL,
     `InstanceAddress` VARCHAR(1000) NULL,
     PRIMARY KEY (`CorrelationId`)
-);
+) ENGINE=InnoDB;
 
 CREATE TABLE `JobTypes` (
     `CorrelationId` BINARY(16) NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE `JobTypes` (
     `Instances` TEXT NULL,
     `Properties` TEXT NULL,      
     PRIMARY KEY (`CorrelationId`)
-);
+) ENGINE=InnoDB;
 
 CREATE TABLE `Jobs` (
     `CorrelationId` BINARY(16) NOT NULL,
@@ -175,7 +175,7 @@ CREATE TABLE `Jobs` (
     `JobProperties` TEXT NULL,
     `JobState` TEXT NULL,    
     PRIMARY KEY (`CorrelationId`)
-);</value>
+) ENGINE=InnoDB;</value>
   </data>
   <data name="MySql_CreateMessageDataTables" xml:space="preserve">
     <value>CREATE TABLE `MessageData` (
@@ -183,7 +183,7 @@ CREATE TABLE `Jobs` (
     `Created` DATETIME NOT NULL,
     `Expires` DATETIME NOT NULL,
     `Data` LONGBLOB NOT NULL
-);</value>
+) ENGINE=InnoDB;</value>
   </data>
   <data name="MySql_CreateSagaTables" xml:space="preserve">
     <value>CREATE TABLE OptimisticSagas (
@@ -370,11 +370,11 @@ CREATE TABLE [dbo].[JobTypes] (
 );</value>
   </data>
   <data name="SqlServer_CreateMessageDataTables" xml:space="preserve">
-    <value>CREATE TABLE MessageData (
-    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
-    Created DATETIMEOFFSET NOT NULL,
-    Expires DATETIMEOFFSET NOT NULL,
-    Data VARBINARY(MAX) NOT NULL
+    <value>CREATE TABLE [MessageData] (
+    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    [Created] DATETIMEOFFSET NOT NULL,
+    [Expires] DATETIMEOFFSET NOT NULL,
+    [Data] VARBINARY(MAX) NOT NULL
 );</value>
   </data>
   <data name="SqlServer_CreateSagaTables" xml:space="preserve">

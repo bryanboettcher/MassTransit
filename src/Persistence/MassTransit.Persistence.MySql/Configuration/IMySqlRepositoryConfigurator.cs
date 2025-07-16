@@ -22,7 +22,7 @@ public interface IMySqlRepositoryConfigurator<TSaga>
     IMySqlRepositoryConfigurator<TSaga> SetTableName(string tableName);
 
     /// <summary>
-    /// Sets the name of the primary key column.  Defaults to `CorrelationId` if not specified.
+    /// Sets the name of the primary key column.  Defaults to `CorrelationId` if not specified.  Respects [Key] and [ExplicitKey] attributes.
     /// </summary>
     IMySqlRepositoryConfigurator<TSaga> SetIdentityColumnName(string identityColumnName);
 
@@ -75,7 +75,7 @@ public interface IMySqlRepositoryConfigurator<TSaga>
     string? TableName { get; set; }
 
     /// <summary>
-    /// Gets/sets the primary key column name.  Defaults to `CorrelationId` if unspecified.
+    /// Gets/sets the primary key column name.  Defaults to `CorrelationId` if unspecified.  Respects [Key] and [ExplicitKey] attributes.
     /// </summary>
     string IdentityColumnName { get; set; }
 }

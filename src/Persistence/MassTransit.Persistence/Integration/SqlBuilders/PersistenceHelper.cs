@@ -3,15 +3,16 @@ using System.Reflection;
 
 namespace MassTransit.Persistence.Integration.SqlBuilders
 {
+    using Saga;
+
+
     /// <summary>
     /// Had to have a god-object somewhere to shove all the tangentially related methods...
     /// </summary>
     public static class PersistenceHelper
     {
         public static string GetTableName<T>()
-        {
-            return GetTableName(typeof(T));
-        }
+            => GetTableName(typeof(T));
 
         public static string GetTableName(Type type)
         {
@@ -21,6 +22,9 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
 
             return type.Name + "s";
         }
+
+        public static string GetIdColumnName<T>()
+            => GetIdColumnName(typeof(T));
 
         public static string GetIdColumnName(Type type)
         {
@@ -60,19 +64,24 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
             return GetColumnName(type, property);
         }
 
-        public static string GetColumnName(Type type, PropertyInfo property)
+        public static string GetColumnName(Type type, PropertyInfo property, List<SqlPropertyMapping>? mappings = null)
         {
+            var name = property.Name;
+            var mapping = mappings?.FirstOrDefault(m => m.Property.Member.Name == name);
+            if (mapping is not null)
+                return mapping.Name ?? name;
+
             var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
             if (columnAttribute is null || string.IsNullOrEmpty(columnAttribute.Name))
-                return property.Name;
+                return name;
 
             return columnAttribute.Name;
         }
 
-        public static IDictionary<string, string> BuildProperties(Type modelType)
+        public static IDictionary<string, string> BuildProperties(Type modelType, List<SqlPropertyMapping> mappings)
         {
             return (from prop in modelType.GetProperties()
-                    let columnName = GetColumnName(modelType, prop)
+                    let columnName = GetColumnName(modelType, prop, mappings)
                     let propertyName = NormalizeName(prop.Name)
                     select (columnName, propertyName))
                 .DistinctBy(m => m.columnName, StringComparer.OrdinalIgnoreCase)

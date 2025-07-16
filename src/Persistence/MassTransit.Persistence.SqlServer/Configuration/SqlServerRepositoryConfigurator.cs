@@ -15,8 +15,8 @@ public class SqlServerRepositoryConfigurator<TSaga> : ISqlServerRepositoryConfig
     public SqlServerRepositoryConfigurator()
     {
         TableName = PersistenceHelper.GetTableName<TSaga>();
-
-        IdentityColumnName = nameof(ISaga.CorrelationId);
+        IdentityColumnName = PersistenceHelper.GetIdColumnName<TSaga>();
+        
         IsolationLevel = IsolationLevel.ReadCommitted;
         ConcurrencyMode = ConcurrencyMode.Pessimistic;
     }

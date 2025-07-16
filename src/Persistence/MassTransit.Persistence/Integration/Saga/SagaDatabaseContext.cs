@@ -136,7 +136,13 @@ namespace MassTransit.Persistence.Integration.Saga
 
         protected internal abstract string BuildDeleteSql();
 
-        protected void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
+        protected void MapPrefix<TProperty>(Expression<Func<TSaga, TProperty>> mappingExpression, string? prefixName = null)
+            => MapCore(mappingExpression, prefixName, false);
+
+        protected void MapProperty<TProperty>(Expression<Func<TSaga, TProperty>> mappingExpression, string targetName)
+            => MapCore(mappingExpression, targetName, true);
+
+        void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
         {
             if (mappingExpression.NodeType != ExpressionType.Lambda)
                 throw new InvalidOperationException("Expression must be a lambda");

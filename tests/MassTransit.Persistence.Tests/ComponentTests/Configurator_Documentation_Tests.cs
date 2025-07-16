@@ -1,16 +1,13 @@
 ﻿namespace MassTransit.Persistence.Tests.ComponentTests
 {
     using System.Data;
-    using System.Linq.Expressions;
     using Configuration;
-    using Integration.Saga;
-    using MassTransit.Tests.Pipeline;
-    using Microsoft.Data.SqlClient;
     using Microsoft.Extensions.DependencyInjection;
+    using MySqlConnector;
     using NUnit.Framework;
-    using Persistence.SqlServer.Configuration;
-    using Persistence.SqlServer.Connections;
-    using Persistence.SqlServer.Extensions;
+    using Persistence.MySql.Configuration;
+    using Persistence.MySql.Connections;
+    using Persistence.MySql.Extensions;
 
 
     public class Configurator_Documentation_Tests
@@ -19,81 +16,92 @@
         public void Registration_looks_correct()
         {
             var services = new ServiceCollection();
+
             services.AddMassTransit(bus =>
             {
-                //bus.AddSagaStateMachine<OrderStateMachine, OrderSaga>()
-                //    .CustomRepository(conf => conf.UsingSqlServer(opt => opt
-                //        .SetConnectionString("my connection string")
-                //        .SetTableName("Orders")
-                //        .SetIdentityColumnName("OrderId")
-                //        .SetOptimisticConcurrency(m => m.RowVersion)
-                //    ));
-
-bus.AddScoped<DatabaseContext<OrderSaga>, OrderSagaRepository>();
-bus.AddSagaStateMachine<OrderStateMachine, OrderSaga>()
-    .CustomRepository(conf => conf.SetContextFactory(
-        async ctx => ctx.GetRequiredService<DatabaseContext<OrderSaga>>()
-    ));
+                bus.AddSagaStateMachine<OrderStateMachine, OrderSaga>()
+                    .CustomRepository(conf => conf.UsingMySql(opt => opt
+                        .SetOptimisticConcurrency()
+                    ));
 
                 bus.AddJobSagaStateMachines()
-                    .CustomRepository(conf => conf.UsingSqlServer(
+                    .CustomRepository(conf => conf.UsingMySql(
                         opt => opt.SetConnectionString("my connection string")
                     ));
 
                 bus.UsingInMemory((ctx, cfg) =>
                 {
-                    cfg.UseMessageData(conf => conf.UsingSqlServer(
-                        opt => opt.SetConnectionString("my connection string")
-                    ));
-
                     cfg.ConfigureEndpoints(ctx);
                 });
             });
         }
     }
 
-
-    public class OrderSagaRepository : DatabaseContext<OrderSaga>
-    {
-        readonly IOrderService _service;
-        public OrderSagaRepository(IOrderService service) => _service = service;
-
-        public ValueTask DisposeAsync() => _service.DisposeAsync();
-
-        public void Dispose() => _service.Dispose();
-
-        public Task DeleteAsync(OrderSaga instance, CancellationToken cancellationToken = default)
-            => _service.RemoveOrder(instance.CorrelationId, cancellationToken);
-
-        public Task<OrderSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken = default)
-            => _service.GetOrderById(correlationId, cancellationToken);
-
-        public async Task InsertAsync(OrderSaga instance, CancellationToken cancellationToken = default)
-            => _service.CreateOrder(instance, cancellationToken);
-
-        public async Task UpdateAsync(OrderSaga instance, CancellationToken cancellationToken = default)
-            => _service.UpdateOrder(instance, cancellationToken);
-
-        public IAsyncEnumerable<OrderSaga> QueryAsync(Expression<Func<OrderSaga, bool>> filterExpression, CancellationToken cancellationToken = default)
-            => throw new NotSupportedException("Orders do not need searches right now");
-
-        public async Task CommitAsync(CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-
     public class OrderSaga : SagaStateMachineInstance
     {
         public Guid CorrelationId { get; set; }
         public byte[] RowVersion { get; set; }
+        public int CurrentState { get; set; }
+        public string OrderNumber { get; set; }
+        public Guid? CustomerId { get; set; }
+        public decimal TotalAmount { get; set; }
         public DateTime CreatedOn { get; set; }
+        public DateTime UpdatedOn { get; set; }
+
+        public ICollection<OrderItem> Items { get; set; } = [];
     }
+
+    public record OrderItem(Guid ItemId, int Quantity, decimal ItemPrice);
 
 
     public class OrderStateMachine : MassTransitStateMachine<OrderSaga>
     {
+    }
 
+    public class MySqlOrderSagaRepository : OptimisticMySqlDatabaseContext<OrderSaga>
+    {
+        public MySqlOrderSagaRepository(string connectionString)
+            // base constructor shows setting the table, id, and version column/property names
+            : base(connectionString, "OrderSagas", "CorrelationId", "RowVersion", "RowVersion")
+        {
+            MapProperty(saga => saga.Items, "ItemsJson");
+        }
+
+        protected override Func<IDataReader, OrderSaga> CreateReaderAdapter() => MapFromReader;
+        static OrderSaga MapFromReader(IDataReader reader)
+        {
+            var r = (MySqlDataReader)reader;
+            return new OrderSaga
+            {
+                CorrelationId = r.GetGuid("CorrelationId"),
+                CurrentState = r.GetInt32("CurrentState"),
+                OrderNumber = r.GetString("OrderNumber"),
+                CustomerId = r.GetGuidOrNull("CustomerId"),
+                TotalAmount = r.GetDecimal("TotalAmount"),
+                Items = r.FromJson<List<OrderItem>>("ItemsJson") ?? [],
+                CreatedOn = r.GetDateTime("CreatedOn"),
+                UpdatedOn = r.GetDateTime("UpdatedOn"),
+                RowVersion = r.GetFieldValue<byte[]>("RowVersion")
+            };
+        }
+
+        protected override Action<object?, MySqlParameterCollection> CreateWriterAdapter() => MapToParameters;
+        static void MapToParameters(object? input, MySqlParameterCollection parameters)
+        {
+            if (input is OrderSaga saga)
+            {
+                parameters.Add("@correlationid", MySqlDbType.Guid).Value = saga.CorrelationId;
+                parameters.Add("@currentstate", MySqlDbType.Int32).Value = saga.CurrentState;
+                parameters.Add("@ordernumber", MySqlDbType.VarChar, 50).Value = saga.OrderNumber;
+                parameters.Add("@customerid", MySqlDbType.Guid).Value = saga.CustomerId.OrDbNull();
+                parameters.Add("@totalamount", MySqlDbType.Decimal).Value = saga.TotalAmount;
+                parameters.Add("@items", MySqlDbType.Text).Value = saga.Items.ToJson().OrDbNull();
+                parameters.Add("@rowversion", MySqlDbType.Timestamp).Value = saga.RowVersion;
+                return;
+            }
+
+            // Fallback for query parameters
+            AssignParameters(input, parameters);
+        }
     }
 }

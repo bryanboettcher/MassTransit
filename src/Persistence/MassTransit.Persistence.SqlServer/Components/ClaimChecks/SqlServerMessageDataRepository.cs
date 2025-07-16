@@ -108,7 +108,6 @@
                     : DateTimeOffset.MaxValue; // C# DTO.MaxValue is the same as MSSQL DTO MaxValue
         }
 
-        /// <inheritdoc />
         public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
             var now = _timeProvider.GetUtcNow();

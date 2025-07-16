@@ -4,7 +4,7 @@ using Microsoft.Data.SqlClient;
 using Persistence.Configuration;
 
 
-public static class AdoJobSagaRepositoryConfiguratorExtensions
+public static class CustomJobSagaRepositoryConfiguratorExtensions
 {
     /// <summary>
     /// Configures the JobConsumer sagas to use Sql Server.  Requires

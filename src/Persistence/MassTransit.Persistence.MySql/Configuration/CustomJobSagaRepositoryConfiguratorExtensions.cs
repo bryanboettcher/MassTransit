@@ -3,7 +3,7 @@
 using MySqlConnector;
 using Persistence.Configuration;
 
-public static class AdoJobSagaRepositoryConfiguratorExtensions
+public static class CustomJobSagaRepositoryConfiguratorExtensions
 {
     /// <summary>
     /// Configures the JobConsumer sagas to use MySql.  Requires

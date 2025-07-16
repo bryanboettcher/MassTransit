@@ -143,7 +143,7 @@
         protected virtual ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
             => ValueTask.CompletedTask;
 
-        internal static void AssignParameters(object? parameters, NpgsqlParameterCollection collection)
+        protected static void AssignParameters(object? parameters, NpgsqlParameterCollection collection)
         {
             foreach (var (name, value) in ParameterReader.Read(parameters))
             {

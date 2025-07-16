@@ -42,7 +42,7 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
 
     protected override string BuildInsertSql()
     {
-        var properties = PersistenceHelper.BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
         properties.Remove(_versionProperty.Name);
 
@@ -56,7 +56,7 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
 
     protected override string BuildUpdateSql()
     {
-        var properties = PersistenceHelper.BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
         properties.Remove(nameof(ISaga.CorrelationId));
         properties.Remove(_versionProperty.Name);

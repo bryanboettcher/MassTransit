@@ -110,7 +110,7 @@ namespace MassTransit.Persistence.Integration.Saga
         }
     }
 
-    public class AdoSagaRepositoryContext<TSaga> :
+    public class CustomSagaRepositoryContext<TSaga> :
         BasePipeContext,
         QuerySagaRepositoryContext<TSaga>,
         LoadSagaRepositoryContext<TSaga>
@@ -118,7 +118,7 @@ namespace MassTransit.Persistence.Integration.Saga
     {
         readonly DatabaseContext<TSaga> _context;
 
-        public AdoSagaRepositoryContext(DatabaseContext<TSaga> context, CancellationToken cancellationToken)
+        public CustomSagaRepositoryContext(DatabaseContext<TSaga> context, CancellationToken cancellationToken)
             : base(cancellationToken)
         {
             _context = context;

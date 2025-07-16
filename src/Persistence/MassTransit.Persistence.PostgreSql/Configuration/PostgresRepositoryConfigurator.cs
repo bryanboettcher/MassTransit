@@ -15,8 +15,8 @@ public class PostgresRepositoryConfigurator<TSaga> : IPostgresRepositoryConfigur
     public PostgresRepositoryConfigurator()
     {
         TableName = PersistenceHelper.GetTableName<TSaga>();
+        IdentityColumnName = PersistenceHelper.GetIdColumnName<TSaga>();
 
-        IdentityColumnName = nameof(ISaga.CorrelationId);
         IsolationLevel = IsolationLevel.ReadCommitted;
         ConcurrencyMode = ConcurrencyMode.Pessimistic;
     }

@@ -72,12 +72,11 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         ///    `ServiceAddress` VARCHAR(1000) NULL,
         ///    `InstanceAddress` VARCHAR(1000) NULL,
         ///    PRIMARY KEY (`CorrelationId`)
-        ///);
+        ///) ENGINE=InnoDB;
         ///
         ///CREATE TABLE `JobTypes` (
         ///    `CorrelationId` BINARY(16) NOT NULL,
-        ///    `Name` VARCHAR(255) NOT NULL,
-        ///  [rest of string was truncated]&quot;;.
+        ///    `Name` VARCHAR(255 [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MySql_CreateJobTables {
             get {
@@ -91,7 +90,7 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         ///    `Created` DATETIME NOT NULL,
         ///    `Expires` DATETIME NOT NULL,
         ///    `Data` LONGBLOB NOT NULL
-        ///);.
+        ///) ENGINE=InnoDB;.
         /// </summary>
         internal static string MySql_CreateMessageDataTables {
             get {
@@ -265,11 +264,11 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CREATE TABLE MessageData (
-        ///    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
-        ///    Created DATETIMEOFFSET NOT NULL,
-        ///    Expires DATETIMEOFFSET NOT NULL,
-        ///    Data VARBINARY(MAX) NOT NULL
+        ///   Looks up a localized string similar to CREATE TABLE [MessageData] (
+        ///    [Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+        ///    [Created] DATETIMEOFFSET NOT NULL,
+        ///    [Expires] DATETIMEOFFSET NOT NULL,
+        ///    [Data] VARBINARY(MAX) NOT NULL
         ///);.
         /// </summary>
         internal static string SqlServer_CreateMessageDataTables {

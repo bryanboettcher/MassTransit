@@ -4,7 +4,7 @@
     using MySqlConnector;
     using Persistence.Configuration;
 
-    public static class AdoSagaRepositoryConfiguratorExtensions
+    public static class CustomSagaRepositoryConfiguratorExtensions
     {
         /// <summary>
         /// Configures a MySql-based saga repository for this <typeparamref name="TSaga"/>.
