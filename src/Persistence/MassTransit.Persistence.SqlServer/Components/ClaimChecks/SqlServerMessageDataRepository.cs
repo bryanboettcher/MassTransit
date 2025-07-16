@@ -1,10 +1,10 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Components.ClaimChecks
 {
     using System.Data;
+    using Integration.ClaimChecks;
     using Microsoft.Data.SqlClient;
 
-
-    public class SqlServerMessageDataRepository : IMessageDataRepository
+    public class SqlServerMessageDataRepository : IMessageDataRepository, IMessageDataCleaner
     {
         const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
         
@@ -22,6 +22,11 @@
         /// </summary>
         public string SqlSave { get; set; } = "INSERT INTO {0} VALUES (@id, @created, @expires, @data);";
 
+        /// <summary>
+        /// The SQL statement used to clean stale Claim Checks.  The {0} value is replaced with the table name.
+        /// </summary>
+        public string SqlClean { get; set; } = "DELETE FROM {0} WHERE Expires < @now;";
+
         public SqlServerMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
         {
             _connectionString = connectionString;
@@ -31,6 +36,7 @@
 
             SqlLoad = string.Format(SqlLoad, tableName);
             SqlSave = string.Format(SqlSave, tableName);
+            SqlClean = string.Format(SqlClean, tableName);
         }
 
         /// <inheritdoc />
@@ -38,22 +44,33 @@
         {
             var id = Unpack(address);
             var now = _timeProvider.GetUtcNow();
+            var output = new MemoryStream();
 
-            await using var command = await CreateCommand(SqlLoad, cancellationToken)
-                .ConfigureAwait(false);
+            await CreateCommand(
+                SqlLoad,
+                async command =>
+                {
+                    command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+                    command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
 
-            command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
-            command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
+                    await using var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
+                        .ConfigureAwait(false);
 
-            await using var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
-                .ConfigureAwait(false);
+                    var available = await reader.ReadAsync(cancellationToken)
+                        .ConfigureAwait(false);
 
-            var available = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-            
-            if (! available)
-                throw new KeyNotFoundException($"No claim check available at {address}");
+                    if (!available)
+                        throw new KeyNotFoundException($"No claim check available at {address}");
 
-            return reader.GetStream(0);
+                    await reader.GetStream(0).CopyToAsync(output, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    output.Position = 0;
+                },
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            return output;
         }
 
         /// <inheritdoc />
@@ -66,12 +83,23 @@
             if (expiration < now)
                 throw new InvalidOperationException("TTL has already expired");
 
-            await using var command = await CreateCommand(SqlSave, cancellationToken);
-            
-            command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
-            command.Parameters.Add("@created", SqlDbType.DateTimeOffset).Value = now;
-            command.Parameters.Add("@expires", SqlDbType.DateTimeOffset).Value = expiration;
-            command.Parameters.Add("@data", SqlDbType.Binary, -1).Value = stream;
+            await CreateCommand(
+                SqlSave,
+                async command =>
+                {
+                    if (stream.CanSeek)
+                        stream.Seek(0, SeekOrigin.Begin);
+
+                    command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+                    command.Parameters.Add("@created", SqlDbType.DateTimeOffset).Value = now;
+                    command.Parameters.Add("@expires", SqlDbType.DateTimeOffset).Value = expiration;
+                    command.Parameters.Add("@data", SqlDbType.Binary, -1).Value = stream;
+
+                    await command.ExecuteNonQueryAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                },
+                cancellationToken
+            ).ConfigureAwait(false);
             
             return Pack(id);
 
@@ -81,15 +109,40 @@
                     : DateTimeOffset.MaxValue; // C# DTO.MaxValue is the same as MSSQL DTO MaxValue
         }
 
-        async Task<SqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
+        /// <inheritdoc />
+        public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
+            var now = _timeProvider.GetUtcNow();
+            var rows = 0;
+
+            await CreateCommand(
+                SqlClean,
+                async command =>
+                {
+                    command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
+
+                    rows = await command.ExecuteNonQueryAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                    
+                }, cancellationToken
+            ).ConfigureAwait(false);
+
+            return rows;
+        }
+
+        async Task CreateCommand(string sql, Func<SqlCommand, Task> callback, CancellationToken cancellationToken)
+        {
+            SqlConnection? connection = null;
             SqlCommand? command = null;
+            SqlTransaction? transaction = null;
             try
             {
-                await using var connection = new SqlConnection(_connectionString);
-                await connection.OpenAsync(cancellationToken);
+                connection = new SqlConnection(_connectionString);
 
-                await using var transaction = (SqlTransaction)await connection.BeginTransactionAsync(
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                transaction = (SqlTransaction)await connection.BeginTransactionAsync(
                     _isolationLevel, cancellationToken).ConfigureAwait(false);
 
                 command = connection.CreateCommand();
@@ -97,13 +150,32 @@
                 command.Transaction = transaction;
                 command.CommandText = sql;
 
-                return command;
+                await callback(command)
+                    .ConfigureAwait(false);
+
+                await transaction.CommitAsync(cancellationToken)
+                    .ConfigureAwait(false);
             }
             catch
             {
                 if (command != null)
-                    await command.DisposeAsync();
+                    await command.DisposeAsync().ConfigureAwait(false);
+
+                if (transaction != null)
+                    await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+
                 throw;
+            }
+            finally
+            {
+                if (transaction is not null)
+                    await transaction.DisposeAsync().ConfigureAwait(false);
+
+                if (command is not null)
+                    await command.DisposeAsync().ConfigureAwait(false);
+
+                if (connection is not null)
+                    await connection.DisposeAsync().ConfigureAwait(false);
             }
         }
 
@@ -120,5 +192,6 @@
 
         static Uri Pack(Guid id)
             => new($"urn:claim?{id:N}");
+
     }
 }

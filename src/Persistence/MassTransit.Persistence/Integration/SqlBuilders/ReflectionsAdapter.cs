@@ -34,8 +34,11 @@ public class ReflectionsAdapter
 
                 var value = input.GetValue(index);
                 var actual = CheckDbNull(value);
-                
-                property.SetValue(target, actual);
+
+                if (property.PropertyType == typeof(Guid) && actual is byte[] { Length: 16 } bytes)
+                    property.SetValue(target, new Guid(bytes)); // thanks, MySql ...
+                else
+                    property.SetValue(target, actual);
             }
 
             return target;

@@ -62,7 +62,7 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         
         /// <summary>
         ///   Looks up a localized string similar to CREATE TABLE `JobAttempts` (
-        ///    `CorrelationId` CHAR(36) NOT NULL,
+        ///    `CorrelationId` BINARY(16) NOT NULL,
         ///    `CurrentState` INT NOT NULL,
         ///    `JobId` CHAR(36) NOT NULL,    
         ///    `Started` DATETIME NULL,
@@ -75,9 +75,9 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         ///);
         ///
         ///CREATE TABLE `JobTypes` (
-        ///    `CorrelationId` CHAR(36) NOT NULL,
+        ///    `CorrelationId` BINARY(16) NOT NULL,
         ///    `Name` VARCHAR(255) NOT NULL,
-        ///    ` [rest of string was truncated]&quot;;.
+        ///  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string MySql_CreateJobTables {
             get {
@@ -86,21 +86,35 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE `MessageData` (
+        ///    `Id` BINARY(16) NOT NULL PRIMARY KEY,
+        ///    `Created` DATETIME NOT NULL,
+        ///    `Expires` DATETIME NOT NULL,
+        ///    `Data` LONGBLOB NOT NULL
+        ///);.
+        /// </summary>
+        internal static string MySql_CreateMessageDataTables {
+            get {
+                return ResourceManager.GetString("MySql_CreateMessageDataTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to CREATE TABLE OptimisticSagas (
-        ///    CorrelationId CHAR(36) NOT NULL,
-        ///    RowVersion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        ///    CurrentState VARCHAR(20),
-        ///    Name TEXT,
+        ///    `CorrelationId` BINARY(16) NOT NULL,
+        ///    `RowVersion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        ///    `CurrentState` VARCHAR(20),
+        ///    `Name` TEXT,
         ///    
-        ///    PRIMARY KEY (CorrelationId)
+        ///    PRIMARY KEY (`CorrelationId`)
         ///);
         ///
-        ///CREATE TABLE PessimisticSagas (
-        ///    CorrelationId CHAR(36) NOT NULL,
-        ///    CurrentState VARCHAR(20),
-        ///    Name TEXT,
+        ///CREATE TABLE `PessimisticSagas` (
+        ///    `CorrelationId` BINARY(16) NOT NULL,
+        ///    `CurrentState` VARCHAR(20),
+        ///    `Name` TEXT,
         ///    
-        ///    PRIMARY KEY (CorrelationId)
+        ///    PRIMARY KEY (`CorrelationId`)
         ///);.
         /// </summary>
         internal static string MySql_CreateSagaTables {
@@ -117,6 +131,15 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         internal static string MySql_DropJobTables {
             get {
                 return ResourceManager.GetString("MySql_DropJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS MessageData;.
+        /// </summary>
+        internal static string MySql_DropMessageDataTables {
+            get {
+                return ResourceManager.GetString("MySql_DropMessageDataTables", resourceCulture);
             }
         }
         
@@ -156,6 +179,20 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE MessageData (
+        ///    Id UUID NOT NULL PRIMARY KEY,
+        ///    Created TIMESTAMP NOT NULL,
+        ///    Expires TIMESTAMP NOT NULL,
+        ///    Data BYTEA NOT NULL
+        ///);.
+        /// </summary>
+        internal static string Postgres_CreateMessageDataTables {
+            get {
+                return ResourceManager.GetString("Postgres_CreateMessageDataTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to CREATE TABLE IF NOT EXISTS OptimisticSagas (
         ///    CorrelationId UUID NOT NULL,
         ///    CurrentState VARCHAR(20),
@@ -188,6 +225,15 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS MessageData CASCADE;.
+        /// </summary>
+        internal static string Postgres_DropMessageDataTables {
+            get {
+                return ResourceManager.GetString("Postgres_DropMessageDataTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to DROP TABLE IF EXISTS OptimisticSagas, PessimisticSagas;.
         /// </summary>
         internal static string Postgres_DropSagaTables {
@@ -215,6 +261,20 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         internal static string SqlServer_CreateJobTables {
             get {
                 return ResourceManager.GetString("SqlServer_CreateJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to CREATE TABLE MessageData (
+        ///    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+        ///    Created DATETIMEOFFSET NOT NULL,
+        ///    Expires DATETIMEOFFSET NOT NULL,
+        ///    Data VARBINARY(MAX) NOT NULL
+        ///);.
+        /// </summary>
+        internal static string SqlServer_CreateMessageDataTables {
+            get {
+                return ResourceManager.GetString("SqlServer_CreateMessageDataTables", resourceCulture);
             }
         }
         
@@ -252,6 +312,15 @@ namespace MassTransit.Persistence.Tests.IntegrationTests {
         internal static string SqlServer_DropJobTables {
             get {
                 return ResourceManager.GetString("SqlServer_DropJobTables", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to DROP TABLE IF EXISTS MessageData;.
+        /// </summary>
+        internal static string SqlServer_DropMessageDataTables {
+            get {
+                return ResourceManager.GetString("SqlServer_DropMessageDataTables", resourceCulture);
             }
         }
         

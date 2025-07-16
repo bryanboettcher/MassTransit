@@ -12,6 +12,8 @@ public interface TestConnector
     void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga;
 
+    IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider);
+
     Task<List<TSaga>> GetSagas<TSaga>()
         where TSaga : class, ISaga;
 }

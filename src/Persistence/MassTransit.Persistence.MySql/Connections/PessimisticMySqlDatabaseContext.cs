@@ -2,8 +2,9 @@
 
 using System.Data;
 using System.Linq.Expressions;
-using global::MySql.Data.MySqlClient;
 using Integration.Saga;
+using Integration.SqlBuilders;
+using MySqlConnector;
 
 
 public class PessimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>, DatabaseContext<TSaga>
@@ -38,7 +39,7 @@ public class PessimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga
 
     protected override string BuildInsertSql()
     {
-        var properties = BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType);
 
         var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
         var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
@@ -50,7 +51,7 @@ public class PessimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga
 
     protected override string BuildUpdateSql()
     {
-        var properties = BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType);
 
         properties.Remove(nameof(ISaga.CorrelationId));
 

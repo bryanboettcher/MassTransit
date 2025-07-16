@@ -1,8 +1,10 @@
 ﻿namespace MassTransit.Persistence.Tests.IntegrationTests.Connectors;
 
+using System.Data;
 using Configuration;
-using Dapper;
-using global::MySql.Data.MySqlClient;
+using global::MySqlConnector;
+using Integration.SqlBuilders;
+using MySql.Components.ClaimChecks;
 using MySql.Configuration;
 using StateMachineSagas;
 
@@ -14,6 +16,11 @@ public class OptimisticMySqlConnector : MySqlConnector, TestConnector
         where TSaga : class, ISaga
     {
         conf.UsingMySql(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
+    }
+
+    public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
+    {
+        throw new NotSupportedException("MessageData only supports pessimistic concurrency");
     }
 
     public Task<List<TSaga>> GetSagas<TSaga>()
@@ -29,6 +36,11 @@ public class PessimisticMySqlConnector : MySqlConnector, TestConnector
         conf.UsingMySql(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
     }
 
+    public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
+    {
+        return new MySqlMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider);
+    }
+
     public Task<List<TSaga>> GetSagas<TSaga>()
         where TSaga : class, ISaga =>
         base.GetSagas<TSaga>("PessimisticSagas");
@@ -37,7 +49,7 @@ public class PessimisticMySqlConnector : MySqlConnector, TestConnector
 public abstract class MySqlConnector : BehaviorSaga
 {
     protected readonly string ConnectionString;
-
+    
     public MySqlConnector()
     {
         ConnectionString = "Server=localhost; Database=masstransit; Uid=sa; Pwd=Password12!";
@@ -47,26 +59,43 @@ public abstract class MySqlConnector : BehaviorSaga
     {
         await RunSql(Sql.MySql_DropJobTables);
         await RunSql(Sql.MySql_DropSagaTables);
+        await RunSql(Sql.MySql_DropMessageDataTables);
 
         await RunSql(Sql.MySql_CreateJobTables);
         await RunSql(Sql.MySql_CreateSagaTables);
+        await RunSql(Sql.MySql_CreateMessageDataTables);
     }
 
     public async Task Teardown()
     {
         await RunSql(Sql.MySql_DropJobTables);
         await RunSql(Sql.MySql_DropSagaTables);
+        //await RunSql(Sql.MySql_DropMessageDataTables);
     }
 
     public void Connect(IAdoJobSagaRepositoryConfigurator conf)
         => conf.UsingMySql(ConnectionString);
 
     protected async Task<List<TSaga>> GetSagas<TSaga>(string tableName)
+        where TSaga : class
     {
-        await using var connection = new MySqlConnection(ConnectionString);
+        var adapter = ReflectionsAdapter.CreateFor<TSaga>();
 
-        var sql = $"SELECT * FROM {tableName};";
-        return (await connection.QueryAsync<TSaga>(sql)).AsList();
+        await using var connection = new MySqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = $"SELECT * FROM {tableName};";
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var result = new List<TSaga>();
+        while (await reader.ReadAsync())
+        {
+            result.Add(adapter(reader));
+        }
+
+        return result;
     }
 
     async Task RunSql(string sql)

@@ -1,8 +1,10 @@
 ﻿namespace MassTransit.Persistence.Tests.IntegrationTests.Connectors;
 
+using System.Data;
 using Configuration;
-using Dapper;
+using Integration.SqlBuilders;
 using Npgsql;
+using PostgreSql.Components.ClaimChecks;
 using PostgreSql.Configuration;
 using StateMachineSagas;
 
@@ -17,6 +19,11 @@ public class OptimisticPostgresConnector : PostgresConnector, TestConnector
         conf.UsingPostgres(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
     }
 
+    public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
+    {
+        throw new NotSupportedException("MessageData only supports pessimistic concurrency");
+    }
+
     public Task<List<TSaga>> GetSagas<TSaga>()
         where TSaga : class, ISaga =>
         base.GetSagas<TSaga>("OptimisticSagas");
@@ -28,6 +35,11 @@ public class PessimisticPostgresConnector : PostgresConnector, TestConnector
         where TSaga : class, ISaga
     {
         conf.UsingPostgres(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
+    }
+
+    public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
+    {
+        return new PostgresMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider);
     }
 
     public Task<List<TSaga>> GetSagas<TSaga>()
@@ -48,26 +60,43 @@ public abstract class PostgresConnector : BehaviorSaga
     {
         await RunSql(Sql.Postgres_DropJobTables);
         await RunSql(Sql.Postgres_DropSagaTables);
+        await RunSql(Sql.Postgres_DropMessageDataTables);
 
         await RunSql(Sql.Postgres_CreateJobTables);
         await RunSql(Sql.Postgres_CreateSagaTables);
+        await RunSql(Sql.Postgres_CreateMessageDataTables);
     }
     
     public async Task Teardown()
     {
         await RunSql(Sql.Postgres_DropJobTables);
         await RunSql(Sql.Postgres_DropSagaTables);
+        //await RunSql(Sql.Postgres_DropMessageDataTables);
     }
 
     public void Connect(IAdoJobSagaRepositoryConfigurator conf)
         => conf.UsingPostgres(ConnectionString);
 
     protected async Task<List<TSaga>> GetSagas<TSaga>(string tableName)
+        where TSaga : class
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        var adapter = ReflectionsAdapter.CreateFor<TSaga>();
 
-        var sql = $"SELECT * FROM {tableName};";
-        return (await connection.QueryAsync<TSaga>(sql)).AsList();
+        await using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+
+        command.CommandText = $"SELECT * FROM {tableName};";
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var result = new List<TSaga>();
+        while (await reader.ReadAsync())
+        {
+            result.Add(adapter(reader));
+        }
+
+        return result;
     }
 
     async Task RunSql(string sql)

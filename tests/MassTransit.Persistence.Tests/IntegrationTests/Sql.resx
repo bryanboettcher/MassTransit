@@ -119,7 +119,7 @@
   </resheader>
   <data name="MySql_CreateJobTables" xml:space="preserve">
     <value>CREATE TABLE `JobAttempts` (
-    `CorrelationId` CHAR(36) NOT NULL,
+    `CorrelationId` BINARY(16) NOT NULL,
     `CurrentState` INT NOT NULL,
     `JobId` CHAR(36) NOT NULL,    
     `Started` DATETIME NULL,
@@ -132,7 +132,7 @@
 );
 
 CREATE TABLE `JobTypes` (
-    `CorrelationId` CHAR(36) NOT NULL,
+    `CorrelationId` BINARY(16) NOT NULL,
     `Name` VARCHAR(255) NOT NULL,
     `CurrentState` INT NOT NULL,
     `ActiveJobCount` INT NOT NULL,
@@ -147,7 +147,7 @@ CREATE TABLE `JobTypes` (
 );
 
 CREATE TABLE `Jobs` (
-    `CorrelationId` CHAR(36) NOT NULL,
+    `CorrelationId` BINARY(16) NOT NULL,
     `CurrentState` INT NOT NULL,    
     `Completed` DATETIME NULL,
     `Faulted` DATETIME NULL,
@@ -177,28 +177,39 @@ CREATE TABLE `Jobs` (
     PRIMARY KEY (`CorrelationId`)
 );</value>
   </data>
+  <data name="MySql_CreateMessageDataTables" xml:space="preserve">
+    <value>CREATE TABLE `MessageData` (
+    `Id` BINARY(16) NOT NULL PRIMARY KEY,
+    `Created` DATETIME NOT NULL,
+    `Expires` DATETIME NOT NULL,
+    `Data` LONGBLOB NOT NULL
+);</value>
+  </data>
   <data name="MySql_CreateSagaTables" xml:space="preserve">
     <value>CREATE TABLE OptimisticSagas (
-    CorrelationId CHAR(36) NOT NULL,
-    RowVersion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CurrentState VARCHAR(20),
-    Name TEXT,
+    `CorrelationId` BINARY(16) NOT NULL,
+    `RowVersion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `CurrentState` VARCHAR(20),
+    `Name` TEXT,
     
-    PRIMARY KEY (CorrelationId)
+    PRIMARY KEY (`CorrelationId`)
 );
 
-CREATE TABLE PessimisticSagas (
-    CorrelationId CHAR(36) NOT NULL,
-    CurrentState VARCHAR(20),
-    Name TEXT,
+CREATE TABLE `PessimisticSagas` (
+    `CorrelationId` BINARY(16) NOT NULL,
+    `CurrentState` VARCHAR(20),
+    `Name` TEXT,
     
-    PRIMARY KEY (CorrelationId)
+    PRIMARY KEY (`CorrelationId`)
 );</value>
   </data>
   <data name="MySql_DropJobTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS Jobs;
 DROP TABLE IF EXISTS JobTypes;
 DROP TABLE IF EXISTS JobAttempts;</value>
+  </data>
+  <data name="MySql_DropMessageDataTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS MessageData;</value>
   </data>
   <data name="MySql_DropSagaTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS OptimisticSagas;
@@ -264,6 +275,14 @@ CREATE TABLE IF NOT EXISTS Jobs (
     PRIMARY KEY (CorrelationId)
 );</value>
   </data>
+  <data name="Postgres_CreateMessageDataTables" xml:space="preserve">
+    <value>CREATE TABLE MessageData (
+    Id UUID NOT NULL PRIMARY KEY,
+    Created TIMESTAMP NOT NULL,
+    Expires TIMESTAMP NOT NULL,
+    Data BYTEA NOT NULL
+);</value>
+  </data>
   <data name="Postgres_CreateSagaTables" xml:space="preserve">
     <value>CREATE TABLE IF NOT EXISTS OptimisticSagas (
     CorrelationId UUID NOT NULL,
@@ -283,6 +302,9 @@ CREATE TABLE IF NOT EXISTS PessimisticSagas (
   </data>
   <data name="Postgres_DropJobTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS Jobs, JobAttempts, JobTypes;</value>
+  </data>
+  <data name="Postgres_DropMessageDataTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS MessageData CASCADE;</value>
   </data>
   <data name="Postgres_DropSagaTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS OptimisticSagas, PessimisticSagas;</value>
@@ -347,6 +369,14 @@ CREATE TABLE [dbo].[JobTypes] (
     PRIMARY KEY CLUSTERED ([CorrelationId] ASC)
 );</value>
   </data>
+  <data name="SqlServer_CreateMessageDataTables" xml:space="preserve">
+    <value>CREATE TABLE MessageData (
+    Id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+    Created DATETIMEOFFSET NOT NULL,
+    Expires DATETIMEOFFSET NOT NULL,
+    Data VARBINARY(MAX) NOT NULL
+);</value>
+  </data>
   <data name="SqlServer_CreateSagaTables" xml:space="preserve">
     <value>CREATE TABLE [dbo].[OptimisticSagas] (
     [CorrelationId] UNIQUEIDENTIFIER NOT NULL,
@@ -371,6 +401,9 @@ CREATE TABLE [dbo].[PessimisticSagas] (
     <value>DROP TABLE IF EXISTS [dbo].[Jobs];
 DROP TABLE IF EXISTS [dbo].[JobAttempts];
 DROP TABLE IF EXISTS [dbo].[JobTypes];</value>
+  </data>
+  <data name="SqlServer_DropMessageDataTables" xml:space="preserve">
+    <value>DROP TABLE IF EXISTS MessageData;</value>
   </data>
   <data name="SqlServer_DropSagaTables" xml:space="preserve">
     <value>DROP TABLE IF EXISTS [dbo].[OptimisticSagas];

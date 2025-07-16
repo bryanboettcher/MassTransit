@@ -1,9 +1,8 @@
 namespace MassTransit.Persistence.Integration.Saga
 {
-    using System.ComponentModel.DataAnnotations.Schema;
     using System.Linq.Expressions;
-    using System.Reflection;
     using System.Runtime.CompilerServices;
+    using Logging;
 
 
     /// <summary>
@@ -16,13 +15,13 @@ namespace MassTransit.Persistence.Integration.Saga
         protected readonly Type ModelType = typeof(TSaga);
         protected readonly List<SqlPropertyMapping> Mappings = new();
         
-        protected SagaDatabaseContext()
-        {
-        }
-
+        protected SagaDatabaseContext() { }
+        
         public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
         {
             var sql = BuildLoadSql();
+
+            LogContext.Debug?.Log("Loading: {sql}", sql, correlationId);
 
             var results = ReadAsync(
                 sql,
@@ -33,7 +32,13 @@ namespace MassTransit.Persistence.Integration.Saga
             // intentionally returning inside the foreach,
             // since we only need at most one result
             await foreach (var result in results)
+            {
+                LogContext.Debug?.Log("Instance found for {id}", correlationId);
+
                 return result;
+            }
+
+            LogContext.Debug?.Log("No instance found for {id}", correlationId);
 
             return null;
         }
@@ -43,19 +48,31 @@ namespace MassTransit.Persistence.Integration.Saga
             var parameters = new Dictionary<string, object?>();
             var sql = BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
 
+            LogContext.Debug?.Log("Querying: {sql}");
+
             var results = ReadAsync(
                 sql,
                 parameters,
                 cancellationToken
             ).ConfigureAwait(false);
 
+            var instances = 0;
             await foreach (var result in results)
+            {
+                // have to increment instead of .Length / .Count, because
+                // this IAsyncEnumerable is NOT backed by a collection type
+                instances++;
                 yield return result;
+            }
+
+            LogContext.Debug?.Log("Loaded {count} instances", instances);
         }
 
         public async Task InsertAsync(TSaga instance, CancellationToken cancellationToken = default)
         {
             var sql = BuildInsertSql();
+
+            LogContext.Debug?.Log("Inserting: {sql}", sql);
 
             var rows = await ExecuteAsync(
                 sql,
@@ -65,11 +82,15 @@ namespace MassTransit.Persistence.Integration.Saga
 
             if (rows == 0)
                 throw new SagaConcurrencyException("Saga Insert failed", instance);
+
+            LogContext.Debug?.Log("Instance added: {id}", instance.CorrelationId);
         }
 
         public async Task UpdateAsync(TSaga instance, CancellationToken cancellationToken = default)
         {
             var sql = BuildUpdateSql();
+
+            LogContext.Debug?.Log("Updating: {sql}", sql);
 
             var rows = await ExecuteAsync(
                 sql,
@@ -79,11 +100,15 @@ namespace MassTransit.Persistence.Integration.Saga
 
             if (rows == 0)
                 throw new SagaConcurrencyException("Saga Update failed", instance);
+
+            LogContext.Debug?.Log("Instance updated: {id}", instance.CorrelationId);
         }
 
         public async Task DeleteAsync(TSaga instance, CancellationToken cancellationToken)
         {
             var sql = BuildDeleteSql();
+
+            LogContext.Debug?.Log("Deleting: {sql}", sql);
 
             var rows = await ExecuteAsync(
                 sql,
@@ -93,6 +118,8 @@ namespace MassTransit.Persistence.Integration.Saga
 
             if (rows == 0)
                 throw new SagaConcurrencyException("Saga Delete failed", instance);
+
+            LogContext.Debug?.Log("Instance deleted: {id}", instance.CorrelationId);
         }
 
         protected abstract IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, CancellationToken cancellationToken);
@@ -109,72 +136,6 @@ namespace MassTransit.Persistence.Integration.Saga
 
         protected internal abstract string BuildDeleteSql();
 
-        protected virtual string GetTableName(Type type)
-        {
-            var tableName = AttributeValue(type, "TableAttribute", "Name");
-            if (!string.IsNullOrEmpty(tableName))
-                return tableName;
-
-            return type.Name + "s";
-        }
-
-        protected virtual string GetIdColumnName(Type type)
-        {
-            var properties = type.GetProperties();
-
-            // support the Dapper.Contrib manual-mapping of keys or non-identity keys
-            var keyColumn = AttributeValue(type, "KeyAttribute", "Name");
-            if (!string.IsNullOrEmpty(keyColumn))
-                return keyColumn;
-
-            var explicitKeyColumn = AttributeValue(type, "ExplicitKeyAttribute", "Name");
-            if (!string.IsNullOrEmpty(explicitKeyColumn))
-                return explicitKeyColumn;
-
-            if (properties.Any(p => p.Name == "CorrelationId"))
-                return "CorrelationId";
-
-            throw new InvalidOperationException("Only CorrelationId can be auto-detected as the key column.  Use constructor if necessary to override.");
-        }
-
-        protected virtual string? GetVersionColumnName<TProp>(Type type, string defaultName)
-        {
-            var candidate = type.GetProperties()
-                .FirstOrDefault(p => p.Name.Equals(defaultName, StringComparison.OrdinalIgnoreCase));
-
-            return candidate is not null && candidate.PropertyType == typeof(TProp)
-                    ? candidate.Name
-                    : null;
-        }
-
-        protected virtual string? GetColumnName(Type type, string propertyName)
-        {
-            var property = type.GetProperty(propertyName);
-            if (property is null)
-                return null;
-
-            return GetColumnName(type, property);
-        }
-
-        protected virtual string GetColumnName(Type type, PropertyInfo property)
-        {
-            var columnAttribute = property.GetCustomAttribute<ColumnAttribute>();
-            if (columnAttribute is null || string.IsNullOrEmpty(columnAttribute.Name))
-                return property.Name;
-
-            return columnAttribute.Name;
-        }
-
-        protected virtual IDictionary<string, string> BuildProperties(Type modelType)
-        {
-            return (from prop in modelType.GetProperties()
-                   let columnName = GetColumnName(modelType, prop)
-                   let propertyName = NormalizeName(prop.Name)
-                   select (columnName, propertyName))
-                .DistinctBy(m => m.columnName, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(m => m.columnName, m => m.propertyName, StringComparer.OrdinalIgnoreCase);
-        }
-
         protected void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
         {
             if (mappingExpression.NodeType != ExpressionType.Lambda)
@@ -190,27 +151,6 @@ namespace MassTransit.Persistence.Integration.Saga
                 Name = name ?? body.Member.Name,
                 Exact = exact,
             });
-        }
-
-        protected static string NormalizeName(string original)
-        {
-            return new string(original.ToLowerInvariant().Where(char.IsAsciiLetterOrDigit).ToArray());
-        }
-
-        static string? AttributeValue(Type type, string attributeName, string propertyName)
-        {
-            var tableAttribute = type.GetCustomAttributes()
-                .FirstOrDefault(a => a.GetType().Name.StartsWith(attributeName, StringComparison.OrdinalIgnoreCase));
-
-            var nameProperty = tableAttribute?.GetType().GetProperty(propertyName);
-            if (nameProperty is null)
-                return null;
-
-            var nameValue = (string?)nameProperty.GetValue(tableAttribute);
-
-            return !string.IsNullOrEmpty(nameValue)
-                ? nameValue
-                : null;
         }
     }
 }

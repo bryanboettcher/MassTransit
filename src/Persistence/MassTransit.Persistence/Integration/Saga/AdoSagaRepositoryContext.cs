@@ -8,7 +8,8 @@ namespace MassTransit.Persistence.Integration.Saga
 
     public class AdoSagaRepositoryContext<TSaga, TMessage> :
         ConsumeContextScope<TMessage>,
-        SagaRepositoryContext<TSaga, TMessage>
+        SagaRepositoryContext<TSaga, TMessage>,
+        IProbeSite
         where TSaga : class, ISaga
         where TMessage : class
     {
@@ -35,40 +36,78 @@ namespace MassTransit.Persistence.Integration.Saga
 
         public Task<SagaConsumeContext<TSaga, TMessage>> Add(TSaga instance)
         {
+            LogContext.Debug?.Log("Adding saga instance {correlationId}", instance.CorrelationId);
+
             return _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Add);
         }
 
         public async Task<SagaConsumeContext<TSaga, TMessage>> Insert(TSaga instance)
         {
+            LogContext.Debug?.Log("Inserting saga instance {correlationId}", instance.CorrelationId);
+
             await _context.InsertAsync(instance, CancellationToken)
                 .ConfigureAwait(false);
 
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Insert).ConfigureAwait(false);
         }
 
-        public async Task<SagaConsumeContext<TSaga, TMessage>> Load(Guid correlationId)
+        public async Task<SagaConsumeContext<TSaga, TMessage>?> Load(Guid correlationId)
         {
-            var instance = await _context.LoadAsync(correlationId, CancellationToken).ConfigureAwait(false);
-            if (instance == null)
-                return null;
+            LogContext.Debug?.Log("Attempting to load saga instance {correlationId}", correlationId);
 
+            var instance = await _context.LoadAsync(correlationId, CancellationToken)
+                .ConfigureAwait(false);
+
+            if (instance == null)
+            {
+                LogContext.Debug?.Log("No saga instance found for {correlationId}", correlationId);
+                return null;
+            }
+
+            LogContext.Debug?.Log("Saga instance found for {correlationId}", correlationId);
             return await _factory.CreateSagaConsumeContext(_context, _consumeContext, instance, SagaConsumeContextMode.Load).ConfigureAwait(false);
         }
 
         public Task Save(SagaConsumeContext<TSaga> context)
-            => _context.InsertAsync(context.Saga, CancellationToken);
+        {
+            LogContext.Debug?.Log("Saving saga instance {correlationId}", context.Saga.CorrelationId);
+
+            return _context.InsertAsync(context.Saga, CancellationToken);
+        }
 
         public Task Update(SagaConsumeContext<TSaga> context)
-            => _context.UpdateAsync(context.Saga, CancellationToken);
+        {
+            LogContext.Debug?.Log("Updating saga instance {correlationId}", context.Saga.CorrelationId);
+
+            return _context.UpdateAsync(context.Saga, CancellationToken);
+        }
 
         public Task Delete(SagaConsumeContext<TSaga> context)
-            => _context.DeleteAsync(context.Saga, CancellationToken);
+        {
+            LogContext.Debug?.Log("Deleting saga instance {correlationId}", context.Saga.CorrelationId);
+
+            return _context.DeleteAsync(context.Saga, CancellationToken);
+        }
 
         public Task Discard(SagaConsumeContext<TSaga> context)
-            => Task.CompletedTask;
+        {
+            LogContext.Debug?.Log("Discarding saga instance {correlationId}", context.Saga.CorrelationId);
+
+            return Task.CompletedTask;
+        }
 
         public Task Undo(SagaConsumeContext<TSaga> context)
-            => Task.CompletedTask;
+        {
+            LogContext.Debug?.Log("Reverting saga instance {correlationId}", context.Saga.CorrelationId);
+
+            return Task.CompletedTask;
+        }
+
+        public void Probe(ProbeContext context)
+        {
+            context.Add("TSaga", typeof(TSaga).Name);
+            context.Add("TMessage", typeof(TMessage).Name);
+        }
     }
 
     public class AdoSagaRepositoryContext<TSaga> :
@@ -85,15 +124,30 @@ namespace MassTransit.Persistence.Integration.Saga
             _context = context;
         }
 
-        public Task<TSaga> Load(Guid correlationId)
+        public async Task<TSaga> Load(Guid correlationId)
         {
-            return _context.LoadAsync(correlationId, CancellationToken)!;
+            var instance = await _context.LoadAsync(correlationId, CancellationToken)
+                .ConfigureAwait(false);
+
+            if (instance is null)
+                LogContext.Debug?.Log("Missing saga instance {correlationId}", correlationId);
+            else
+                LogContext.Debug?.Log("Loaded saga instance {correlationId}", correlationId);
+
+            return instance;
         }
 
         public async Task<SagaRepositoryQueryContext<TSaga>> Query(ISagaQuery<TSaga> query, CancellationToken cancellationToken = default)
         {
             var instances = await (_context.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken))
                 .ConfigureAwait(false);
+
+            if (LogContext.Debug.HasValue)
+            {
+                var expression = query.FilterExpression.ToExpressionString();
+
+                LogContext.Debug?.Log("Loaded {count} matching saga instances for {expression}", instances.Count, expression);
+            }
 
             return new LoadedSagaRepositoryQueryContext<TSaga>(this, instances);
         }

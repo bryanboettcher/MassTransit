@@ -1,8 +1,9 @@
 ﻿namespace MassTransit.Persistence.MySql.Configuration;
 
 using Components.ClaimChecks;
-using global::MySql.Data.MySqlClient;
 using MassTransit.Configuration;
+using MySqlConnector;
+
 
 public static class MessageDataRepositorySelectorExtensions
 {

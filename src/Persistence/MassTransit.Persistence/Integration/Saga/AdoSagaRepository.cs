@@ -1,16 +1,23 @@
 ﻿namespace MassTransit.Persistence.Integration.Saga
 {
     using Configuration;
-    using MassTransit.DependencyInjection.Registration;
+    using DependencyInjection.Registration;
     using MassTransit.Saga;
     using Microsoft.Extensions.DependencyInjection;
 
-
+    /// <summary>
+    /// Thin wrapper over <seealso cref="SagaDatabaseContext{TSaga}"/> to
+    /// allow creation of a standalone repository rather than registering it.
+    /// </summary>
+    /// <typeparam name="TSaga"></typeparam>
     public class AdoSagaRepository<TSaga>
         where TSaga : class, ISaga
     {
         private AdoSagaRepository() { }
 
+        /// <summary>
+        /// Creates a saga repository directly, rather than using a DI container.
+        /// </summary>
         public static ISagaRepository<TSaga> Create(Action<IAdoRepositoryConfigurator<TSaga>> configure, IServiceProvider? provider = null)
         {
             var configurator = new AdoRepositoryConfigurator<TSaga>();

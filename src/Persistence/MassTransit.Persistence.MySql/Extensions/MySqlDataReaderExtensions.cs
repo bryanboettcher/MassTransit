@@ -1,8 +1,7 @@
 ﻿namespace MassTransit.Persistence.MySql.Extensions
 {
     using System.Data;
-    using global::MySql.Data.MySqlClient;
-
+    using MySqlConnector;
 
     public static class MySqlDataReaderExtensions
     {

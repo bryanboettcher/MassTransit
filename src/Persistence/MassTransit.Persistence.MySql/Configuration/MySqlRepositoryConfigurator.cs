@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq.Expressions;
 using Connections;
 using Integration.Saga;
+using Integration.SqlBuilders;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence.Configuration;
 
@@ -11,14 +12,23 @@ using Persistence.Configuration;
 public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<TSaga>, ISpecification
     where TSaga : class, ISaga
 {
+    public MySqlRepositoryConfigurator()
+    {
+        TableName = PersistenceHelper.GetTableName<TSaga>();
+
+        IdentityColumnName = nameof(ISaga.CorrelationId);
+        IsolationLevel = IsolationLevel.ReadCommitted;
+        ConcurrencyMode = ConcurrencyMode.Pessimistic;
+    }
+
     /// <inheritdoc />
     public string? ConnectionString { get; set; }
 
     /// <inheritdoc />
-    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.ReadCommitted;
+    public IsolationLevel IsolationLevel { get; set; }
 
     /// <inheritdoc />
-    public ConcurrencyMode ConcurrencyMode { get; set; } = ConcurrencyMode.Pessimistic;
+    public ConcurrencyMode ConcurrencyMode { get; set; }
 
     /// <inheritdoc />
     public string? VersionColumnName { get; set; }
@@ -30,7 +40,7 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
     public string? TableName { get; set; }
 
     /// <inheritdoc />
-    public string IdentityColumnName { get; set; } = "CorrelationId";
+    public string IdentityColumnName { get; set; }
 
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate()
@@ -43,6 +53,9 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
 
         if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionColumnName))
             yield return this.Failure($"{nameof(VersionColumnName)} must be set when using Optimistic concurrency");
+
+        if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionPropertyName))
+            yield return this.Failure($"{nameof(VersionPropertyName)} must be set when using Optimistic concurrency");
     }
 
     /// <inheritdoc />
@@ -106,12 +119,13 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
         ArgumentException.ThrowIfNullOrEmpty(TableName);
 
         return ConcurrencyMode == ConcurrencyMode.Optimistic
-            ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, VersionColumnName, VersionPropertyName))
+            ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, VersionColumnName!, VersionPropertyName!))
             : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, IsolationLevel));
     }
 
     void RegisterServices(IServiceCollection services)
     {
+        services.AddSingleton<IMySqlRepositoryConfigurator<TSaga>>(this);
     }
 
     static string ExtractPropertyName<TProp>(Expression<Func<TSaga, TProp>> selector)

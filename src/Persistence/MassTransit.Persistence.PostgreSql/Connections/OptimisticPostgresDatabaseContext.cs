@@ -3,6 +3,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using Integration.Saga;
+using Integration.SqlBuilders;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -41,7 +42,7 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
 
     protected override string BuildInsertSql()
     {
-        var properties = BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType);
 
         properties.Remove(_versionProperty.Name);
 
@@ -55,7 +56,7 @@ public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<
 
     protected override string BuildUpdateSql()
     {
-        var properties = BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType);
 
         properties.Remove(nameof(ISaga.CorrelationId));
         properties.Remove(_versionProperty.Name);

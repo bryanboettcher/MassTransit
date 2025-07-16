@@ -2,8 +2,8 @@
 
 using System.Linq.Expressions;
 using System.Reflection;
-using global::MySql.Data.MySqlClient;
 using Integration.Saga;
+using Integration.SqlBuilders;
 
 
 public class OptimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>, DatabaseContext<TSaga>
@@ -40,7 +40,7 @@ public class OptimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>
 
     protected override string BuildInsertSql()
     {
-        var properties = BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType);
 
         properties.Remove(_versionProperty.Name);
 
@@ -54,7 +54,7 @@ public class OptimisticMySqlDatabaseContext<TSaga> : MySqlDatabaseContext<TSaga>
 
     protected override string BuildUpdateSql()
     {
-        var properties = BuildProperties(ModelType);
+        var properties = PersistenceHelper.BuildProperties(ModelType);
 
         properties.Remove(nameof(ISaga.CorrelationId));
         properties.Remove(_versionProperty.Name);

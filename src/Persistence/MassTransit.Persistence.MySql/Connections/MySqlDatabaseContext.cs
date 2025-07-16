@@ -2,9 +2,9 @@
 {
     using System.Data;
     using System.Runtime.CompilerServices;
-    using global::MySql.Data.MySqlClient;
     using Integration.Saga;
     using Integration.SqlBuilders;
+    using MySqlConnector;
 
 
     public abstract class MySqlDatabaseContext<TSaga> : SagaDatabaseContext<TSaga>
@@ -144,7 +144,14 @@
         {
             foreach (var (name, value) in ParameterReader.Read(parameters))
             {
-                collection.AddWithValue(name, value ?? DBNull.Value);
+                if (name.Equals(nameof(ISaga.CorrelationId), StringComparison.OrdinalIgnoreCase))
+                {
+                    collection.Add(name, MySqlDbType.Binary, 16).Value = ((Guid)value!).ToByteArray();
+                }
+                else
+                {
+                    collection.AddWithValue(name, value ?? DBNull.Value);
+                }
             }
         }
 

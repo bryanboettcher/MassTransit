@@ -1,8 +1,7 @@
 ﻿namespace MassTransit.Persistence.MySql.Configuration;
 
-using global::MySql.Data.MySqlClient;
+using MySqlConnector;
 using Persistence.Configuration;
-
 
 public static class AdoJobSagaRepositoryConfiguratorExtensions
 {

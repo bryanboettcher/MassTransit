@@ -1,6 +1,7 @@
 namespace MassTransit.Persistence.Integration.Saga
 {
     using Configuration;
+    using Logging;
     using MassTransit.Internals;
     using MassTransit.Saga;
     using Microsoft.Extensions.DependencyInjection;
@@ -37,7 +38,8 @@ namespace MassTransit.Persistence.Integration.Saga
 
         public void Probe(ProbeContext context)
         {
-            context.CreateScope("ado-saga-repository");
+            var scope = context.CreateScope("saga-repository");
+            scope.Add("TSaga", typeof(TSaga).Name);
         }
 
         public async Task Send<T>(ConsumeContext<T> context, IPipe<SagaRepositoryContext<TSaga, T>> next)
@@ -61,7 +63,7 @@ namespace MassTransit.Persistence.Integration.Saga
             where T : class
         {
             var cancellationToken = context.CancellationToken;
-
+            
             await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -88,7 +90,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
             var result = await asyncMethod(sagaRepositoryContext)
                 .ConfigureAwait(false);
-
+            
             await databaseContext.CommitAsync(cancellationToken)
                 .ConfigureAwait(false);
 

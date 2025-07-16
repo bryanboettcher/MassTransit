@@ -4,7 +4,7 @@ using System.Data;
 using System.Linq.Expressions;
 using Connections;
 using Extensions;
-using global::MySql.Data.MySqlClient;
+using MySqlConnector;
 
 
 public class JobSagaDatabaseContext : PessimisticMySqlDatabaseContext<JobSaga>
@@ -136,7 +136,7 @@ WHERE
 
     static void ConvertJob(MySqlParameterCollection collection, JobSaga instance)
     {
-        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
+        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId.ToByteArray();
         collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
         collection.Add("@completed", MySqlDbType.DateTime).Value = instance.Completed.OrDbNull();
         collection.Add("@faulted", MySqlDbType.DateTime).Value = instance.Faulted.OrDbNull();

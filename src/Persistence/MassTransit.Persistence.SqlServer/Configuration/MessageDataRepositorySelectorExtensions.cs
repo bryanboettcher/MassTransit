@@ -49,7 +49,7 @@ public static class MessageDataRepositorySelectorExtensions
         var configurator = new SqlServerMessageDataConfigurator();
 
         configurator.SetConnectionString(connectionString);
-
+        
         configure?.Invoke(configurator);
 
         configurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");

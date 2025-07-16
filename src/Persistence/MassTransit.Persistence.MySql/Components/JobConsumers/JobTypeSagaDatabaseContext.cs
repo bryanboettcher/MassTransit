@@ -1,12 +1,12 @@
 ﻿namespace MassTransit.Persistence.MySql.Components.JobConsumers;
 
-using global::MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq.Expressions;
 using Connections;
 using Extensions;
+using MySqlConnector;
 
 
 public class JobTypeSagaDatabaseContext : PessimisticMySqlDatabaseContext<JobTypeSaga>
@@ -100,7 +100,7 @@ WHERE
 
     static void ConvertJobType(MySqlParameterCollection collection, JobTypeSaga instance)
     {
-        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId;
+        collection.Add("@correlationid", MySqlDbType.Guid).Value = instance.CorrelationId.ToByteArray();
         collection.Add("@name", MySqlDbType.VarChar, 255).Value = instance.Name;
         collection.Add("@currentstate", MySqlDbType.Int32).Value = instance.CurrentState;
         collection.Add("@activejobcount", MySqlDbType.Int32).Value = instance.ActiveJobCount;
