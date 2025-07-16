@@ -10,17 +10,17 @@
     /// allow creation of a standalone repository rather than registering it.
     /// </summary>
     /// <typeparam name="TSaga"></typeparam>
-    public class AdoSagaRepository<TSaga>
+    public class CustomSagaRepository<TSaga>
         where TSaga : class, ISaga
     {
-        private AdoSagaRepository() { }
+        private CustomSagaRepository() { }
 
         /// <summary>
         /// Creates a saga repository directly, rather than using a DI container.
         /// </summary>
-        public static ISagaRepository<TSaga> Create(Action<IAdoRepositoryConfigurator<TSaga>> configure, IServiceProvider? provider = null)
+        public static ISagaRepository<TSaga> Create(Action<ICustomRepositoryConfigurator<TSaga>> configure, IServiceProvider? provider = null)
         {
-            var configurator = new AdoRepositoryConfigurator<TSaga>();
+            var configurator = new CustomRepositoryConfigurator<TSaga>();
 
             configure(configurator);
             configurator.Validate().ThrowIfContainsFailure("Saga repository configuration is invalid:");
@@ -36,7 +36,7 @@
 
             var consumeContextFactory = new SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>();
 
-            var repositoryContextFactory = new AdoSagaRepositoryContextFactory<TSaga>(
+            var repositoryContextFactory = new CustomSagaRepositoryContextFactory<TSaga>(
                 consumeContextFactory,
                 provider
             );

@@ -1,10 +1,9 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Components.ClaimChecks
 {
     using System.Data;
-    using Integration.ClaimChecks;
     using Microsoft.Data.SqlClient;
 
-    public class SqlServerMessageDataRepository : IMessageDataRepository, IMessageDataCleaner
+    public class SqlServerMessageDataRepository : IMessageDataRepository
     {
         const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
         

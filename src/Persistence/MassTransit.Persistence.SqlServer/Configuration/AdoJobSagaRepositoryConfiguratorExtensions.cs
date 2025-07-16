@@ -11,8 +11,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// setting the connection string as part of the <paramref name="configure"/>
     /// callback.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingSqlServer(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingSqlServer(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         Action<ISqlServerJobSagaRepositoryConfigurator> configure)
     {
         return UsingSqlServer(jobSagaConfigurator, string.Empty, configure);
@@ -22,8 +22,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// Configures the JobConsumer sagas to use Sql Server.  Builds
     /// the connection string from the provided parameters.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingSqlServer(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingSqlServer(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         string hostname, string catalog, string username, string password,
         Action<ISqlServerJobSagaRepositoryConfigurator>? configure = null)
     {
@@ -42,8 +42,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// Configures the JobConsumer sagas to use Sql Server.  Takes the
     /// connection string directly.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingSqlServer(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingSqlServer(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         string connectionString,
         Action<ISqlServerJobSagaRepositoryConfigurator>? configure = null)
     {

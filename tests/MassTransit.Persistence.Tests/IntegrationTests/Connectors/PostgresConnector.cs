@@ -13,7 +13,7 @@ public class OptimisticPostgresConnector : PostgresConnector, TestConnector
 {
     public uint XMin { get; set; }
 
-    public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    public void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
         conf.UsingPostgres(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
@@ -31,7 +31,7 @@ public class OptimisticPostgresConnector : PostgresConnector, TestConnector
 
 public class PessimisticPostgresConnector : PostgresConnector, TestConnector
 {
-    public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    public void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
         conf.UsingPostgres(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
@@ -74,7 +74,7 @@ public abstract class PostgresConnector : BehaviorSaga
         //await RunSql(Sql.Postgres_DropMessageDataTables);
     }
 
-    public void Connect(IAdoJobSagaRepositoryConfigurator conf)
+    public void Connect(ICustomJobSagaRepositoryConfigurator conf)
         => conf.UsingPostgres(ConnectionString);
 
     protected async Task<List<TSaga>> GetSagas<TSaga>(string tableName)

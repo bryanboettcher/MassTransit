@@ -14,7 +14,7 @@ public class OptimisticSqlServerConnector : SqlServerConnector, TestConnector
 {
     public byte[] RowVersion { get; set; }
     
-    void TestConnector.Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    void TestConnector.Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         => conf.UsingSqlServer(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
 
     public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
@@ -28,7 +28,7 @@ public class OptimisticSqlServerConnector : SqlServerConnector, TestConnector
 
 public class PessimisticSqlServerConnector : SqlServerConnector, TestConnector
 {
-    void TestConnector.Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    void TestConnector.Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         => conf.UsingSqlServer(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
 
     public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
@@ -67,7 +67,7 @@ public abstract class SqlServerConnector : BehaviorSaga
         //await RunSql(Sql.SqlServer_DropMessageDataTables);
     }
 
-    public void Connect(IAdoJobSagaRepositoryConfigurator conf)
+    public void Connect(ICustomJobSagaRepositoryConfigurator conf)
         => conf.UsingSqlServer(ConnectionString);
 
     protected async Task<List<TSaga>> GetSagas<TSaga>(string tableName)

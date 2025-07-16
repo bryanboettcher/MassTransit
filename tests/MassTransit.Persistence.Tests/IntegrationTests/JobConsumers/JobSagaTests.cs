@@ -60,7 +60,7 @@
             configurator.SetJobConsumerOptions(options => options.HeartbeatInterval = TimeSpan.FromSeconds(10)).Endpoint(e => e.PrefetchCount = 100);
 
             configurator.AddJobSagaStateMachines()
-                .DapperRepository(_connector.Connect);
+                .CustomRepository(_connector.Connect);
             
             configurator.UsingInMemory((ctx, cfg) =>
             {

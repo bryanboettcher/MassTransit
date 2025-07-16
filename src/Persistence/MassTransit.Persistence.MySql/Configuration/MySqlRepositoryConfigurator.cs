@@ -105,9 +105,9 @@ public class MySqlRepositoryConfigurator<TSaga> : IMySqlRepositoryConfigurator<T
         return this;
     }
 
-    public void Configure(IAdoRepositoryConfigurator<TSaga> sagaConfigurator)
+    public void Configure(ICustomRepositoryConfigurator<TSaga> sagaConfigurator)
     {
-        (sagaConfigurator as AdoRepositoryConfigurator<TSaga>)?
+        (sagaConfigurator as CustomRepositoryConfigurator<TSaga>)?
             .AddCallback(RegisterServices);
 
         sagaConfigurator.SetContextFactory(ConfiguredContextFactory);

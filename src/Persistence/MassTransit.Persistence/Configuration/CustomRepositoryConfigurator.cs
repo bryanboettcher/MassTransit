@@ -6,7 +6,7 @@ using MassTransit.Saga;
 using Microsoft.Extensions.DependencyInjection;
 
 
-public class AdoRepositoryConfigurator<TSaga> : IAdoRepositoryConfigurator<TSaga>, ISpecification
+public class CustomRepositoryConfigurator<TSaga> : ICustomRepositoryConfigurator<TSaga>, ISpecification
     where TSaga : class, ISaga
 {
     readonly List<Action<IServiceCollection>> _callbacks = new();
@@ -14,7 +14,7 @@ public class AdoRepositoryConfigurator<TSaga> : IAdoRepositoryConfigurator<TSaga
     DatabaseContextFactory<TSaga>? _contextFactory;
     
     /// <inheritdoc />
-    public IAdoRepositoryConfigurator<TSaga> SetContextFactory(DatabaseContextFactory<TSaga> contextFactory)
+    public ICustomRepositoryConfigurator<TSaga> SetContextFactory(DatabaseContextFactory<TSaga> contextFactory)
     {
         _contextFactory = contextFactory;
         return this;
@@ -34,9 +34,9 @@ public class AdoRepositoryConfigurator<TSaga> : IAdoRepositoryConfigurator<TSaga
 
         services.AddSingleton(_ => _contextFactory!);
 
-        services.RegisterLoadSagaRepository<TSaga, AdoSagaRepositoryContextFactory<TSaga>>();
-        services.RegisterQuerySagaRepository<TSaga, AdoSagaRepositoryContextFactory<TSaga>>();
-        services.RegisterSagaRepository<TSaga, DatabaseContext<TSaga>, SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>, AdoSagaRepositoryContextFactory<TSaga>>();
+        services.RegisterLoadSagaRepository<TSaga, CustomSagaRepositoryContextFactory<TSaga>>();
+        services.RegisterQuerySagaRepository<TSaga, CustomSagaRepositoryContextFactory<TSaga>>();
+        services.RegisterSagaRepository<TSaga, DatabaseContext<TSaga>, SagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga>, CustomSagaRepositoryContextFactory<TSaga>>();
     }
 
     public void AddCallback(Action<IServiceCollection> callback)

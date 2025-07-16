@@ -1,10 +1,9 @@
 ﻿namespace MassTransit.Persistence.MySql.Components.ClaimChecks
 {
     using System.Data;
-    using Integration.ClaimChecks;
     using MySqlConnector;
 
-    public class MySqlMessageDataRepository : IMessageDataRepository, IMessageDataCleaner
+    public class MySqlMessageDataRepository : IMessageDataRepository
     {
         const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
         static readonly DateTimeOffset FutureProblem = new(2199, 12, 31, 23, 59, 59, TimeSpan.Zero);

@@ -12,8 +12,8 @@
         /// Requires setting the connection string as part of the <paramref name="configure"/>
         /// callback.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             Action<ISqlServerRepositoryConfigurator<TSaga>> configure) where TSaga : class, ISaga
         {
             return UsingSqlServer(sagaConfigurator, string.Empty, configure);
@@ -23,8 +23,8 @@
         /// Configures a Sql Server-based saga repository for this <typeparamref name="TSaga"/>.
         /// Builds the connection string from provided parameters.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             string hostname, string catalog, string username, string password,
             Action<ISqlServerRepositoryConfigurator<TSaga>>? configure = null)
             where TSaga : class, ISaga
@@ -44,8 +44,8 @@
         /// Configures a Sql Server-based saga repository for this <typeparamref name="TSaga"/>.
         /// Takes the connection string directly.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingSqlServer<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             string connectionString,
             Action<ISqlServerRepositoryConfigurator<TSaga>>? configure = null)
             where TSaga : class, ISaga

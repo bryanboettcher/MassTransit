@@ -12,8 +12,8 @@
         /// Requires setting the connection string as part of the <paramref name="configure"/>
         /// callback.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingPostgres<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingPostgres<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             Action<IPostgresRepositoryConfigurator<TSaga>> configure) where TSaga : class, ISaga
         {
             return UsingPostgres(sagaConfigurator, string.Empty, configure);
@@ -23,8 +23,8 @@
         /// Configures a Postgres-based saga repository for this <typeparamref name="TSaga"/>.
         /// Builds the connection string from the parameters.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingPostgres<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingPostgres<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             string hostname, string catalog, string username, string password,
             Action<IPostgresRepositoryConfigurator<TSaga>>? configure = null)
             where TSaga : class, ISaga
@@ -44,8 +44,8 @@
         /// Configures a Postgres-based saga repository for this <typeparamref name="TSaga"/>.
         /// Takes the connection string directly.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingPostgres<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingPostgres<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             string connectionString,
             Action<IPostgresRepositoryConfigurator<TSaga>>? configure = null)
             where TSaga : class, ISaga

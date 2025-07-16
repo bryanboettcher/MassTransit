@@ -35,9 +35,9 @@ public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositor
             yield return this.Failure("ConnectionString must be specified");
     }
 
-    public void Configure(IAdoJobSagaRepositoryConfigurator configurator)
+    public void Configure(ICustomJobSagaRepositoryConfigurator configurator)
     {
-        (configurator as AdoJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
+        (configurator as CustomJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
 
         configurator.SetJobContextFactory(sp =>
         {

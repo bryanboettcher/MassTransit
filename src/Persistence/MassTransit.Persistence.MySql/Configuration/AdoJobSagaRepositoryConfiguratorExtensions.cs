@@ -10,8 +10,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// setting the connection string from the <paramref name="configure"/>
     /// callback.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingMySql(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingMySql(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         Action<IMySqlJobSagaRepositoryConfigurator> configure)
     {
         return UsingMySql(jobSagaConfigurator, string.Empty, configure);
@@ -21,8 +21,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// Configures the JobConsumer sagas to use MySql.
     /// Builds the connection string from the parameters.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingMySql(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingMySql(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         string hostname, string catalog, string username, string password,
         Action<IMySqlJobSagaRepositoryConfigurator>? configure = null)
     {
@@ -41,8 +41,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// Configures the JobConsumer sagas to use MySql.
     /// Takes the connection string directly.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingMySql(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingMySql(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         string connectionString,
         Action<IMySqlJobSagaRepositoryConfigurator>? configure = null)
     {

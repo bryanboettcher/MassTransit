@@ -8,8 +8,8 @@ public interface TestConnector
     Task Setup();
     Task Teardown();
 
-    void Connect(IAdoJobSagaRepositoryConfigurator conf);
-    void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    void Connect(ICustomJobSagaRepositoryConfigurator conf);
+    void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga;
 
     IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider);

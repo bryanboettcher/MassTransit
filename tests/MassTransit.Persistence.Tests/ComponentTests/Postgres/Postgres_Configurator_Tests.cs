@@ -19,7 +19,7 @@ namespace MassTransit.Persistence.Tests.ComponentTests.Postgres
         {
             var services = new ServiceCollection();
             var repositoryServices = new SagaRepositoryRegistrationConfigurator<VersionedSaga>(services);
-            var configurator = new AdoRepositoryConfigurator<VersionedSaga>();
+            var configurator = new CustomRepositoryConfigurator<VersionedSaga>();
 
             configurator.UsingPostgres("my connection string");
             configurator.Register(repositoryServices);
@@ -39,7 +39,7 @@ namespace MassTransit.Persistence.Tests.ComponentTests.Postgres
         {
             var services = new ServiceCollection();
             var repositoryServices = new SagaRepositoryRegistrationConfigurator<InlinedSaga>(services);
-            var configurator = new AdoRepositoryConfigurator<InlinedSaga>();
+            var configurator = new CustomRepositoryConfigurator<InlinedSaga>();
 
             configurator.UsingPostgres("my connection string", conf => conf.SetOptimisticConcurrency(s => s.Version));
             configurator.Register(repositoryServices);

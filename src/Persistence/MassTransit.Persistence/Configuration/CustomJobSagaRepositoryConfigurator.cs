@@ -5,7 +5,7 @@ using MassTransit.DependencyInjection.Registration;
 using Microsoft.Extensions.DependencyInjection;
 
 
-public class AdoJobSagaRepositoryConfigurator : IAdoJobSagaRepositoryConfigurator, ISpecification,
+public class CustomJobSagaRepositoryConfigurator : ICustomJobSagaRepositoryConfigurator, ISpecification,
     ISagaRepositoryRegistrationProvider
 {
     readonly List<Action<IServiceCollection>> _callbacks = new();
@@ -54,25 +54,25 @@ public class AdoJobSagaRepositoryConfigurator : IAdoJobSagaRepositoryConfigurato
         static void Register<T>(DatabaseContextFactory<T> contextFactory, ISagaRepositoryRegistrationConfigurator<T> services)
             where T : class, ISaga
         {
-            var cfg = new AdoRepositoryConfigurator<T>();
+            var cfg = new CustomRepositoryConfigurator<T>();
             cfg.SetContextFactory(contextFactory);
             cfg.Register(services);
         }
     }
 
-    public IAdoJobSagaRepositoryConfigurator SetJobContextFactory(DatabaseContextFactory<JobSaga> contextFactory)
+    public ICustomJobSagaRepositoryConfigurator SetJobContextFactory(DatabaseContextFactory<JobSaga> contextFactory)
     {
         JobContextFactory = contextFactory;
         return this;
     }
 
-    public IAdoJobSagaRepositoryConfigurator SetJobTypeContextFactory(DatabaseContextFactory<JobTypeSaga> contextFactory)
+    public ICustomJobSagaRepositoryConfigurator SetJobTypeContextFactory(DatabaseContextFactory<JobTypeSaga> contextFactory)
     {
         JobTypeContextFactory = contextFactory;
         return this;
     }
 
-    public IAdoJobSagaRepositoryConfigurator SetJobAttemptContextFactory(DatabaseContextFactory<JobAttemptSaga> contextFactory)
+    public ICustomJobSagaRepositoryConfigurator SetJobAttemptContextFactory(DatabaseContextFactory<JobAttemptSaga> contextFactory)
     {
         JobAttemptContextFactory = contextFactory;
         return this;

@@ -11,8 +11,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// setting the connection string from the <paramref name="configure"/>
     /// callback.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingPostgres(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingPostgres(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         Action<IPostgresJobSagaRepositoryConfigurator> configure)
     {
         return UsingPostgres(jobSagaConfigurator, string.Empty, configure);
@@ -22,8 +22,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// Configures the JobConsumer sagas to use Postgres.
     /// Builds the connection string from the parameters.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingPostgres(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingPostgres(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         string hostname, string catalog, string username, string password,
         Action<IPostgresJobSagaRepositoryConfigurator>? configure = null)
     {
@@ -42,8 +42,8 @@ public static class AdoJobSagaRepositoryConfiguratorExtensions
     /// Configures the JobConsumer sagas to use Postgres.
     /// Takes the connection string directly.
     /// </summary>
-    public static IAdoJobSagaRepositoryConfigurator UsingPostgres(
-        this IAdoJobSagaRepositoryConfigurator jobSagaConfigurator,
+    public static ICustomJobSagaRepositoryConfigurator UsingPostgres(
+        this ICustomJobSagaRepositoryConfigurator jobSagaConfigurator,
         string connectionString,
         Action<IPostgresJobSagaRepositoryConfigurator>? configure = null)
     {

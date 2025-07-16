@@ -1,11 +1,10 @@
 ﻿namespace MassTransit.Persistence.PostgreSql.Components.ClaimChecks
 {
     using System.Data;
-    using Integration.ClaimChecks;
     using Npgsql;
     using NpgsqlTypes;
     
-    public class PostgresMessageDataRepository : IMessageDataRepository, IMessageDataCleaner
+    public class PostgresMessageDataRepository : IMessageDataRepository
     {
         const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
         

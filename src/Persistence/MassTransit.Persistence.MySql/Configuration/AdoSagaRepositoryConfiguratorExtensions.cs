@@ -11,8 +11,8 @@
         /// Requires setting the connection string as part of the <paramref name="configure"/>
         /// callback.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingMySql<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingMySql<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             Action<IMySqlRepositoryConfigurator<TSaga>> configure) where TSaga : class, ISaga
         {
             return UsingMySql(sagaConfigurator, string.Empty, configure);
@@ -22,8 +22,8 @@
         /// Configures a MySql-based saga repository for this <typeparamref name="TSaga"/>.
         /// Builds the connection string from the parameters.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingMySql<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingMySql<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             string hostname, string catalog, string username, string password,
             Action<IMySqlRepositoryConfigurator<TSaga>>? configure = null)
             where TSaga : class, ISaga
@@ -43,8 +43,8 @@
         /// Configures a MySql-based saga repository for this <typeparamref name="TSaga"/>.
         /// Takes the connection string directly.
         /// </summary>
-        public static IAdoRepositoryConfigurator<TSaga> UsingMySql<TSaga>(
-            this IAdoRepositoryConfigurator<TSaga> sagaConfigurator,
+        public static ICustomRepositoryConfigurator<TSaga> UsingMySql<TSaga>(
+            this ICustomRepositoryConfigurator<TSaga> sagaConfigurator,
             string connectionString,
             Action<IMySqlRepositoryConfigurator<TSaga>>? configure = null)
             where TSaga : class, ISaga

@@ -7,7 +7,7 @@ namespace MassTransit.Persistence.Integration.Saga
     using Microsoft.Extensions.DependencyInjection;
 
 
-    public class AdoSagaRepositoryContextFactory<TSaga> :
+    public class CustomSagaRepositoryContextFactory<TSaga> :
         ISagaRepositoryContextFactory<TSaga>,
         IQuerySagaRepositoryContextFactory<TSaga>,
         ILoadSagaRepositoryContextFactory<TSaga>
@@ -16,7 +16,7 @@ namespace MassTransit.Persistence.Integration.Saga
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
         readonly IServiceProvider _serviceProvider;
 
-        public AdoSagaRepositoryContextFactory(
+        public CustomSagaRepositoryContextFactory(
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory,
             IServiceProvider serviceProvider)
         {
@@ -50,7 +50,7 @@ namespace MassTransit.Persistence.Integration.Saga
             await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
             
-            var repositoryContext = new AdoSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
+            var repositoryContext = new CustomSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
 
             await next.Send(repositoryContext)
                 .ConfigureAwait(false);
@@ -70,7 +70,7 @@ namespace MassTransit.Persistence.Integration.Saga
             var instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var repositoryContext = new AdoSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
+            var repositoryContext = new CustomSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
             var queryContext = new LoadedSagaRepositoryQueryContext<TSaga, T>(repositoryContext, instances);
 
             await next.Send(queryContext)

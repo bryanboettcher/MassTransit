@@ -17,7 +17,7 @@
         {
             var services = new ServiceCollection();
             var repositoryServices = new SagaRepositoryRegistrationConfigurator<VersionedSaga>(services);
-            var configurator = new AdoRepositoryConfigurator<VersionedSaga>();
+            var configurator = new CustomRepositoryConfigurator<VersionedSaga>();
 
             configurator.UsingSqlServer("my connection string");
             configurator.Register(repositoryServices);
@@ -37,7 +37,7 @@
         {
             var services = new ServiceCollection();
             var repositoryServices = new SagaRepositoryRegistrationConfigurator<InlinedSaga>(services);
-            var configurator = new AdoRepositoryConfigurator<InlinedSaga>();
+            var configurator = new CustomRepositoryConfigurator<InlinedSaga>();
 
             configurator.UsingSqlServer("my connection string", conf => conf.SetOptimisticConcurrency());
             configurator.Register(repositoryServices);

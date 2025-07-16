@@ -3,22 +3,22 @@
 /// <summary>
 /// Enables JobConsumer support via preconfigured saga repositories.
 /// </summary>
-public interface IAdoJobSagaRepositoryConfigurator
+public interface ICustomJobSagaRepositoryConfigurator
 {
     /// <summary>
     /// Set a custom context factory for JobSagas.
     /// </summary>
-    IAdoJobSagaRepositoryConfigurator SetJobContextFactory(DatabaseContextFactory<JobSaga> contextFactory);
+    ICustomJobSagaRepositoryConfigurator SetJobContextFactory(DatabaseContextFactory<JobSaga> contextFactory);
 
     /// <summary>
     /// Set a custom context factory for JobTypeSagas.
     /// </summary>
-    IAdoJobSagaRepositoryConfigurator SetJobTypeContextFactory(DatabaseContextFactory<JobTypeSaga> contextFactory);
+    ICustomJobSagaRepositoryConfigurator SetJobTypeContextFactory(DatabaseContextFactory<JobTypeSaga> contextFactory);
 
     /// <summary>
     /// Set a custom context factory for JobAttemptSagas.
     /// </summary>
-    IAdoJobSagaRepositoryConfigurator SetJobAttemptContextFactory(DatabaseContextFactory<JobAttemptSaga> contextFactory);
+    ICustomJobSagaRepositoryConfigurator SetJobAttemptContextFactory(DatabaseContextFactory<JobAttemptSaga> contextFactory);
 
     /// <summary>
     /// Gets/sets a custom context factory for JobSagas.

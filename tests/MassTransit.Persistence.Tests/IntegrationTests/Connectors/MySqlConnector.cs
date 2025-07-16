@@ -12,7 +12,7 @@ public class OptimisticMySqlConnector : MySqlConnector, TestConnector
 {
     public DateTime RowVersion { get; set; }
 
-    public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    public void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
         conf.UsingMySql(ConnectionString, opt => opt.SetTableName("OptimisticSagas").SetOptimisticConcurrency());
@@ -30,7 +30,7 @@ public class OptimisticMySqlConnector : MySqlConnector, TestConnector
 
 public class PessimisticMySqlConnector : MySqlConnector, TestConnector
 {
-    public void Connect<TSaga>(IAdoRepositoryConfigurator<TSaga> conf)
+    public void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
         where TSaga : class, ISaga
     {
         conf.UsingMySql(ConnectionString, opt => opt.SetTableName("PessimisticSagas").SetPessimisticConcurrency());
@@ -73,7 +73,7 @@ public abstract class MySqlConnector : BehaviorSaga
         //await RunSql(Sql.MySql_DropMessageDataTables);
     }
 
-    public void Connect(IAdoJobSagaRepositoryConfigurator conf)
+    public void Connect(ICustomJobSagaRepositoryConfigurator conf)
         => conf.UsingMySql(ConnectionString);
 
     protected async Task<List<TSaga>> GetSagas<TSaga>(string tableName)

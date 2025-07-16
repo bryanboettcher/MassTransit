@@ -27,7 +27,7 @@
 
         protected override void ConfigureInMemoryReceiveEndpoint(IInMemoryReceiveEndpointConfigurator configurator)
         {
-            _repository = AdoSagaRepository<TConnector>.Create(conf =>
+            _repository = CustomSagaRepository<TConnector>.Create(conf =>
                 Connector.Connect(conf)
             );
 

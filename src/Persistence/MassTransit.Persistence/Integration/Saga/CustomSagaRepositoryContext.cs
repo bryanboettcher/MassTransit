@@ -6,7 +6,7 @@ namespace MassTransit.Persistence.Integration.Saga
     using MassTransit.Saga;
 
 
-    public class AdoSagaRepositoryContext<TSaga, TMessage> :
+    public class CustomSagaRepositoryContext<TSaga, TMessage> :
         ConsumeContextScope<TMessage>,
         SagaRepositoryContext<TSaga, TMessage>,
         IProbeSite
@@ -17,7 +17,7 @@ namespace MassTransit.Persistence.Integration.Saga
         readonly DatabaseContext<TSaga> _context;
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
 
-        public AdoSagaRepositoryContext(
+        public CustomSagaRepositoryContext(
             DatabaseContext<TSaga> context,
             ConsumeContext<TMessage> consumeContext,
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory)
