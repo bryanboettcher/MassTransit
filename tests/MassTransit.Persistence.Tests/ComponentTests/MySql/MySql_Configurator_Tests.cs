@@ -13,26 +13,6 @@
     public class MySql_Configurator_Tests : MySql_Tests
     {
         [Test]
-        public void Configurator_uses_default_conventions()
-        {
-            var services = new ServiceCollection();
-            var repositoryServices = new SagaRepositoryRegistrationConfigurator<VersionedSaga>(services);
-            var configurator = new CustomRepositoryConfigurator<VersionedSaga>();
-
-            configurator.UsingMySql("my connection string");
-            configurator.Register(repositoryServices);
-
-            var provider = services.BuildServiceProvider();
-            var instance = provider.GetRequiredService<IMySqlRepositoryConfigurator<VersionedSaga>>();
-
-            Assert.That(instance.ConcurrencyMode, Is.EqualTo(ConcurrencyMode.Pessimistic));
-            Assert.That(instance.ConnectionString, Is.EqualTo("my connection string"));
-            Assert.That(instance.IdentityColumnName, Is.EqualTo("CorrelationId"));
-            Assert.That(instance.TableName, Is.EqualTo("VersionedSagas"));
-            Assert.That(instance.IsolationLevel, Is.EqualTo(IsolationLevel.ReadCommitted));
-        }
-        
-        [Test]
         public void Configurator_finds_other_parts()
         {
             var services = new ServiceCollection();
@@ -53,12 +33,32 @@
             Assert.That(instance.VersionPropertyName, Is.EqualTo("RowVersion"));
         }
 
+        [Test]
+        public void Configurator_uses_default_conventions()
+        {
+            var services = new ServiceCollection();
+            var repositoryServices = new SagaRepositoryRegistrationConfigurator<VersionedSaga>(services);
+            var configurator = new CustomRepositoryConfigurator<VersionedSaga>();
+
+            configurator.UsingMySql("my connection string");
+            configurator.Register(repositoryServices);
+
+            var provider = services.BuildServiceProvider();
+            var instance = provider.GetRequiredService<IMySqlRepositoryConfigurator<VersionedSaga>>();
+
+            Assert.That(instance.ConcurrencyMode, Is.EqualTo(ConcurrencyMode.Pessimistic));
+            Assert.That(instance.ConnectionString, Is.EqualTo("my connection string"));
+            Assert.That(instance.IdentityColumnName, Is.EqualTo("CorrelationId"));
+            Assert.That(instance.TableName, Is.EqualTo("VersionedSagas"));
+            Assert.That(instance.IsolationLevel, Is.EqualTo(IsolationLevel.ReadCommitted));
+        }
+
 
         [Table("tbl_saga")]
         public class InlinedSaga : ISaga
         {
-            public Guid CorrelationId { get; set; }
             public TimeSpan RowVersion { get; set; }
+            public Guid CorrelationId { get; set; }
         }
     }
 }

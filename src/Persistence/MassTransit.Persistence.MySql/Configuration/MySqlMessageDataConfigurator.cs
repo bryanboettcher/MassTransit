@@ -1,46 +1,48 @@
-﻿namespace MassTransit.Persistence.MySql.Configuration;
-
-using System.Data;
-
-
-public class MySqlMessageDataConfigurator : IMySqlMessageDataConfigurator, ISpecification
+﻿namespace MassTransit.Persistence.MySql.Configuration
 {
-    /// <inheritdoc />
-    public string ConnectionString { get; set; }
+    using System.Data;
 
-    /// <inheritdoc />
-    public string TableName { get; set; } = "ClaimChecks";
 
-    /// <inheritdoc />
-    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
-
-    /// <inheritdoc />
-    public IMySqlMessageDataConfigurator SetConnectionString(string connectionString)
+    public class MySqlMessageDataConfigurator : IMySqlMessageDataConfigurator,
+        ISpecification
     {
-        ConnectionString = connectionString;
-        return this;
-    }
+        /// <inheritdoc />
+        public string ConnectionString { get; set; }
 
-    /// <inheritdoc />
-    public IMySqlMessageDataConfigurator SetTableName(string tableName)
-    {
-        TableName = tableName;
-        return this;
-    }
+        /// <inheritdoc />
+        public string TableName { get; set; } = "ClaimChecks";
 
-    /// <inheritdoc />
-    public IMySqlMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
-    {
-        IsolationLevel = isolationLevel;
-        return this;
-    }
-    
-    public IEnumerable<ValidationResult> Validate()
-    {
-        if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return this.Failure($"{nameof(ConnectionString)} must be set");
+        /// <inheritdoc />
+        public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
-        if (string.IsNullOrWhiteSpace(TableName))
-            yield return this.Failure($"{nameof(TableName)} must be set");
+        /// <inheritdoc />
+        public IMySqlMessageDataConfigurator SetConnectionString(string connectionString)
+        {
+            ConnectionString = connectionString;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IMySqlMessageDataConfigurator SetTableName(string tableName)
+        {
+            TableName = tableName;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IMySqlMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+        {
+            IsolationLevel = isolationLevel;
+            return this;
+        }
+
+        public IEnumerable<ValidationResult> Validate()
+        {
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                yield return this.Failure($"{nameof(ConnectionString)} must be set");
+
+            if (string.IsNullOrWhiteSpace(TableName))
+                yield return this.Failure($"{nameof(TableName)} must be set");
+        }
     }
 }

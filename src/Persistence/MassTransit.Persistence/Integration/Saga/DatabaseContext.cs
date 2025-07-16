@@ -4,7 +4,8 @@ namespace MassTransit.Persistence.Integration.Saga
 
 
     public interface DatabaseContext<TSaga> :
-        IAsyncDisposable, IDisposable
+        IAsyncDisposable,
+        IDisposable
         where TSaga : class
     {
         Task DeleteAsync(TSaga instance, CancellationToken cancellationToken = default);

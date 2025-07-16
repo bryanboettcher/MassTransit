@@ -12,13 +12,15 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected SagaDatabaseContext<VersionedSaga> Subject = new PessimisticSqlServerDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", IsolationLevel.Unspecified);
-            
+            protected SagaDatabaseContext<VersionedSaga> Subject =
+                new PessimisticSqlServerDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", IsolationLevel.Unspecified);
+
             [Test]
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO VersionedSagas ([CorrelationId], [RowVersion], [Name], [Age], [PhoneNumber], [Zip_Code]) VALUES (@correlationid, @rowversion, @name, @age, @phonenumber, @zipcode)";
+                var expected =
+                    "INSERT INTO VersionedSagas ([CorrelationId], [RowVersion], [Name], [Age], [PhoneNumber], [Zip_Code]) VALUES (@correlationid, @rowversion, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -27,7 +29,8 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET [RowVersion] = @rowversion, [Name] = @name, [Age] = @age, [PhoneNumber] = @phonenumber, [Zip_Code] = @zipcode WHERE [CorrelationId] = @correlationid";
+                var expected =
+                    "UPDATE VersionedSagas SET [RowVersion] = @rowversion, [Name] = @name, [Age] = @age, [PhoneNumber] = @phonenumber, [Zip_Code] = @zipcode WHERE [CorrelationId] = @correlationid";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -60,15 +63,18 @@
             }
         }
 
+
         public class UnversionedSaga_SqlBuilder
         {
-            protected SagaDatabaseContext<UnversionedSaga> Subject = new PessimisticSqlServerDatabaseContext<UnversionedSaga>("", "UnversionedSagas", "CorrelationId", IsolationLevel.Unspecified);
+            protected SagaDatabaseContext<UnversionedSaga> Subject =
+                new PessimisticSqlServerDatabaseContext<UnversionedSaga>("", "UnversionedSagas", "CorrelationId", IsolationLevel.Unspecified);
 
             [Test]
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO UnversionedSagas ([CorrelationId], [Name], [EarthTrips], [PhoneNumber], [Zip_Code]) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
+                var expected =
+                    "INSERT INTO UnversionedSagas ([CorrelationId], [Name], [EarthTrips], [PhoneNumber], [Zip_Code]) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -77,7 +83,8 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE UnversionedSagas SET [Name] = @name, [EarthTrips] = @age, [PhoneNumber] = @phonenumber, [Zip_Code] = @zipcode WHERE [CorrelationId] = @correlationid";
+                var expected =
+                    "UPDATE UnversionedSagas SET [Name] = @name, [EarthTrips] = @age, [PhoneNumber] = @phonenumber, [Zip_Code] = @zipcode WHERE [CorrelationId] = @correlationid";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }

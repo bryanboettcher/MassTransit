@@ -1,64 +1,66 @@
-﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
-
-using System.Data;
-using Components.JobConsumers;
-using Integration.Saga;
-using Microsoft.Extensions.DependencyInjection;
-using Persistence.Configuration;
-
-
-public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryConfigurator, ISpecification
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration
 {
-    /// <inheritdoc />
-    public string? ConnectionString { get; set; }
+    using System.Data;
+    using Components.JobConsumers;
+    using Integration.Saga;
+    using Microsoft.Extensions.DependencyInjection;
+    using Persistence.Configuration;
 
-    /// <inheritdoc />
-    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
-    /// <inheritdoc />
-    public IPostgresJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
+    public class PostgresJobSagaRepositoryConfigurator : IPostgresJobSagaRepositoryConfigurator,
+        ISpecification
     {
-        ConnectionString = connectionString;
-        return this;
-    }
+        /// <inheritdoc />
+        public string? ConnectionString { get; set; }
 
-    /// <inheritdoc />
-    public IPostgresJobSagaRepositoryConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
-    {
-        IsolationLevel = isolationLevel;
-        return this;
-    }
+        /// <inheritdoc />
+        public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
-    /// <inheritdoc />
-    public IEnumerable<ValidationResult> Validate()
-    {
-        if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return this.Failure("ConnectionString must be specified");
-    }
+        /// <inheritdoc />
+        public IPostgresJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
+        {
+            ConnectionString = connectionString;
+            return this;
+        }
 
-    public void Configure(ICustomJobSagaRepositoryConfigurator configurator)
-    {
-        (configurator as CustomJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
+        /// <inheritdoc />
+        public IPostgresJobSagaRepositoryConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+        {
+            IsolationLevel = isolationLevel;
+            return this;
+        }
 
-        configurator.SetJobContextFactory(sp => Task.FromResult(sp.GetRequiredService<DatabaseContext<JobSaga>>()));
-        configurator.SetJobTypeContextFactory(sp => Task.FromResult(sp.GetRequiredService<DatabaseContext<JobTypeSaga>>()));
-        configurator.SetJobAttemptContextFactory(sp => Task.FromResult(sp.GetRequiredService<DatabaseContext<JobAttemptSaga>>()));
-    }
+        /// <inheritdoc />
+        public IEnumerable<ValidationResult> Validate()
+        {
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                yield return this.Failure("ConnectionString must be specified");
+        }
 
-    void RegisterDependencies(IServiceCollection services)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+        public void Configure(ICustomJobSagaRepositoryConfigurator configurator)
+        {
+            (configurator as CustomJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
 
-        services.AddTransient<DatabaseContext<JobSaga>>(_
-            => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
-        );
+            configurator.SetJobContextFactory(sp => Task.FromResult(sp.GetRequiredService<DatabaseContext<JobSaga>>()));
+            configurator.SetJobTypeContextFactory(sp => Task.FromResult(sp.GetRequiredService<DatabaseContext<JobTypeSaga>>()));
+            configurator.SetJobAttemptContextFactory(sp => Task.FromResult(sp.GetRequiredService<DatabaseContext<JobAttemptSaga>>()));
+        }
 
-        services.AddTransient<DatabaseContext<JobTypeSaga>>(_
-            => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
-        );
+        void RegisterDependencies(IServiceCollection services)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
 
-        services.AddTransient<DatabaseContext<JobAttemptSaga>>(_
-            => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
-        );
+            services.AddTransient<DatabaseContext<JobSaga>>(_
+                => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
+            );
+
+            services.AddTransient<DatabaseContext<JobTypeSaga>>(_
+                => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
+            );
+
+            services.AddTransient<DatabaseContext<JobAttemptSaga>>(_
+                => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
+            );
+        }
     }
 }

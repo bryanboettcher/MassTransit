@@ -1,91 +1,94 @@
-﻿namespace MassTransit.Persistence.PostgreSql.Connections;
-
-using System.Linq.Expressions;
-using System.Reflection;
-using Integration.Saga;
-using Integration.SqlBuilders;
-using Npgsql;
-using NpgsqlTypes;
-
-
-public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<TSaga>, DatabaseContext<TSaga>
-    where TSaga : class, ISaga
+﻿namespace MassTransit.Persistence.PostgreSql.Connections
 {
-    readonly string _versionColumnName;
-    readonly PropertyInfo _versionProperty;
+    using System.Linq.Expressions;
+    using System.Reflection;
+    using Integration.Saga;
+    using Integration.SqlBuilders;
+    using Npgsql;
+    using NpgsqlTypes;
 
-    public OptimisticPostgresDatabaseContext(string connectionString, string tableName, string idColumnName, string versionPropertyName)
-        : base(connectionString, tableName, idColumnName)
+
+    public class OptimisticPostgresDatabaseContext<TSaga> : PostgresDatabaseContext<TSaga>,
+        DatabaseContext<TSaga>
+        where TSaga : class, ISaga
     {
-        _versionColumnName = @"xmin";
-        _versionProperty = ModelType.GetProperty(versionPropertyName)
-            ?? throw new InvalidOperationException($"Cannot access version property {versionPropertyName} on {ModelType.Name}");
-    }
+        readonly string _versionColumnName;
+        readonly PropertyInfo _versionProperty;
 
-    protected override string BuildLoadSql()
-    {
-        return $"SELECT *, xmin AS {_versionProperty.Name} FROM {TableName} WHERE {IdColumnName} = @correlationid LIMIT 1";
-    }
+        public OptimisticPostgresDatabaseContext(string connectionString, string tableName, string idColumnName, string versionPropertyName)
+            : base(connectionString, tableName, idColumnName)
+        {
+            _versionColumnName = @"xmin";
+            _versionProperty = ModelType.GetProperty(versionPropertyName)
+                ?? throw new InvalidOperationException($"Cannot access version property {versionPropertyName} on {ModelType.Name}");
+        }
 
-    protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
-    {
-        var sqlRoot = $"SELECT *, xmin AS {_versionProperty.Name} FROM {TableName}";
+        protected override string BuildLoadSql()
+        {
+            return $"SELECT *, xmin AS {_versionProperty.Name} FROM {TableName} WHERE {IdColumnName} = @correlationid LIMIT 1";
+        }
 
-        var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+        protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
+        {
+            var sqlRoot = $"SELECT *, xmin AS {_versionProperty.Name} FROM {TableName}";
 
-        if (predicates.Count == 0) // good luck...
-            return sqlRoot;
+            List<SqlPredicate> predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
-        var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
-        return string.Concat(sqlRoot, " WHERE ", queryPredicate);
-    }
+            if (predicates.Count == 0) // good luck...
+                return sqlRoot;
 
-    protected override string BuildInsertSql()
-    {
-        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
+            return string.Concat(sqlRoot, " WHERE ", queryPredicate);
+        }
 
-        properties.Remove(_versionProperty.Name);
+        protected override string BuildInsertSql()
+        {
+            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-        var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
-        var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
+            properties.Remove(_versionProperty.Name);
 
-        var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
+            var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
 
-        return sql;
-    }
+            var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
 
-    protected override string BuildUpdateSql()
-    {
-        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            return sql;
+        }
 
-        properties.Remove(nameof(ISaga.CorrelationId));
-        properties.Remove(_versionProperty.Name);
+        protected override string BuildUpdateSql()
+        {
+            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-        var updateExpression = string.Join(", ", properties.Select(p => $"{p.Key} = @{p.Value}"));
+            properties.Remove(nameof(ISaga.CorrelationId));
+            properties.Remove(_versionProperty.Name);
 
-        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE {IdColumnName} = @correlationid AND {_versionColumnName} = @{_versionProperty.Name.ToLowerInvariant()}";
+            var updateExpression = string.Join(", ", properties.Select(p => $"{p.Key} = @{p.Value}"));
 
-        return sql;
-    }
+            var sql =
+                $"UPDATE {TableName} SET {updateExpression} WHERE {IdColumnName} = @correlationid AND {_versionColumnName} = @{_versionProperty.Name.ToLowerInvariant()}";
 
-    protected override string BuildDeleteSql()
-    {
-        var sql = $"DELETE FROM {TableName} WHERE {IdColumnName} = @correlationid AND {_versionColumnName} = @{_versionProperty.Name.ToLowerInvariant()}";
+            return sql;
+        }
 
-        return sql;
-    }
+        protected override string BuildDeleteSql()
+        {
+            var sql = $"DELETE FROM {TableName} WHERE {IdColumnName} = @correlationid AND {_versionColumnName} = @{_versionProperty.Name.ToLowerInvariant()}";
 
-    protected override ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
-    {
-        var param = command.Parameters.FirstOrDefault(p => string.Equals(
-            p.ParameterName,
-            _versionProperty.Name.ToLowerInvariant(),
-            StringComparison.OrdinalIgnoreCase
-        ));
+            return sql;
+        }
 
-        if (param is not null)
-            param.NpgsqlDbType = NpgsqlDbType.Xid;
+        protected override ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
+        {
+            var param = command.Parameters.FirstOrDefault(p => string.Equals(
+                p.ParameterName,
+                _versionProperty.Name.ToLowerInvariant(),
+                StringComparison.OrdinalIgnoreCase
+            ));
 
-        return base.OnParametersWritten(command, cancellationToken);
+            if (param is not null)
+                param.NpgsqlDbType = NpgsqlDbType.Xid;
+
+            return base.OnParametersWritten(command, cancellationToken);
+        }
     }
 }

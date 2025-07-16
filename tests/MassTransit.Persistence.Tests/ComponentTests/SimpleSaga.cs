@@ -1,8 +1,9 @@
-﻿namespace MassTransit.Persistence.Tests.ComponentTests;
-
-public class SimpleSaga
+﻿namespace MassTransit.Persistence.Tests.ComponentTests
 {
-    public Guid CorrelationId { get; set; }
-    public string CorrelateBySomething { get; set; }
-    public bool Completed { get; set; }
+    public class SimpleSaga
+    {
+        public Guid CorrelationId { get; set; }
+        public string CorrelateBySomething { get; set; }
+        public bool Completed { get; set; }
+    }
 }

@@ -1,19 +1,21 @@
-﻿namespace MassTransit.Persistence.Tests.IntegrationTests.Connectors;
-
-using Configuration;
-
-
-public interface TestConnector
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.Connectors
 {
-    Task Setup();
-    Task Teardown();
+    using Configuration;
 
-    void Connect(ICustomJobSagaRepositoryConfigurator conf);
-    void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
-        where TSaga : class, ISaga;
 
-    IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider);
+    public interface TestConnector
+    {
+        Task Setup();
+        Task Teardown();
 
-    Task<List<TSaga>> GetSagas<TSaga>()
-        where TSaga : class, ISaga;
+        void Connect(ICustomJobSagaRepositoryConfigurator conf);
+
+        void Connect<TSaga>(ICustomRepositoryConfigurator<TSaga> conf)
+            where TSaga : class, ISaga;
+
+        IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider);
+
+        Task<List<TSaga>> GetSagas<TSaga>()
+            where TSaga : class, ISaga;
+    }
 }

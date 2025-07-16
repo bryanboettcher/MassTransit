@@ -3,14 +3,27 @@
     using System.Data;
     using Npgsql;
     using NpgsqlTypes;
-    
+
+
     public class PostgresMessageDataRepository : IMessageDataRepository
     {
         const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
-        
+
         readonly string _connectionString;
         readonly IsolationLevel _isolationLevel;
         readonly TimeProvider _timeProvider;
+
+        public PostgresMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
+        {
+            _connectionString = connectionString;
+            _isolationLevel = isolationLevel;
+
+            _timeProvider = timeProvider;
+
+            SqlLoad = string.Format(SqlLoad, tableName);
+            SqlSave = string.Format(SqlSave, tableName);
+            SqlClean = string.Format(SqlClean, tableName);
+        }
 
         /// <summary>
         /// The SQL statement used to load a Claim Check from the database.  The {0} value is replaced with the table name.
@@ -26,18 +39,6 @@
         /// The SQL statement used to clean stale Claim Checks.  The {0} value is replaced with the table name.
         /// </summary>
         public string SqlClean { get; set; } = "DELETE FROM {0} WHERE Expires < @now";
-
-        public PostgresMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
-        {
-            _connectionString = connectionString;
-            _isolationLevel = isolationLevel;
-            
-            _timeProvider = timeProvider;
-
-            SqlLoad = string.Format(SqlLoad, tableName);
-            SqlSave = string.Format(SqlSave, tableName);
-            SqlClean = string.Format(SqlClean, tableName);
-        }
 
         /// <inheritdoc />
         public async Task<Stream> Get(Uri address, CancellationToken cancellationToken = default)
@@ -103,13 +104,16 @@
                 },
                 cancellationToken
             ).ConfigureAwait(false);
-            
+
             return Pack(id);
 
             static DateTimeOffset GetExpiration(TimeSpan? ttl, DateTimeOffset now)
-                => ttl.HasValue
+            {
+                return ttl.HasValue
                     ? now.Add(ttl.Value)
-                    : DateTimeOffset.MaxValue; // C# DTO.MaxValue is the same as Postgres DTO MaxValue
+                    : DateTimeOffset.MaxValue;
+            }
+            // C# DTO.MaxValue is the same as Postgres DTO MaxValue
         }
 
         /// <inheritdoc />
@@ -126,7 +130,6 @@
 
                     rows = await command.ExecuteNonQueryAsync(cancellationToken)
                         .ConfigureAwait(false);
-
                 }, cancellationToken
             ).ConfigureAwait(false);
 
@@ -193,6 +196,8 @@
         }
 
         static Uri Pack(Guid id)
-            => new($"urn:claim?{id:N}");
+        {
+            return new Uri($"urn:claim?{id:N}");
+        }
     }
 }

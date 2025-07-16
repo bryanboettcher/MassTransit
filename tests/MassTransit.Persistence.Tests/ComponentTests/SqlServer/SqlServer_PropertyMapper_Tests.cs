@@ -2,13 +2,11 @@
 //using MassTransit.Persistence.SqlServer.Connections;
 //using NUnit.Framework;
 
-
 //namespace MassTransit.Persistence.Tests.ComponentTests.SqlServer
 //{
 //    using System.Data;
 //    using System.Linq.Expressions;
 //    using Integration.SqlBuilders;
-
 
 //    [TestFixture]
 //    public class SqlServer_PropertyMapper_Tests : SqlServer_Tests
@@ -38,3 +36,4 @@
 
 //   public ICollection<OrderItem> Items { get; set; } = [];
 //*/
+

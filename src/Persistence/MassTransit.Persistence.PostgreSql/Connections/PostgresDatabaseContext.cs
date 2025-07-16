@@ -11,14 +11,14 @@
         where TSaga : class, ISaga
     {
         readonly string _connectionString;
+        protected readonly string IdColumnName;
 
         protected readonly string TableName;
-        protected readonly string IdColumnName;
+
+        bool _disposed;
 
         protected NpgsqlConnection? Connection;
         protected NpgsqlTransaction? Transaction;
-
-        bool _disposed;
 
         protected PostgresDatabaseContext(string connectionString, string tableName, string idColumnName)
         {
@@ -41,11 +41,11 @@
 
             return string.Join(" AND ", queryPredicates);
         }
-        
+
         protected override async IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            var readerAdapter = CreateReaderAdapter();
-            var writerAdapter = CreateWriterAdapter();
+            Func<IDataReader, TSaga>? readerAdapter = CreateReaderAdapter();
+            Action<object, NpgsqlParameterCollection>? writerAdapter = CreateWriterAdapter();
 
             Connection = await CreateConnection(cancellationToken)
                 .ConfigureAwait(false);
@@ -62,14 +62,12 @@
                 .ConfigureAwait(false);
 
             while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-            {
                 yield return readerAdapter(reader);
-            }
         }
 
         protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
-            var writerAdapter = CreateWriterAdapter();
+            Action<object, NpgsqlParameterCollection>? writerAdapter = CreateWriterAdapter();
 
             await using var command = await CreateCommand(sql, cancellationToken)
                 .ConfigureAwait(false);
@@ -118,7 +116,9 @@
         /// adapter, but can be overridden for performance or complex mappings.
         /// </summary>
         protected virtual Func<IDataReader, TSaga> CreateReaderAdapter()
-            => ReflectionsAdapter.CreateFor<TSaga>();
+        {
+            return ReflectionsAdapter.CreateFor<TSaga>();
+        }
 
         /// <summary>
         /// Writer adapters are to convert an object (usually model instance) to a
@@ -127,34 +127,40 @@
         /// that needs non-trivial logic.
         /// </summary>
         protected virtual Action<object?, NpgsqlParameterCollection> CreateWriterAdapter()
-            => AssignParameters;
+        {
+            return AssignParameters;
+        }
 
         /// <summary>
         /// Called immediately after a new connection is opened.  Generally used to begin a transaction
         /// or set additional properties on the connection, such as buffer sizes or attaching event handlers.
         /// </summary>
         protected virtual ValueTask OnConnectionOpened(NpgsqlConnection connection, CancellationToken cancellationToken)
-            => ValueTask.CompletedTask;
+        {
+            return ValueTask.CompletedTask;
+        }
 
         /// <summary>
         /// Called immediately after parameters are written.  Generally used by specific types of database
         /// engines to handle special property types.
         /// </summary>
         protected virtual ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
-            => ValueTask.CompletedTask;
+        {
+            return ValueTask.CompletedTask;
+        }
 
         protected static void AssignParameters(object? parameters, NpgsqlParameterCollection collection)
         {
             foreach (var (name, value) in ParameterReader.Read(parameters))
-            {
                 collection.AddWithValue(name, value ?? DBNull.Value);
-            }
         }
 
         public virtual Task CommitAsync(CancellationToken cancellationToken = default)
-            => Transaction is null
+        {
+            return Transaction is null
                 ? Task.CompletedTask
                 : Transaction.CommitAsync(cancellationToken);
+        }
 
         public virtual void Dispose()
         {

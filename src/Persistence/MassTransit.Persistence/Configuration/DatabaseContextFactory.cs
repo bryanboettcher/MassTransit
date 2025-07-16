@@ -1,7 +1,8 @@
-﻿namespace MassTransit.Persistence.Configuration;
+﻿namespace MassTransit.Persistence.Configuration
+{
+    using Integration.Saga;
 
-using Integration.Saga;
 
-
-public delegate Task<DatabaseContext<TSaga>> DatabaseContextFactory<TSaga>(IServiceProvider serviceProvider)
-    where TSaga : class;
+    public delegate Task<DatabaseContext<TSaga>> DatabaseContextFactory<TSaga>(IServiceProvider serviceProvider)
+        where TSaga : class;
+}

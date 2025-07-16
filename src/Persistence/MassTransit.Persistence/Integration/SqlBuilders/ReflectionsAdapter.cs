@@ -1,63 +1,68 @@
-namespace MassTransit.Persistence.Integration.SqlBuilders;
-
-using System.Data;
-
-
-public class ReflectionsAdapter
+namespace MassTransit.Persistence.Integration.SqlBuilders
 {
-    /// <summary>
-    /// Creates a reflections-based data adapter for the specified <typeparamref name="TModel"/>.
-    /// </summary>
-    /// <typeparam name="TModel">The target type to return</typeparam>
-    /// <returns>An instance of a model adapter</returns>
-    public static Func<IDataReader, TModel> CreateFor<TModel>()
-        where TModel: class
-    {
-        return new Adapter<TModel>().Convert;
-    }
-    
-    class Adapter<TModel>
-    {
-        IDictionary<string, int>? _columns;
+    using System.Data;
+    using System.Reflection;
 
-        public TModel Convert(IDataReader input)
+
+    public class ReflectionsAdapter
+    {
+        /// <summary>
+        /// Creates a reflections-based data adapter for the specified <typeparamref name="TModel" />.
+        /// </summary>
+        /// <typeparam name="TModel">The target type to return</typeparam>
+        /// <returns>An instance of a model adapter</returns>
+        public static Func<IDataReader, TModel> CreateFor<TModel>()
+            where TModel : class
         {
-            _columns ??= CreateSchema(input);
-
-            var target = Activator.CreateInstance<TModel>();
-            var properties = typeof(TModel).GetProperties().Where(p => p.CanWrite);
-
-            foreach (var property in properties)
-            {
-                if (!_columns.TryGetValue(property.Name, out var index))
-                    continue;
-
-                var value = input.GetValue(index);
-                var actual = CheckDbNull(value);
-
-                if (property.PropertyType == typeof(Guid) && actual is byte[] { Length: 16 } bytes)
-                    property.SetValue(target, new Guid(bytes)); // thanks, MySql ...
-                else
-                    property.SetValue(target, actual);
-            }
-
-            return target;
-
-            object? CheckDbNull(object? value) =>
-                DBNull.Value.Equals(value) ? null : value;
+            return new Adapter<TModel>().Convert;
         }
 
-        static IDictionary<string, int> CreateSchema(IDataReader input)
-        {
-            var mappings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-            for (var fieldIndex = 0; fieldIndex < input.FieldCount; fieldIndex++)
+        class Adapter<TModel>
+        {
+            IDictionary<string, int>? _columns;
+
+            public TModel Convert(IDataReader input)
             {
-                var fieldName = input.GetName(fieldIndex);
-                mappings.TryAdd(fieldName, fieldIndex);
+                _columns ??= CreateSchema(input);
+
+                var target = Activator.CreateInstance<TModel>();
+                IEnumerable<PropertyInfo> properties = typeof(TModel).GetProperties().Where(p => p.CanWrite);
+
+                foreach (var property in properties)
+                {
+                    if (!_columns.TryGetValue(property.Name, out var index))
+                        continue;
+
+                    var value = input.GetValue(index);
+                    var actual = CheckDbNull(value);
+
+                    if (property.PropertyType == typeof(Guid) && actual is byte[] { Length: 16 } bytes)
+                        property.SetValue(target, new Guid(bytes)); // thanks, MySql ...
+                    else
+                        property.SetValue(target, actual);
+                }
+
+                return target;
+
+                object? CheckDbNull(object? value)
+                {
+                    return DBNull.Value.Equals(value) ? null : value;
+                }
             }
 
-            return mappings;
+            static IDictionary<string, int> CreateSchema(IDataReader input)
+            {
+                var mappings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+                for (var fieldIndex = 0; fieldIndex < input.FieldCount; fieldIndex++)
+                {
+                    var fieldName = input.GetName(fieldIndex);
+                    mappings.TryAdd(fieldName, fieldIndex);
+                }
+
+                return mappings;
+            }
         }
     }
 }

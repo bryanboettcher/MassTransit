@@ -5,15 +5,18 @@
     using MassTransit.Saga;
     using Microsoft.Extensions.DependencyInjection;
 
+
     /// <summary>
-    /// Thin wrapper over <seealso cref="SagaDatabaseContext{TSaga}"/> to
+    /// Thin wrapper over <seealso cref="SagaDatabaseContext{TSaga}" /> to
     /// allow creation of a standalone repository rather than registering it.
     /// </summary>
     /// <typeparam name="TSaga"></typeparam>
     public class CustomSagaRepository<TSaga>
         where TSaga : class, ISaga
     {
-        private CustomSagaRepository() { }
+        CustomSagaRepository()
+        {
+        }
 
         /// <summary>
         /// Creates a saga repository directly, rather than using a DI container.

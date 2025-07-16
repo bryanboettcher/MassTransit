@@ -1,9 +1,9 @@
 namespace MassTransit.Persistence.Integration.Saga
 {
-    using MassTransit.Context;
-    using MassTransit.Internals;
-    using MassTransit.Middleware;
+    using Context;
+    using Internals;
     using MassTransit.Saga;
+    using Middleware;
 
 
     public class CustomSagaRepositoryContext<TSaga, TMessage> :
@@ -17,8 +17,7 @@ namespace MassTransit.Persistence.Integration.Saga
         readonly DatabaseContext<TSaga> _context;
         readonly ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> _factory;
 
-        public CustomSagaRepositoryContext(
-            DatabaseContext<TSaga> context,
+        public CustomSagaRepositoryContext(DatabaseContext<TSaga> context,
             ConsumeContext<TMessage> consumeContext,
             ISagaConsumeContextFactory<DatabaseContext<TSaga>, TSaga> factory)
             : base(consumeContext, context)
@@ -26,6 +25,12 @@ namespace MassTransit.Persistence.Integration.Saga
             _context = context;
             _consumeContext = consumeContext;
             _factory = factory;
+        }
+
+        public void Probe(ProbeContext context)
+        {
+            context.Add("TSaga", typeof(TSaga).Name);
+            context.Add("TMessage", typeof(TMessage).Name);
         }
 
         public Task<SagaConsumeContext<TSaga, T>> CreateSagaConsumeContext<T>(ConsumeContext<T> consumeContext, TSaga instance, SagaConsumeContextMode mode)
@@ -102,13 +107,8 @@ namespace MassTransit.Persistence.Integration.Saga
 
             return Task.CompletedTask;
         }
-
-        public void Probe(ProbeContext context)
-        {
-            context.Add("TSaga", typeof(TSaga).Name);
-            context.Add("TMessage", typeof(TMessage).Name);
-        }
     }
+
 
     public class CustomSagaRepositoryContext<TSaga> :
         BasePipeContext,
@@ -139,7 +139,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
         public async Task<SagaRepositoryQueryContext<TSaga>> Query(ISagaQuery<TSaga> query, CancellationToken cancellationToken = default)
         {
-            var instances = await (_context.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken))
+            IList<TSaga>? instances = await _context.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (LogContext.Debug.HasValue)

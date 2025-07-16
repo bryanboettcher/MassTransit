@@ -1,46 +1,48 @@
-﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
-
-using System.Data;
-
-
-public class PostgresMessageDataConfigurator : IPostgresMessageDataConfigurator, ISpecification
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration
 {
-    /// <inheritdoc />
-    public string ConnectionString { get; set; }
+    using System.Data;
 
-    /// <inheritdoc />
-    public string TableName { get; set; } = "ClaimChecks";
 
-    /// <inheritdoc />
-    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
-
-    /// <inheritdoc />
-    public IPostgresMessageDataConfigurator SetConnectionString(string connectionString)
+    public class PostgresMessageDataConfigurator : IPostgresMessageDataConfigurator,
+        ISpecification
     {
-        ConnectionString = connectionString;
-        return this;
-    }
+        /// <inheritdoc />
+        public string ConnectionString { get; set; }
 
-    /// <inheritdoc />
-    public IPostgresMessageDataConfigurator SetTableName(string tableName)
-    {
-        TableName = tableName;
-        return this;
-    }
+        /// <inheritdoc />
+        public string TableName { get; set; } = "ClaimChecks";
 
-    /// <inheritdoc />
-    public IPostgresMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
-    {
-        IsolationLevel = isolationLevel;
-        return this;
-    }
-    
-    public IEnumerable<ValidationResult> Validate()
-    {
-        if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return this.Failure($"{nameof(ConnectionString)} must be set");
+        /// <inheritdoc />
+        public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
-        if (string.IsNullOrWhiteSpace(TableName))
-            yield return this.Failure($"{nameof(TableName)} must be set");
+        /// <inheritdoc />
+        public IPostgresMessageDataConfigurator SetConnectionString(string connectionString)
+        {
+            ConnectionString = connectionString;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IPostgresMessageDataConfigurator SetTableName(string tableName)
+        {
+            TableName = tableName;
+            return this;
+        }
+
+        /// <inheritdoc />
+        public IPostgresMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
+        {
+            IsolationLevel = isolationLevel;
+            return this;
+        }
+
+        public IEnumerable<ValidationResult> Validate()
+        {
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                yield return this.Failure($"{nameof(ConnectionString)} must be set");
+
+            if (string.IsNullOrWhiteSpace(TableName))
+                yield return this.Failure($"{nameof(TableName)} must be set");
+        }
     }
 }

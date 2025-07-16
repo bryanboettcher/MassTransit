@@ -1,8 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Reflection;
-
-namespace MassTransit.Persistence.Integration.SqlBuilders
+﻿namespace MassTransit.Persistence.Integration.SqlBuilders
 {
+    using System.ComponentModel.DataAnnotations.Schema;
+    using System.Reflection;
     using Saga;
 
 
@@ -12,7 +11,9 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
     public static class PersistenceHelper
     {
         public static string GetTableName<T>()
-            => GetTableName(typeof(T));
+        {
+            return GetTableName(typeof(T));
+        }
 
         public static string GetTableName(Type type)
         {
@@ -24,11 +25,13 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
         }
 
         public static string GetIdColumnName<T>()
-            => GetIdColumnName(typeof(T));
+        {
+            return GetIdColumnName(typeof(T));
+        }
 
         public static string GetIdColumnName(Type type)
         {
-            var properties = type.GetProperties();
+            PropertyInfo[] properties = type.GetProperties();
 
             // support the Dapper.Contrib manual-mapping of keys or non-identity keys
             var keyColumn = AttributeValue(type, "KeyAttribute", "Name");
@@ -51,8 +54,8 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
                 .FirstOrDefault(p => p.Name.Equals(defaultName, StringComparison.OrdinalIgnoreCase));
 
             return candidate is not null && candidate.PropertyType == typeof(TProp)
-                    ? candidate.Name
-                    : null;
+                ? candidate.Name
+                : null;
         }
 
         public static string? GetColumnName(Type type, string propertyName)

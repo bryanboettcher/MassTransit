@@ -6,7 +6,8 @@ namespace MassTransit.Persistence.Tests.IntegrationTests.StateMachineSagas
     using Common;
 
 
-    public class SagaStateMachine<TSaga> : MassTransitStateMachine<TSaga> where TSaga : BehaviorSaga
+    public class SagaStateMachine<TSaga> : MassTransitStateMachine<TSaga>
+        where TSaga : BehaviorSaga
     {
         public SagaStateMachine()
         {

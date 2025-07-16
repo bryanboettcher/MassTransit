@@ -37,9 +37,9 @@
         }
     }
 
+
     public class OrderSaga : SagaStateMachineInstance
     {
-        public Guid CorrelationId { get; set; }
         public byte[] RowVersion { get; set; }
         public int CurrentState { get; set; }
         public string OrderNumber { get; set; }
@@ -49,7 +49,9 @@
         public DateTime UpdatedOn { get; set; }
 
         public ICollection<OrderItem> Items { get; set; } = [];
+        public Guid CorrelationId { get; set; }
     }
+
 
     public record OrderItem(Guid ItemId, int Quantity, decimal ItemPrice);
 
@@ -57,6 +59,7 @@
     public class OrderStateMachine : MassTransitStateMachine<OrderSaga>
     {
     }
+
 
     public class MySqlOrderSagaRepository : OptimisticMySqlDatabaseContext<OrderSaga>
     {
@@ -67,7 +70,11 @@
             MapProperty(saga => saga.Items, "ItemsJson");
         }
 
-        protected override Func<IDataReader, OrderSaga> CreateReaderAdapter() => MapFromReader;
+        protected override Func<IDataReader, OrderSaga> CreateReaderAdapter()
+        {
+            return MapFromReader;
+        }
+
         static OrderSaga MapFromReader(IDataReader reader)
         {
             var r = (MySqlDataReader)reader;
@@ -85,7 +92,11 @@
             };
         }
 
-        protected override Action<object?, MySqlParameterCollection> CreateWriterAdapter() => MapToParameters;
+        protected override Action<object?, MySqlParameterCollection> CreateWriterAdapter()
+        {
+            return MapToParameters;
+        }
+
         static void MapToParameters(object? input, MySqlParameterCollection parameters)
         {
             if (input is OrderSaga saga)

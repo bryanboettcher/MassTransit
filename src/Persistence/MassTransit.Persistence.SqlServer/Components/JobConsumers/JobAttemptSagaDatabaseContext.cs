@@ -58,7 +58,9 @@ WHERE
         }
 
         protected override Func<IDataReader, JobAttemptSaga> CreateReaderAdapter()
-            => ConvertFrom;
+        {
+            return ConvertFrom;
+        }
 
         static JobAttemptSaga ConvertFrom(IDataReader dataReader)
         {
@@ -80,7 +82,9 @@ WHERE
         }
 
         protected override Action<object?, SqlParameterCollection> CreateWriterAdapter()
-            => ConvertTo;
+        {
+            return ConvertTo;
+        }
 
         static void ConvertTo(object? source, SqlParameterCollection collection)
         {

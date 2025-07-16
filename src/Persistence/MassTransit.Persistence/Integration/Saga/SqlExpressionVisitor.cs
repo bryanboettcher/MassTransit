@@ -3,7 +3,7 @@
     using System.ComponentModel.DataAnnotations.Schema;
     using System.Linq.Expressions;
     using System.Reflection;
-    using MassTransit.Internals;
+    using Internals;
 
 
     public static class SqlExpressionVisitor
@@ -64,18 +64,18 @@
             else
                 value = Expression.Lambda<Func<object>>(Expression.Convert(node.Right, typeof(object))).CompileFast().Invoke();
 
-            return [new(name, value, op)];
+            return [new SqlPredicate(name, value, op)];
         }
 
         static List<SqlPredicate> NegatedVisit(UnaryExpression node, List<SqlPropertyMapping>? mappings)
         {
-            var property = (MemberExpression) node.Operand;
+            var property = (MemberExpression)node.Operand;
             var name = MemberName(property.Member, mappings);
 
             if (node.Type != typeof(bool))
                 throw new InvalidOperationException("Negation is only supported for boolean properties");
-            
-            return [new(name, false)];
+
+            return [new SqlPredicate(name, false)];
         }
 
         static List<SqlPredicate> MemberAccessVisit(MemberExpression node, List<SqlPropertyMapping>? mappings)
@@ -90,7 +90,7 @@
             else
                 value = null;
 
-            return [new(name, value)];
+            return [new SqlPredicate(name, value)];
         }
 
         static string MemberName(MemberInfo member, List<SqlPropertyMapping>? mappings)
@@ -121,6 +121,7 @@
             return member.Name;
         }
     }
+
 
     public class SqlPredicate
     {

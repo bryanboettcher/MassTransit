@@ -1,77 +1,79 @@
-﻿namespace MassTransit.Persistence.SqlServer.Configuration;
-
-using System.Data;
-using Components.JobConsumers;
-using Integration.Saga;
-using Microsoft.Extensions.DependencyInjection;
-using Persistence.Configuration;
-
-
-public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositoryConfigurator, ISpecification
+﻿namespace MassTransit.Persistence.SqlServer.Configuration
 {
-    /// <inheritdoc />
-    public string? ConnectionString { get; set; }
+    using System.Data;
+    using Components.JobConsumers;
+    using Integration.Saga;
+    using Microsoft.Extensions.DependencyInjection;
+    using Persistence.Configuration;
 
-    /// <inheritdoc />
-    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
 
-    /// <inheritdoc />
-    public ISqlServerJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
+    public class SqlServerJobSagaRepositoryConfigurator : ISqlServerJobSagaRepositoryConfigurator,
+        ISpecification
     {
-        ConnectionString = connectionString;
-        return this;
-    }
-
-    /// <inheritdoc />
-    public ISqlServerJobSagaRepositoryConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
-    {
-        IsolationLevel = isolationLevel;
-        return this;
-    }
-
-    public IEnumerable<ValidationResult> Validate()
-    {
-        if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return this.Failure("ConnectionString must be specified");
-    }
-
-    public void Configure(ICustomJobSagaRepositoryConfigurator configurator)
-    {
-        (configurator as CustomJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
-
-        configurator.SetJobContextFactory(sp =>
+        public IEnumerable<ValidationResult> Validate()
         {
-            var service = sp.GetRequiredService<DatabaseContext<JobSaga>>();
-            return Task.FromResult(service);
-        });
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                yield return this.Failure("ConnectionString must be specified");
+        }
 
-        configurator.SetJobTypeContextFactory(sp =>
+        /// <inheritdoc />
+        public string? ConnectionString { get; set; }
+
+        /// <inheritdoc />
+        public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
+
+        /// <inheritdoc />
+        public ISqlServerJobSagaRepositoryConfigurator SetConnectionString(string connectionString)
         {
-            var service = sp.GetRequiredService<DatabaseContext<JobTypeSaga>>();
-            return Task.FromResult(service);
-        });
+            ConnectionString = connectionString;
+            return this;
+        }
 
-        configurator.SetJobAttemptContextFactory(sp =>
+        /// <inheritdoc />
+        public ISqlServerJobSagaRepositoryConfigurator SetIsolationLevel(IsolationLevel isolationLevel)
         {
-            var service = sp.GetRequiredService<DatabaseContext<JobAttemptSaga>>();
-            return Task.FromResult(service);
-        });
-    }
+            IsolationLevel = isolationLevel;
+            return this;
+        }
 
-    void RegisterDependencies(IServiceCollection services)
-    {
-        ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+        public void Configure(ICustomJobSagaRepositoryConfigurator configurator)
+        {
+            (configurator as CustomJobSagaRepositoryConfigurator)?.AddCallback(RegisterDependencies);
 
-        services.AddScoped<DatabaseContext<JobSaga>>(_
-            => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
-        );
+            configurator.SetJobContextFactory(sp =>
+            {
+                var service = sp.GetRequiredService<DatabaseContext<JobSaga>>();
+                return Task.FromResult(service);
+            });
 
-        services.AddScoped<DatabaseContext<JobTypeSaga>>(_
-            => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
-        );
+            configurator.SetJobTypeContextFactory(sp =>
+            {
+                var service = sp.GetRequiredService<DatabaseContext<JobTypeSaga>>();
+                return Task.FromResult(service);
+            });
 
-        services.AddScoped<DatabaseContext<JobAttemptSaga>>(_
-            => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
-        );
+            configurator.SetJobAttemptContextFactory(sp =>
+            {
+                var service = sp.GetRequiredService<DatabaseContext<JobAttemptSaga>>();
+                return Task.FromResult(service);
+            });
+        }
+
+        void RegisterDependencies(IServiceCollection services)
+        {
+            ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+
+            services.AddScoped<DatabaseContext<JobSaga>>(_
+                => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
+            );
+
+            services.AddScoped<DatabaseContext<JobTypeSaga>>(_
+                => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
+            );
+
+            services.AddScoped<DatabaseContext<JobAttemptSaga>>(_
+                => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
+            );
+        }
     }
 }

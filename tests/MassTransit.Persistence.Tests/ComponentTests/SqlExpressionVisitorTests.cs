@@ -67,7 +67,7 @@
             Expression<Func<SimpleSaga, bool>> filter = x => x.CorrelationId == sagaId && x.Completed;
 
             // Act
-            var result = SqlExpressionVisitor.CreateFromExpression(filter);
+            List<SqlPredicate>? result = SqlExpressionVisitor.CreateFromExpression(filter);
 
             // Assert
             Assert.That(result, Has.Count.EqualTo(2));
@@ -95,13 +95,13 @@
             Expression<Func<SimpleSaga, bool>> filter = x => x.Completed != true;
 
             // Act
-            var result = SqlExpressionVisitor.CreateFromExpression(filter);
+            List<SqlPredicate>? result = SqlExpressionVisitor.CreateFromExpression(filter);
 
             // Assert
             Assert.That(result, Has.Count.EqualTo(1));
 
             var first = result.First();
-            
+
             Assert.Multiple(() =>
             {
                 Assert.That(first.Name, Is.EqualTo(nameof(SimpleSaga.Completed)));
@@ -115,10 +115,10 @@
         {
             // Arrange
             var sagaId = NewId.NextGuid();
-            Expression<Func<SimpleSaga, bool>> filter = x => ! x.Completed;
+            Expression<Func<SimpleSaga, bool>> filter = x => !x.Completed;
 
             // Act
-            var result = SqlExpressionVisitor.CreateFromExpression(filter);
+            List<SqlPredicate>? result = SqlExpressionVisitor.CreateFromExpression(filter);
 
             // Assert
             Assert.That(result, Has.Count.EqualTo(1));
@@ -141,7 +141,7 @@
             Expression<Func<SimpleSaga, bool>> filter = x => x.CorrelationId == sagaId && x.Completed && x.CorrelateBySomething == "Kebabsvarv";
 
             // Act
-            var result = SqlExpressionVisitor.CreateFromExpression(filter);
+            List<SqlPredicate>? result = SqlExpressionVisitor.CreateFromExpression(filter);
 
             // Assert
             Assert.That(result, Has.Count.EqualTo(3));

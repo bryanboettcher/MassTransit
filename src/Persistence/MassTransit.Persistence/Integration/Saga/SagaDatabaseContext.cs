@@ -2,7 +2,6 @@ namespace MassTransit.Persistence.Integration.Saga
 {
     using System.Linq.Expressions;
     using System.Runtime.CompilerServices;
-    using Logging;
 
 
     /// <summary>
@@ -12,21 +11,19 @@ namespace MassTransit.Persistence.Integration.Saga
     public abstract class SagaDatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
-        protected readonly Type ModelType = typeof(TSaga);
         protected readonly List<SqlPropertyMapping> Mappings = new();
-        
-        protected SagaDatabaseContext() { }
-        
+        protected readonly Type ModelType = typeof(TSaga);
+
         public async Task<TSaga?> LoadAsync(Guid correlationId, CancellationToken cancellationToken)
         {
             var sql = BuildLoadSql();
 
             LogContext.Debug?.Log("Loading: {sql}", sql, correlationId);
 
-            var results = ReadAsync(
+            ConfiguredCancelableAsyncEnumerable<TSaga> results = ReadAsync(
                 sql,
                 new { correlationId },
-                cancellationToken: cancellationToken
+                cancellationToken
             ).ConfigureAwait(false);
 
             // intentionally returning inside the foreach,
@@ -43,14 +40,15 @@ namespace MassTransit.Persistence.Integration.Saga
             return null;
         }
 
-        public async IAsyncEnumerable<TSaga> QueryAsync(Expression<Func<TSaga, bool>> filterExpression, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<TSaga> QueryAsync(Expression<Func<TSaga, bool>> filterExpression,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var parameters = new Dictionary<string, object?>();
             var sql = BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
 
             LogContext.Debug?.Log("Querying: {sql}");
 
-            var results = ReadAsync(
+            ConfiguredCancelableAsyncEnumerable<TSaga> results = ReadAsync(
                 sql,
                 parameters,
                 cancellationToken
@@ -137,10 +135,14 @@ namespace MassTransit.Persistence.Integration.Saga
         protected internal abstract string BuildDeleteSql();
 
         protected void MapPrefix<TProperty>(Expression<Func<TSaga, TProperty>> mappingExpression, string? prefixName = null)
-            => MapCore(mappingExpression, prefixName, false);
+        {
+            MapCore(mappingExpression, prefixName, false);
+        }
 
         protected void MapProperty<TProperty>(Expression<Func<TSaga, TProperty>> mappingExpression, string targetName)
-            => MapCore(mappingExpression, targetName, true);
+        {
+            MapCore(mappingExpression, targetName, true);
+        }
 
         void MapCore<TModel, TProperty>(Expression<Func<TModel, TProperty>> mappingExpression, string? name, bool exact)
         {
@@ -151,11 +153,11 @@ namespace MassTransit.Persistence.Integration.Saga
             if (body is null)
                 throw new InvalidOperationException("Expression must only be a property (x => x.Foo.Bar)");
 
-            Mappings.Add(new()
+            Mappings.Add(new SqlPropertyMapping
             {
                 Property = body,
                 Name = name ?? body.Member.Name,
-                Exact = exact,
+                Exact = exact
             });
         }
     }

@@ -10,13 +10,15 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected SagaDatabaseContext<VersionedSaga> Subject = new OptimisticPostgresDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "XMin");
+            protected SagaDatabaseContext<VersionedSaga> Subject =
+                new OptimisticPostgresDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "XMin");
 
             [Test]
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
+                var expected =
+                    "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -25,7 +27,8 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND xmin = @xmin";
+                var expected =
+                    "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND xmin = @xmin";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }

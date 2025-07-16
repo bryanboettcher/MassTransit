@@ -1,26 +1,33 @@
-﻿using MassTransit.Persistence.Tests.IntegrationTests.Connectors;
-using NUnit.Framework;
-
-namespace MassTransit.Persistence.Tests.IntegrationTests.ClaimChecks
+﻿namespace MassTransit.Persistence.Tests.IntegrationTests.ClaimChecks
 {
     using System.Security.Cryptography;
+    using Connectors;
     using Microsoft.Extensions.Time.Testing;
-    
+    using NUnit.Framework;
+
+
     [TestFixture(typeof(PessimisticSqlServerConnector))]
     [TestFixture(typeof(PessimisticPostgresConnector))]
     [TestFixture(typeof(PessimisticMySqlConnector))]
     public class ClaimCheck_Tests<TConnector> : SagaTests<TConnector>
         where TConnector : TestConnector, new()
     {
-        readonly FakeTimeProvider _timeProvider;
-        readonly IMessageDataRepository _repository;
-        
-        public ClaimCheck_Tests()
+        [Test]
+        public async Task Data_already_expired_is_not_stored()
         {
-            _timeProvider = new FakeTimeProvider();
-            _timeProvider.SetUtcNow(DateTimeOffset.UtcNow);
+            var buffer = new byte[128 * 1024];
+            Random.Shared.NextBytes(buffer);
 
-            _repository = Connector.CreateMessageDataRepository(_timeProvider);
+            await using var writeStream = new MemoryStream();
+            await writeStream.WriteAsync(buffer, CancellationToken.None);
+
+            writeStream.Position = 0;
+            var expected = Assert.ThrowsAsync<InvalidOperationException>(
+                async () => await _repository.Put(writeStream, TimeSpan.FromSeconds(-10))
+            );
+
+            Assert.That(expected, Is.Not.Null);
+            Assert.That(expected?.Message, Is.EqualTo("TTL has already expired"));
         }
 
         [Test]
@@ -68,22 +75,15 @@ namespace MassTransit.Persistence.Tests.IntegrationTests.ClaimChecks
             );
         }
 
-        [Test]
-        public async Task Data_already_expired_is_not_stored()
+        readonly FakeTimeProvider _timeProvider;
+        readonly IMessageDataRepository _repository;
+
+        public ClaimCheck_Tests()
         {
-            var buffer = new byte[128 * 1024];
-            Random.Shared.NextBytes(buffer);
+            _timeProvider = new FakeTimeProvider();
+            _timeProvider.SetUtcNow(DateTimeOffset.UtcNow);
 
-            await using var writeStream = new MemoryStream();
-            await writeStream.WriteAsync(buffer, CancellationToken.None);
-
-            writeStream.Position = 0;
-            var expected = Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await _repository.Put(writeStream, TimeSpan.FromSeconds(-10))
-            );
-
-            Assert.That(expected, Is.Not.Null);
-            Assert.That(expected?.Message, Is.EqualTo("TTL has already expired"));
+            _repository = Connector.CreateMessageDataRepository(_timeProvider);
         }
     }
 }

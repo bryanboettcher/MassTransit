@@ -1,41 +1,41 @@
-﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
-
-using System.Data;
-
-
-/// <summary>
-/// Configures a MessageData repository with Postgres.
-/// </summary>
-public interface IPostgresMessageDataConfigurator
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration
 {
-    /// <summary>
-    /// Sets the connection string.
-    /// </summary>
-    IPostgresMessageDataConfigurator SetConnectionString(string connectionString);
+    using System.Data;
+
 
     /// <summary>
-    /// Sets the table name.
+    /// Configures a MessageData repository with Postgres.
     /// </summary>
+    public interface IPostgresMessageDataConfigurator
+    {
+        /// <summary>
+        /// Gets/sets the connection string.
+        /// </summary>
+        string ConnectionString { get; set; }
 
-    IPostgresMessageDataConfigurator SetTableName(string tableName);
+        /// <summary>
+        /// Gets/sets the table name.  Defaults to ClaimChecks.
+        /// </summary>
+        string TableName { get; set; }
 
-    /// <summary>
-    /// Sets the isolation level.
-    /// </summary>
-    IPostgresMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
+        /// <summary>
+        /// Gets/sets the isolation level used during requests.
+        /// </summary>
+        IsolationLevel IsolationLevel { get; set; }
 
-    /// <summary>
-    /// Gets/sets the connection string.
-    /// </summary>
-    string ConnectionString { get; set; }
+        /// <summary>
+        /// Sets the connection string.
+        /// </summary>
+        IPostgresMessageDataConfigurator SetConnectionString(string connectionString);
 
-    /// <summary>
-    /// Gets/sets the table name.  Defaults to ClaimChecks.
-    /// </summary>
-    string TableName { get; set; }
+        /// <summary>
+        /// Sets the table name.
+        /// </summary>
+        IPostgresMessageDataConfigurator SetTableName(string tableName);
 
-    /// <summary>
-    /// Gets/sets the isolation level used during requests.
-    /// </summary>
-    IsolationLevel IsolationLevel { get; set; }
+        /// <summary>
+        /// Sets the isolation level.
+        /// </summary>
+        IPostgresMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
+    }
 }

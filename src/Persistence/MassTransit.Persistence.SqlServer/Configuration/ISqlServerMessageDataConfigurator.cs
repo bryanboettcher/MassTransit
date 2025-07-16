@@ -1,41 +1,41 @@
-﻿namespace MassTransit.Persistence.SqlServer.Configuration;
-
-using System.Data;
-
-
-/// <summary>
-/// Configures a MessageData repository with SqlServer.
-/// </summary>
-public interface ISqlServerMessageDataConfigurator
+﻿namespace MassTransit.Persistence.SqlServer.Configuration
 {
-    /// <summary>
-    /// Sets the connection string.
-    /// </summary>
-    ISqlServerMessageDataConfigurator SetConnectionString(string connectionString);
+    using System.Data;
+
 
     /// <summary>
-    /// Sets the table name.
+    /// Configures a MessageData repository with SqlServer.
     /// </summary>
+    public interface ISqlServerMessageDataConfigurator
+    {
+        /// <summary>
+        /// Gets/sets the connection string.
+        /// </summary>
+        string ConnectionString { get; set; }
 
-    ISqlServerMessageDataConfigurator SetTableName(string tableName);
+        /// <summary>
+        /// Gets/sets the table name.  Defaults to ClaimChecks.
+        /// </summary>
+        string TableName { get; set; }
 
-    /// <summary>
-    /// Sets the isolation level.
-    /// </summary>
-    ISqlServerMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
+        /// <summary>
+        /// Gets/sets the isolation level used during requests.
+        /// </summary>
+        IsolationLevel IsolationLevel { get; set; }
 
-    /// <summary>
-    /// Gets/sets the connection string.
-    /// </summary>
-    string ConnectionString { get; set; }
+        /// <summary>
+        /// Sets the connection string.
+        /// </summary>
+        ISqlServerMessageDataConfigurator SetConnectionString(string connectionString);
 
-    /// <summary>
-    /// Gets/sets the table name.  Defaults to ClaimChecks.
-    /// </summary>
-    string TableName { get; set; }
+        /// <summary>
+        /// Sets the table name.
+        /// </summary>
+        ISqlServerMessageDataConfigurator SetTableName(string tableName);
 
-    /// <summary>
-    /// Gets/sets the isolation level used during requests.
-    /// </summary>
-    IsolationLevel IsolationLevel { get; set; }
+        /// <summary>
+        /// Sets the isolation level.
+        /// </summary>
+        ISqlServerMessageDataConfigurator SetIsolationLevel(IsolationLevel isolationLevel);
+    }
 }

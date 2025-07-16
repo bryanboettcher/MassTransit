@@ -2,20 +2,24 @@
 {
     using Configuration;
     using Connectors;
-    using MassTransit.Contracts.JobService;
-    using MassTransit.TestFramework;
-    using MassTransit.Testing;
+    using Contracts.JobService;
     using MassTransit.Tests.JobConsumerTests;
     using Microsoft.Extensions.DependencyInjection;
     using NUnit.Framework;
+    using TestFramework;
+    using Testing;
 
 
     namespace JobConsumerTests
     {
+        using Contracts.JobService;
+
+
         public interface OddJob
         {
             TimeSpan Duration { get; }
         }
+
 
         public class OddJobConsumer : IJobConsumer<OddJob>
         {
@@ -25,7 +29,8 @@
                     await Task.Delay(context.Job.Duration, context.CancellationToken);
             }
         }
-        
+
+
         public class OddJobCompletedConsumer :
             IConsumer<JobCompleted<OddJob>>
         {
@@ -36,6 +41,7 @@
         }
     }
 
+
     [Category("Integration")]
     [TestFixture(typeof(PessimisticSqlServerConnector))]
     [TestFixture(typeof(PessimisticPostgresConnector))]
@@ -43,32 +49,6 @@
     public class JobSagaTests<TConnector> : InMemoryTestFixture
         where TConnector : TestConnector, new()
     {
-        readonly TestConnector _connector;
-
-        public JobSagaTests()
-        {
-            _connector = new TConnector();
-        }
-
-        void ConfigureRegistration(IBusRegistrationConfigurator configurator)
-        {
-            configurator.SetTestTimeouts(testInactivityTimeout: TimeSpan.FromSeconds(10));
-            configurator.SetKebabCaseEndpointNameFormatter();
-
-            configurator.AddConsumer<OddJobConsumer>().Endpoint(e => e.Name = "odd-job");
-            configurator.AddConsumer<OddJobCompletedConsumer>().Endpoint(e => e.ConcurrentMessageLimit = 1);
-            configurator.SetJobConsumerOptions(options => options.HeartbeatInterval = TimeSpan.FromSeconds(10)).Endpoint(e => e.PrefetchCount = 100);
-
-            configurator.AddJobSagaStateMachines()
-                .CustomRepository(_connector.Connect);
-            
-            configurator.UsingInMemory((ctx, cfg) =>
-            {
-                cfg.UseDelayedMessageScheduler();
-                cfg.ConfigureEndpoints(ctx);
-            });
-        }
-
         [Test]
         public async Task Starting_job_will_start_job()
         {
@@ -111,10 +91,41 @@
         }
 
         [SetUp]
-        public Task Setup() => _connector.Setup();
+        public Task Setup()
+        {
+            return _connector.Setup();
+        }
 
         [TearDown]
-        public Task TearDown() => _connector.Teardown();
+        public Task TearDown()
+        {
+            return _connector.Teardown();
+        }
 
+        readonly TestConnector _connector;
+
+        public JobSagaTests()
+        {
+            _connector = new TConnector();
+        }
+
+        void ConfigureRegistration(IBusRegistrationConfigurator configurator)
+        {
+            configurator.SetTestTimeouts(testInactivityTimeout: TimeSpan.FromSeconds(10));
+            configurator.SetKebabCaseEndpointNameFormatter();
+
+            configurator.AddConsumer<OddJobConsumer>().Endpoint(e => e.Name = "odd-job");
+            configurator.AddConsumer<OddJobCompletedConsumer>().Endpoint(e => e.ConcurrentMessageLimit = 1);
+            configurator.SetJobConsumerOptions(options => options.HeartbeatInterval = TimeSpan.FromSeconds(10)).Endpoint(e => e.PrefetchCount = 100);
+
+            configurator.AddJobSagaStateMachines()
+                .CustomRepository(_connector.Connect);
+
+            configurator.UsingInMemory((ctx, cfg) =>
+            {
+                cfg.UseDelayedMessageScheduler();
+                cfg.ConfigureEndpoints(ctx);
+            });
+        }
     }
 }

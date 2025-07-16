@@ -1,65 +1,63 @@
-﻿namespace MassTransit.Persistence.PostgreSql.Configuration;
-
-using Components.ClaimChecks;
-using MassTransit.Configuration;
-using Npgsql;
-
-
-public static class MessageDataRepositorySelectorExtensions
+﻿namespace MassTransit.Persistence.PostgreSql.Configuration
 {
-    /// <summary>
-    /// Configures a MessageData repository using Postgres.  Requires
-    /// setting the connection string via <paramref name="configure"/>.
-    /// </summary>
-    public static IMessageDataRepository UsingPostgres(
-        this IMessageDataRepositorySelector selector,
-        Action<IPostgresMessageDataConfigurator> configure)
-    {
-        return UsingPostgres(selector, string.Empty, configure);
-    }
+    using Components.ClaimChecks;
+    using MassTransit.Configuration;
+    using Npgsql;
 
-    /// <summary>
-    /// Configures a MessageData repository using Postgres.
-    /// Builds the connection string from the parameters.
-    /// </summary>
-    public static IMessageDataRepository UsingPostgres(
-        this IMessageDataRepositorySelector selector,
-        string hostname, string catalog, string username, string password,
-        Action<IPostgresMessageDataConfigurator>? configure = null)
+
+    public static class MessageDataRepositorySelectorExtensions
     {
-        var connectionStringBuilder = new NpgsqlConnectionStringBuilder
+        /// <summary>
+        /// Configures a MessageData repository using Postgres.  Requires
+        /// setting the connection string via <paramref name="configure" />.
+        /// </summary>
+        public static IMessageDataRepository UsingPostgres(this IMessageDataRepositorySelector selector,
+            Action<IPostgresMessageDataConfigurator> configure)
         {
-            Host = hostname,
-            Database = catalog,
-            Username = username,
-            Password = password
-        };
+            return UsingPostgres(selector, string.Empty, configure);
+        }
 
-        return UsingPostgres(selector, connectionStringBuilder.ToString());
-    }
+        /// <summary>
+        /// Configures a MessageData repository using Postgres.
+        /// Builds the connection string from the parameters.
+        /// </summary>
+        public static IMessageDataRepository UsingPostgres(this IMessageDataRepositorySelector selector,
+            string hostname, string catalog, string username, string password,
+            Action<IPostgresMessageDataConfigurator>? configure = null)
+        {
+            var connectionStringBuilder = new NpgsqlConnectionStringBuilder
+            {
+                Host = hostname,
+                Database = catalog,
+                Username = username,
+                Password = password
+            };
 
-    /// <summary>
-    /// Configures a MessageData repository using Postgres.  Requires
-    /// passing the connection string.
-    /// </summary>
-    public static IMessageDataRepository UsingPostgres(
-        this IMessageDataRepositorySelector selector,
-        string connectionString,
-        Action<IPostgresMessageDataConfigurator>? configure = null)
-    {
-        var configurator = new PostgresMessageDataConfigurator();
+            return UsingPostgres(selector, connectionStringBuilder.ToString());
+        }
 
-        configurator.SetConnectionString(connectionString);
+        /// <summary>
+        /// Configures a MessageData repository using Postgres.  Requires
+        /// passing the connection string.
+        /// </summary>
+        public static IMessageDataRepository UsingPostgres(this IMessageDataRepositorySelector selector,
+            string connectionString,
+            Action<IPostgresMessageDataConfigurator>? configure = null)
+        {
+            var configurator = new PostgresMessageDataConfigurator();
 
-        configure?.Invoke(configurator);
+            configurator.SetConnectionString(connectionString);
 
-        configurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
-        
-        return new PostgresMessageDataRepository(
-            configurator.ConnectionString,
-            configurator.TableName,
-            configurator.IsolationLevel,
-            TimeProvider.System
-        );
+            configure?.Invoke(configurator);
+
+            configurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
+
+            return new PostgresMessageDataRepository(
+                configurator.ConnectionString,
+                configurator.TableName,
+                configurator.IsolationLevel,
+                TimeProvider.System
+            );
+        }
     }
 }

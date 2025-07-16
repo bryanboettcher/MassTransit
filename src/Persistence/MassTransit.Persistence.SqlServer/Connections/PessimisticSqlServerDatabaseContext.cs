@@ -1,77 +1,78 @@
-﻿namespace MassTransit.Persistence.SqlServer.Connections;
-
-using System.Data;
-using System.Diagnostics;
-using System.Linq.Expressions;
-using Integration.Saga;
-using Integration.SqlBuilders;
-using Microsoft.Data.SqlClient;
-
-
-public class PessimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContext<TSaga>, DatabaseContext<TSaga>
-    where TSaga : class, ISaga
+﻿namespace MassTransit.Persistence.SqlServer.Connections
 {
-    readonly IsolationLevel _isolationLevel;
+    using System.Data;
+    using System.Linq.Expressions;
+    using Integration.Saga;
+    using Integration.SqlBuilders;
+    using Microsoft.Data.SqlClient;
 
-    public PessimisticSqlServerDatabaseContext(string connectionString, string tableName, string idColumnName, IsolationLevel isolationLevel)
-        : base(connectionString, tableName, idColumnName)
+
+    public class PessimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContext<TSaga>,
+        DatabaseContext<TSaga>
+        where TSaga : class, ISaga
     {
-        _isolationLevel = isolationLevel;
-    }
+        readonly IsolationLevel _isolationLevel;
 
-    protected override string BuildLoadSql()
-    {
-        return $"SELECT TOP 1 * FROM {TableName} WITH (UPDLOCK, ROWLOCK) WHERE [{IdColumnName}] = @correlationid";
-    }
+        public PessimisticSqlServerDatabaseContext(string connectionString, string tableName, string idColumnName, IsolationLevel isolationLevel)
+            : base(connectionString, tableName, idColumnName)
+        {
+            _isolationLevel = isolationLevel;
+        }
 
-    protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
-    {
-        var sqlRoot = $"SELECT * FROM {TableName} WITH (UPDLOCK, ROWLOCK)";
+        protected override string BuildLoadSql()
+        {
+            return $"SELECT TOP 1 * FROM {TableName} WITH (UPDLOCK, ROWLOCK) WHERE [{IdColumnName}] = @correlationid";
+        }
 
-        var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+        protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
+        {
+            var sqlRoot = $"SELECT * FROM {TableName} WITH (UPDLOCK, ROWLOCK)";
 
-        if (predicates.Count == 0) // good luck...
-            return sqlRoot;
+            List<SqlPredicate> predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
-        var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
-        return string.Concat(sqlRoot, " WHERE ", queryPredicate);
-    }
+            if (predicates.Count == 0) // good luck...
+                return sqlRoot;
 
-    protected override string BuildInsertSql()
-    {
-        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
+            return string.Concat(sqlRoot, " WHERE ", queryPredicate);
+        }
 
-        var columns = string.Join(", ", properties.Select(p => $"[{p.Key}]"));
-        var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
+        protected override string BuildInsertSql()
+        {
+            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-        var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
+            var columns = string.Join(", ", properties.Select(p => $"[{p.Key}]"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
 
-        return sql;
-    }
+            var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
 
-    protected override string BuildUpdateSql()
-    {
-        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            return sql;
+        }
 
-        properties.Remove(nameof(ISaga.CorrelationId));
+        protected override string BuildUpdateSql()
+        {
+            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-        var updateExpression = string.Join(", ", properties.Select(p => $"[{p.Key}] = @{p.Value}"));
+            properties.Remove(nameof(ISaga.CorrelationId));
 
-        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationid";
+            var updateExpression = string.Join(", ", properties.Select(p => $"[{p.Key}] = @{p.Value}"));
 
-        return sql;
-    }
+            var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationid";
 
-    protected override string BuildDeleteSql()
-    {
-        var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationid";
+            return sql;
+        }
 
-        return sql;
-    }
+        protected override string BuildDeleteSql()
+        {
+            var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationid";
 
-    protected override async ValueTask OnConnectionOpened(SqlConnection connection, CancellationToken cancellationToken)
-    {
-        Transaction = (SqlTransaction) await connection.BeginTransactionAsync(_isolationLevel, cancellationToken)
-            .ConfigureAwait(false);
+            return sql;
+        }
+
+        protected override async ValueTask OnConnectionOpened(SqlConnection connection, CancellationToken cancellationToken)
+        {
+            Transaction = (SqlTransaction)await connection.BeginTransactionAsync(_isolationLevel, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 }

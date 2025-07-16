@@ -1,76 +1,80 @@
-﻿namespace MassTransit.Persistence.SqlServer.Connections;
-
-using System.Linq.Expressions;
-using System.Reflection;
-using Integration.Saga;
-using Integration.SqlBuilders;
-using Microsoft.Data.SqlClient;
-
-
-public class OptimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContext<TSaga>, DatabaseContext<TSaga>
-    where TSaga : class, ISaga
+﻿namespace MassTransit.Persistence.SqlServer.Connections
 {
-    readonly string _versionColumnName;
-    readonly PropertyInfo _versionProperty;
+    using System.Linq.Expressions;
+    using System.Reflection;
+    using Integration.Saga;
+    using Integration.SqlBuilders;
 
-    public OptimisticSqlServerDatabaseContext(string connectionString, string tableName, string idColumnName, string versionColumnName, string versionPropertyName)
-        : base(connectionString, tableName, idColumnName)
+
+    public class OptimisticSqlServerDatabaseContext<TSaga> : SqlServerDatabaseContext<TSaga>,
+        DatabaseContext<TSaga>
+        where TSaga : class, ISaga
     {
-        _versionColumnName = versionColumnName;
-        _versionProperty = ModelType.GetProperty(versionPropertyName)
-            ?? throw new InvalidOperationException($"Cannot access version property {versionPropertyName} on {ModelType.Name}");
-    }
-        
-    protected override string BuildLoadSql()
-    {
-        return $"SELECT TOP 1 * FROM {TableName} WHERE [{IdColumnName}] = @correlationid";
-    }
+        readonly string _versionColumnName;
+        readonly PropertyInfo _versionProperty;
 
-    protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
-    {
-        var sqlRoot = $"SELECT * FROM {TableName}";
+        public OptimisticSqlServerDatabaseContext(string connectionString, string tableName, string idColumnName, string versionColumnName,
+            string versionPropertyName)
+            : base(connectionString, tableName, idColumnName)
+        {
+            _versionColumnName = versionColumnName;
+            _versionProperty = ModelType.GetProperty(versionPropertyName)
+                ?? throw new InvalidOperationException($"Cannot access version property {versionPropertyName} on {ModelType.Name}");
+        }
 
-        var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+        protected override string BuildLoadSql()
+        {
+            return $"SELECT TOP 1 * FROM {TableName} WHERE [{IdColumnName}] = @correlationid";
+        }
 
-        if (predicates.Count == 0) // good luck...
-            return sqlRoot;
+        protected override string BuildQuerySql(Expression<Func<TSaga, bool>> filterExpression, Action<string, object?> parameterCallback)
+        {
+            var sqlRoot = $"SELECT * FROM {TableName}";
 
-        var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
-        return string.Concat(sqlRoot, " WHERE ", queryPredicate);
-    }
+            List<SqlPredicate> predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
-    protected override string BuildInsertSql()
-    {
-        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            if (predicates.Count == 0) // good luck...
+                return sqlRoot;
 
-        properties.Remove(_versionProperty.Name);
+            var queryPredicate = BuildQueryPredicate(predicates, parameterCallback);
+            return string.Concat(sqlRoot, " WHERE ", queryPredicate);
+        }
 
-        var columns = string.Join(", ", properties.Select(p => $"[{p.Key}]"));
-        var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
+        protected override string BuildInsertSql()
+        {
+            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-        var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
+            properties.Remove(_versionProperty.Name);
 
-        return sql;
-    }
+            var columns = string.Join(", ", properties.Select(p => $"[{p.Key}]"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
 
-    protected override string BuildUpdateSql()
-    {
-        var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
 
-        properties.Remove(nameof(ISaga.CorrelationId));
-        properties.Remove(_versionProperty.Name);
+            return sql;
+        }
 
-        var updateExpression = string.Join(", ", properties.Select(p => $"[{p.Key}] = @{p.Value}"));
+        protected override string BuildUpdateSql()
+        {
+            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-        var sql = $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationid AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
+            properties.Remove(nameof(ISaga.CorrelationId));
+            properties.Remove(_versionProperty.Name);
 
-        return sql;
-    }
+            var updateExpression = string.Join(", ", properties.Select(p => $"[{p.Key}] = @{p.Value}"));
 
-    protected override string BuildDeleteSql()
-    {
-        var sql = $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationid AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
+            var sql =
+                $"UPDATE {TableName} SET {updateExpression} WHERE [{IdColumnName}] = @correlationid AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
 
-        return sql;
+            return sql;
+        }
+
+        protected override string BuildDeleteSql()
+        {
+            var sql =
+                $"DELETE FROM {TableName} WHERE [{IdColumnName}] = @correlationid AND [{_versionColumnName}] = @{_versionProperty.Name.ToLowerInvariant()}";
+
+            return sql;
+        }
     }
 }

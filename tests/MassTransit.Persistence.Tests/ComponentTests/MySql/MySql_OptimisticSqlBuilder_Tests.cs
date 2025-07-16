@@ -10,13 +10,15 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected SagaDatabaseContext<VersionedSaga> Subject = new OptimisticMySqlDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "RowVersion", "RowVersion");
+            protected SagaDatabaseContext<VersionedSaga> Subject =
+                new OptimisticMySqlDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "RowVersion", "RowVersion");
 
             [Test]
             public void Insert_builds_correct_sql()
             {
                 var actual = Subject.BuildInsertSql();
-                var expected = "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
+                var expected =
+                    "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -25,7 +27,8 @@
             public void Update_builds_correct_sql()
             {
                 var actual = Subject.BuildUpdateSql();
-                var expected = "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND RowVersion = @rowversion";
+                var expected =
+                    "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND RowVersion = @rowversion";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
