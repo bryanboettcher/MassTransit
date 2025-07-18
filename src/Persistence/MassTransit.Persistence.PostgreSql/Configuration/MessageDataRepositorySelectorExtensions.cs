@@ -1,9 +1,8 @@
 ﻿namespace MassTransit.Persistence.PostgreSql.Configuration
 {
-    using Components.ClaimChecks;
     using MassTransit.Configuration;
+    using MessageData;
     using Npgsql;
-
 
     public static class MessageDataRepositorySelectorExtensions
     {
@@ -55,6 +54,7 @@
             return new PostgresMessageDataRepository(
                 configurator.ConnectionString!,
                 configurator.TableName,
+                configurator.IdColumnName,
                 configurator.IsolationLevel,
 #if NET8_0_OR_GREATER
                 () => TimeProvider.System.GetUtcNow()

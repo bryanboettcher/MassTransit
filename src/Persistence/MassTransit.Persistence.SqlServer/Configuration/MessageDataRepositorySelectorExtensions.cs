@@ -1,10 +1,9 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Configuration
 {
-    using Components.ClaimChecks;
     using MassTransit.Configuration;
+    using MessageData;
     using Microsoft.Data.SqlClient;
-
-
+    
     public static class MessageDataRepositorySelectorExtensions
     {
         /// <summary>
@@ -55,6 +54,7 @@
             return new SqlServerMessageDataRepository(
                 configurator.ConnectionString!,
                 configurator.TableName,
+                configurator.IdColumnName,
                 configurator.IsolationLevel,
 #if NET8_0_OR_GREATER
                 () => TimeProvider.System.GetUtcNow()

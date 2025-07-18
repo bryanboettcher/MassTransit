@@ -4,8 +4,8 @@
     using Configuration;
     using Integration.SqlBuilders;
     using MassTransit.Tests;
+    using MessageData;
     using Microsoft.Data.SqlClient;
-    using SqlServer.Components.ClaimChecks;
     using SqlServer.Configuration;
     using StateMachineSagas;
 
@@ -43,7 +43,7 @@
 
         public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
         {
-            return new SqlServerMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
+            return new SqlServerMessageDataRepository(ConnectionString, "MessageData", "Id", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
         }
 
         public Task<List<TSaga>> GetSagas<TSaga>()

@@ -4,11 +4,10 @@
     using Configuration;
     using global::MySqlConnector;
     using Integration.SqlBuilders;
-    using MySql.Components.ClaimChecks;
+    using MessageData;
     using MySql.Configuration;
     using StateMachineSagas;
-
-
+    
     public class OptimisticMySqlConnector : MySqlConnector,
         TestConnector
     {
@@ -44,7 +43,7 @@
 
         public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
         {
-            return new MySqlMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
+            return new MySqlMessageDataRepository(ConnectionString, "MessageData", "Id", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
         }
 
         public Task<List<TSaga>> GetSagas<TSaga>()

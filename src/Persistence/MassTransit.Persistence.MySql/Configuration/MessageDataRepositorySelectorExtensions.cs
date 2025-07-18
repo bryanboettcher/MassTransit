@@ -1,9 +1,8 @@
 ﻿namespace MassTransit.Persistence.MySql.Configuration
 {
-    using Components.ClaimChecks;
     using MassTransit.Configuration;
+    using MessageData;
     using MySqlConnector;
-
 
     public static class MessageDataRepositorySelectorExtensions
     {
@@ -55,6 +54,7 @@
             return new MySqlMessageDataRepository(
                 configurator.ConnectionString!,
                 configurator.TableName,
+                configurator.IdColumnName,
                 configurator.IsolationLevel,
 #if NET8_0_OR_GREATER
                 () => TimeProvider.System.GetUtcNow()

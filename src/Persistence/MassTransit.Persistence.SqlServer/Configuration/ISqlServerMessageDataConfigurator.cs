@@ -19,6 +19,11 @@
         string TableName { get; set; }
 
         /// <summary>
+        /// Gets/sets the identity column name.  Defaults to Id.
+        /// </summary>
+        string IdColumnName { get; set; }
+
+        /// <summary>
         /// Gets/sets the isolation level used during requests.
         /// </summary>
         IsolationLevel IsolationLevel { get; set; }
@@ -32,6 +37,11 @@
         /// Sets the table name.
         /// </summary>
         ISqlServerMessageDataConfigurator SetTableName(string tableName);
+
+        /// <summary>
+        /// Sets the identity column name.
+        /// </summary>
+        ISqlServerMessageDataConfigurator SetIdColumnName(string idColumnName);
 
         /// <summary>
         /// Sets the isolation level.

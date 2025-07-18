@@ -3,8 +3,8 @@
     using System.Data;
     using Configuration;
     using Integration.SqlBuilders;
+    using MessageData;
     using Npgsql;
-    using PostgreSql.Components.ClaimChecks;
     using PostgreSql.Configuration;
     using StateMachineSagas;
 
@@ -44,7 +44,7 @@
 
         public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
         {
-            return new PostgresMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
+            return new PostgresMessageDataRepository(ConnectionString, "MessageData", "Id", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
         }
 
         public Task<List<TSaga>> GetSagas<TSaga>()
