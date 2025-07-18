@@ -12,7 +12,7 @@
             IsolationLevel isolationLevel = IsolationLevel.RepeatableRead,
             CancellationToken cancellationToken = default)
         {
-            return Task.Run(() => connection.BeginTransaction(isolationLevel), cancellationToken);
+            return Task.FromResult(connection.BeginTransaction(isolationLevel));
         }
 
         public static ValueTask DisposeAsync(this SqlCommand? command)

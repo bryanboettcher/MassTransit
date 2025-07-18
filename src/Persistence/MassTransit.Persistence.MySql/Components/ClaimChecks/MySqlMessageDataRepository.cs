@@ -46,31 +46,35 @@
             var now = _timeProvider();
             var output = new MemoryStream();
 
-            await CreateCommand(
+            await Run(
                 SqlLoad,
-                async command =>
-                {
-                    command.Parameters.Add("@id", MySqlDbType.Guid).Value = id.ToByteArray();
-                    command.Parameters.Add("@now", MySqlDbType.Timestamp).Value = now;
-
-                    await using var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    var available = await reader.ReadAsync(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (!available)
-                        throw new KeyNotFoundException($"No claim check available at {address}");
-
-                    await reader.GetStream(0).CopyToAsync(output, 81920, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    output.Position = 0;
-                },
+                Callback,
+                false,
                 cancellationToken
             ).ConfigureAwait(false);
 
             return output;
+
+            async Task Callback(MySqlCommand command)
+            {
+                command.Parameters.Add("@id", MySqlDbType.Guid).Value = id.ToByteArray();
+                command.Parameters.Add("@now", MySqlDbType.Timestamp).Value = now;
+
+                await using var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var available = await reader.ReadAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!available)
+                    throw new KeyNotFoundException($"No claim check available at {address}");
+
+                await reader.GetStream(0)
+                    .CopyToAsync(output, 81920, cancellationToken)
+                    .ConfigureAwait(false);
+
+                output.Position = 0;
+            }
         }
 
         /// <inheritdoc />
@@ -83,31 +87,34 @@
             if (expiration < now)
                 throw new InvalidOperationException("TTL has already expired");
 
-            await CreateCommand(
+            await Run(
                 SqlSave,
-                async command =>
-                {
-                    if (stream.CanSeek)
-                        stream.Seek(0, SeekOrigin.Begin);
-
-                    var bufferStream = new MemoryStream();
-                    await stream.CopyToAsync(bufferStream, 81920, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    var buffer = bufferStream.ToArray();
-
-                    command.Parameters.Add("@id", MySqlDbType.Guid).Value = id.ToByteArray();
-                    command.Parameters.Add("@created", MySqlDbType.Timestamp).Value = now;
-                    command.Parameters.Add("@expires", MySqlDbType.Timestamp).Value = expiration;
-                    command.Parameters.Add("@data", MySqlDbType.VarBinary, -1).Value = buffer;
-
-                    await command.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
-                },
+                Callback,
+                true,
                 cancellationToken
             ).ConfigureAwait(false);
 
             return Pack(id);
+
+            async Task Callback(MySqlCommand command)
+            {
+                if (stream.CanSeek)
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                var bufferStream = new MemoryStream();
+                await stream.CopyToAsync(bufferStream, 81920, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var buffer = bufferStream.ToArray();
+
+                command.Parameters.Add("@id", MySqlDbType.Guid).Value = id.ToByteArray();
+                command.Parameters.Add("@created", MySqlDbType.Timestamp).Value = now;
+                command.Parameters.Add("@expires", MySqlDbType.Timestamp).Value = expiration;
+                command.Parameters.Add("@data", MySqlDbType.VarBinary, -1).Value = buffer;
+
+                await command.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             // MySql has a special "max" date that I didn't care to
             // find the actual value for, so now it's just far enough
@@ -125,21 +132,25 @@
             var now = _timeProvider();
             var rows = 0;
 
-            await CreateCommand(
+            await Run(
                 SqlClean,
-                async command =>
-                {
-                    command.Parameters.Add("@now", MySqlDbType.DateTime).Value = now;
-
-                    rows = await command.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
-                }, cancellationToken
+                Callback,
+                true,
+                cancellationToken
             ).ConfigureAwait(false);
 
             return rows;
+
+            async Task Callback(MySqlCommand command)
+            {
+                command.Parameters.Add("@now", MySqlDbType.DateTime).Value = now;
+
+                rows = await command.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
-        async Task CreateCommand(string sql, Func<MySqlCommand, Task> callback, CancellationToken cancellationToken)
+        async Task Run(string sql, Func<MySqlCommand, Task> callback, bool useTransaction, CancellationToken cancellationToken)
         {
             MySqlConnection? connection = null;
             MySqlCommand? command = null;
@@ -151,8 +162,11 @@
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
 
-                transaction = await connection.BeginTransactionAsync(_isolationLevel, cancellationToken)
-                    .ConfigureAwait(false);
+                if (useTransaction)
+                {
+                    transaction = await connection.BeginTransactionAsync(_isolationLevel, cancellationToken)
+                        .ConfigureAwait(false);
+                }
 
                 command = connection.CreateCommand();
 
@@ -162,8 +176,8 @@
                 await callback(command)
                     .ConfigureAwait(false);
 
-                await transaction.CommitAsync(cancellationToken)
-                    .ConfigureAwait(false);
+                if (transaction is not null)
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch
             {

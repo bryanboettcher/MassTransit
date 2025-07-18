@@ -46,38 +46,41 @@
             var now = _timeProvider();
             var output = new MemoryStream();
 
-            await CreateCommand(
+            await Run(
                 SqlLoad,
-                async command =>
-                {
-                    command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
-                    command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
-
-                    var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    var available = await reader.ReadAsync(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (!available)
-                        throw new KeyNotFoundException($"No claim check available at {address}");
-
-                    await reader.GetStream(0).CopyToAsync(output, 81920, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    output.Position = 0;
-
-#if NET8_0_OR_GREATER
-                    if (reader is IAsyncDisposable ad)
-                        await ad.DisposeAsync().ConfigureAwait(false);
-#else
-                    reader.Close();
-#endif
-                },
+                Callback,
+                false,
                 cancellationToken
             ).ConfigureAwait(false);
 
             return output;
+
+            async Task Callback(SqlCommand command)
+            {
+                command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+                command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
+
+                var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var available = await reader.ReadAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!available)
+                    throw new KeyNotFoundException($"No claim check available at {address}");
+
+                await reader.GetStream(0)
+                    .CopyToAsync(output, 81920, cancellationToken)
+                    .ConfigureAwait(false);
+
+                output.Position = 0;
+
+#if NET8_0_OR_GREATER
+                await reader.DisposeAsync().ConfigureAwait(false);
+#else
+                reader.Dispose();
+#endif
+            }
         }
 
         /// <inheritdoc />
@@ -90,25 +93,28 @@
             if (expiration < now)
                 throw new InvalidOperationException("TTL has already expired");
 
-            await CreateCommand(
+            await Run(
                 SqlSave,
-                async command =>
-                {
-                    if (stream.CanSeek)
-                        stream.Seek(0, SeekOrigin.Begin);
-
-                    command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
-                    command.Parameters.Add("@created", SqlDbType.DateTimeOffset).Value = now;
-                    command.Parameters.Add("@expires", SqlDbType.DateTimeOffset).Value = expiration;
-                    command.Parameters.Add("@data", SqlDbType.Binary, -1).Value = stream;
-
-                    await command.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
-                },
+                Callback,
+                true,
                 cancellationToken
             ).ConfigureAwait(false);
 
             return Pack(id);
+
+            async Task Callback(SqlCommand command)
+            {
+                if (stream.CanSeek)
+                    stream.Seek(0, SeekOrigin.Begin);
+
+                command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
+                command.Parameters.Add("@created", SqlDbType.DateTimeOffset).Value = now;
+                command.Parameters.Add("@expires", SqlDbType.DateTimeOffset).Value = expiration;
+                command.Parameters.Add("@data", SqlDbType.Binary, -1).Value = stream;
+
+                await command.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             static DateTimeOffset GetExpiration(TimeSpan? ttl, DateTimeOffset now)
             {
@@ -123,22 +129,25 @@
         {
             var now = _timeProvider();
             var rows = 0;
-
-            await CreateCommand(
+            
+            await Run(
                 SqlClean,
-                async command =>
-                {
-                    command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
-
-                    rows = await command.ExecuteNonQueryAsync(cancellationToken)
-                        .ConfigureAwait(false);
-                }, cancellationToken
-            ).ConfigureAwait(false);
+                Callback,
+                true,
+                cancellationToken).ConfigureAwait(false);
 
             return rows;
+
+            async Task Callback(SqlCommand command)
+            {
+                command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
+
+                rows = await command.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
-        async Task CreateCommand(string sql, Func<SqlCommand, Task> callback, CancellationToken cancellationToken)
+        async Task Run(string sql, Func<SqlCommand, Task> callback, bool useTransaction, CancellationToken cancellationToken)
         {
             SqlConnection? connection = null;
             SqlCommand? command = null;
@@ -150,8 +159,11 @@
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
 
-                transaction = (SqlTransaction)await connection.BeginTransactionAsync(
-                    _isolationLevel, cancellationToken).ConfigureAwait(false);
+                if (useTransaction)
+                {
+                    transaction = (SqlTransaction)await connection.BeginTransactionAsync(
+                        _isolationLevel, cancellationToken).ConfigureAwait(false);
+                }
 
                 command = connection.CreateCommand();
 
@@ -161,8 +173,8 @@
                 await callback(command)
                     .ConfigureAwait(false);
 
-                await transaction.CommitAsync(cancellationToken)
-                    .ConfigureAwait(false);
+                if (transaction is not null)
+                    await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch
             {
