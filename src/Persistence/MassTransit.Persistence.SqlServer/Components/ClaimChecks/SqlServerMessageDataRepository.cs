@@ -70,6 +70,8 @@
 #if NET8_0_OR_GREATER
                     if (reader is IAsyncDisposable ad)
                         await ad.DisposeAsync().ConfigureAwait(false);
+#else
+                    reader.Close();
 #endif
                 },
                 cancellationToken
@@ -174,12 +176,12 @@
             }
             finally
             {
-                if (transaction is not null)
-                    await transaction.DisposeAsync().ConfigureAwait(false);
-
                 if (command is not null)
                     await command.DisposeAsync().ConfigureAwait(false);
 
+                if (transaction is not null)
+                    await transaction.DisposeAsync().ConfigureAwait(false);
+                
                 if (connection is not null)
                     await connection.DisposeAsync().ConfigureAwait(false);
             }

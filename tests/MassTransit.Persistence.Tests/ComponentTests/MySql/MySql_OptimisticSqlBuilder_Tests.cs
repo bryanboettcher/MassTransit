@@ -10,13 +10,12 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected SagaDatabaseContext<VersionedSaga> Subject =
-                new OptimisticMySqlDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "RowVersion", "RowVersion");
+            readonly OptimisticMySqlDatabaseContext<VersionedSaga> _subject = new("", "VersionedSagas", "CorrelationId", "RowVersion", "RowVersion");
 
             [Test]
             public void Insert_builds_correct_sql()
             {
-                var actual = Subject.BuildInsertSql();
+                var actual = _subject.BuildInsertSql();
                 var expected =
                     "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
@@ -26,7 +25,7 @@
             [Test]
             public void Update_builds_correct_sql()
             {
-                var actual = Subject.BuildUpdateSql();
+                var actual = _subject.BuildUpdateSql();
                 var expected =
                     "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND RowVersion = @rowversion";
 
@@ -36,7 +35,7 @@
             [Test]
             public void Delete_builds_correct_sql()
             {
-                var actual = Subject.BuildDeleteSql();
+                var actual = _subject.BuildDeleteSql();
                 var expected = "DELETE FROM VersionedSagas WHERE CorrelationId = @correlationid AND RowVersion = @rowversion";
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -45,7 +44,7 @@
             [Test]
             public void Load_builds_correct_sql()
             {
-                var actual = Subject.BuildLoadSql();
+                var actual = _subject.BuildLoadSql();
                 var expected = "SELECT * FROM VersionedSagas WHERE CorrelationId = @correlationid LIMIT 1";
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -54,7 +53,7 @@
             [Test]
             public void Query_builds_correct_sql()
             {
-                var actual = Subject.BuildQuerySql(x => x.Name == "test", null);
+                var actual = _subject.BuildQuerySql(x => x.Name == "test", null);
                 var expected = "SELECT * FROM VersionedSagas WHERE Name = @name";
 
                 Assert.That(actual, Is.EqualTo(expected));

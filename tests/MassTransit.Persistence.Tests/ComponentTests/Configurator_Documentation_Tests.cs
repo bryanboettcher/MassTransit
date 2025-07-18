@@ -21,6 +21,7 @@
             {
                 bus.AddSagaStateMachine<OrderStateMachine, OrderSaga>()
                     .CustomRepository(conf => conf.UsingMySql(opt => opt
+                        .SetConnectionString("my connection string")
                         .SetOptimisticConcurrency()
                     ));
 

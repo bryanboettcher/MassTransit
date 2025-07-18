@@ -42,8 +42,8 @@
         {
             var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-            var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
-            var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
+            var columns = string.Join(", ", properties.Select(p => $"{p.ColumnName}"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.PropertyName}"));
 
             var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
 
@@ -56,7 +56,7 @@
 
             properties.Remove(nameof(ISaga.CorrelationId));
 
-            var updateExpression = string.Join(", ", properties.Select(p => $"{p.Key} = @{p.Value}"));
+            var updateExpression = string.Join(", ", properties.Select(p => $"{p.ColumnName} = @{p.PropertyName}"));
 
             var sql = $"UPDATE {TableName} SET {updateExpression} WHERE {IdColumnName} = @correlationid";
 

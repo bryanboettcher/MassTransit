@@ -29,7 +29,7 @@
             var sqlRoot = $"SELECT * FROM {TableName}";
             var sqlLock = " FOR UPDATE";
 
-            List<SqlPredicate> predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
             if (predicates.Count == 0) // good luck...
                 return string.Concat(sqlRoot, sqlLock);
@@ -40,10 +40,10 @@
 
         protected override string BuildInsertSql()
         {
-            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
-            var columns = string.Join(", ", properties.Select(p => $"{p.Key}"));
-            var values = string.Join(", ", properties.Select(p => $"@{p.Value}"));
+            var columns = string.Join(", ", properties.Select(p => $"{p.ColumnName}"));
+            var values = string.Join(", ", properties.Select(p => $"@{p.PropertyName}"));
 
             var sql = $"INSERT INTO {TableName} ({columns}) VALUES ({values})";
 
@@ -52,11 +52,11 @@
 
         protected override string BuildUpdateSql()
         {
-            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
             properties.Remove(nameof(ISaga.CorrelationId));
 
-            var updateExpression = string.Join(", ", properties.Select(p => $"{p.Key} = @{p.Value}"));
+            var updateExpression = string.Join(", ", properties.Select(p => $"{p.ColumnName} = @{p.PropertyName}"));
 
             var sql = $"UPDATE {TableName} SET {updateExpression} WHERE {IdColumnName} = @correlationid";
 

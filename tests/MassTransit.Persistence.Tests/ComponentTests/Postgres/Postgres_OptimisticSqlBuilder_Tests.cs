@@ -10,15 +10,13 @@
     {
         public class VersionedSaga_SqlBuilder
         {
-            protected SagaDatabaseContext<VersionedSaga> Subject =
-                new OptimisticPostgresDatabaseContext<VersionedSaga>("", "VersionedSagas", "CorrelationId", "XMin");
+            readonly OptimisticPostgresDatabaseContext<VersionedSaga> _subject = new("", "VersionedSagas", "CorrelationId", "XMin");
 
             [Test]
             public void Insert_builds_correct_sql()
             {
-                var actual = Subject.BuildInsertSql();
-                var expected =
-                    "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
+                var actual = _subject.BuildInsertSql();
+                var expected = "INSERT INTO VersionedSagas (CorrelationId, Name, Age, PhoneNumber, Zip_Code) VALUES (@correlationid, @name, @age, @phonenumber, @zipcode)";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -26,9 +24,8 @@
             [Test]
             public void Update_builds_correct_sql()
             {
-                var actual = Subject.BuildUpdateSql();
-                var expected =
-                    "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND xmin = @xmin";
+                var actual = _subject.BuildUpdateSql();
+                var expected = "UPDATE VersionedSagas SET Name = @name, Age = @age, PhoneNumber = @phonenumber, Zip_Code = @zipcode WHERE CorrelationId = @correlationid AND xmin = @xmin";
 
                 Assert.That(actual, Is.EqualTo(expected));
             }
@@ -36,7 +33,7 @@
             [Test]
             public void Delete_builds_correct_sql()
             {
-                var actual = Subject.BuildDeleteSql();
+                var actual = _subject.BuildDeleteSql();
                 var expected = "DELETE FROM VersionedSagas WHERE CorrelationId = @correlationid AND xmin = @xmin";
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -45,7 +42,7 @@
             [Test]
             public void Load_builds_correct_sql()
             {
-                var actual = Subject.BuildLoadSql();
+                var actual = _subject.BuildLoadSql();
                 var expected = "SELECT *, xmin AS XMin FROM VersionedSagas WHERE CorrelationId = @correlationid LIMIT 1";
 
                 Assert.That(actual, Is.EqualTo(expected));
@@ -54,7 +51,7 @@
             [Test]
             public void Query_builds_correct_sql()
             {
-                var actual = Subject.BuildQuerySql(x => x.Name == "test", null);
+                var actual = _subject.BuildQuerySql(x => x.Name == "test", null);
                 var expected = "SELECT *, xmin AS XMin FROM VersionedSagas WHERE Name = @name";
 
                 Assert.That(actual, Is.EqualTo(expected));
