@@ -6,6 +6,43 @@
 
     public static class SqlDataReaderExtensions
     {
+#if !NET8_0_OR_GREATER
+        public static bool IsDBNull(this SqlDataReader reader, string columnName)
+        {
+            return reader.IsDBNull(reader.GetOrdinal(columnName));
+        }
+
+        public static Guid GetGuid(this SqlDataReader reader, string columnName)
+            => reader.GetGuid(reader.GetOrdinal(columnName));
+
+        public static byte GetByte(this SqlDataReader reader, string columnName)
+            => reader.GetByte(reader.GetOrdinal(columnName));
+
+        public static int GetInt32(this SqlDataReader reader, string columnName)
+            => reader.GetInt32(reader.GetOrdinal(columnName));
+
+        public static long GetInt64(this SqlDataReader reader, string columnName)
+            => reader.GetInt64(reader.GetOrdinal(columnName));
+
+        public static short GetInt16(this SqlDataReader reader, string columnName)
+            => reader.GetInt16(reader.GetOrdinal(columnName));
+
+        public static decimal GetDecimal(this SqlDataReader reader, string columnName)
+            => reader.GetDecimal(reader.GetOrdinal(columnName));
+
+        public static float GetFloat(this SqlDataReader reader, string columnName)
+            => reader.GetFloat(reader.GetOrdinal(columnName));
+
+        public static double GetDouble(this SqlDataReader reader, string columnName)
+            => reader.GetDouble(reader.GetOrdinal(columnName));
+
+        public static DateTime GetDateTime(this SqlDataReader reader, string columnName)
+            => reader.GetDateTime(reader.GetOrdinal(columnName));
+
+        public static string GetString(this SqlDataReader reader, string columnName)
+            => reader.GetString(reader.GetOrdinal(columnName));
+
+#endif
         public static Guid? GetGuidOrNull(this SqlDataReader reader, string columnName)
         {
             return reader.IsDBNull(columnName) ? null : reader.GetGuid(columnName);

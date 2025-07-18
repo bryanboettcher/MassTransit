@@ -11,13 +11,12 @@
 
         readonly string _connectionString;
         readonly IsolationLevel _isolationLevel;
-        readonly TimeProvider _timeProvider;
+        readonly Func<DateTimeOffset> _timeProvider;
 
-        public MySqlMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
+        public MySqlMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, Func<DateTimeOffset> timeProvider)
         {
             _connectionString = connectionString;
             _isolationLevel = isolationLevel;
-
             _timeProvider = timeProvider;
 
             SqlLoad = string.Format(SqlLoad, tableName);
@@ -44,7 +43,7 @@
         public async Task<Stream> Get(Uri address, CancellationToken cancellationToken = default)
         {
             var id = Unpack(address);
-            var now = _timeProvider.GetUtcNow();
+            var now = _timeProvider();
             var output = new MemoryStream();
 
             await CreateCommand(
@@ -63,7 +62,7 @@
                     if (!available)
                         throw new KeyNotFoundException($"No claim check available at {address}");
 
-                    await reader.GetStream(0).CopyToAsync(output, cancellationToken)
+                    await reader.GetStream(0).CopyToAsync(output, 81920, cancellationToken)
                         .ConfigureAwait(false);
 
                     output.Position = 0;
@@ -78,7 +77,7 @@
         public async Task<Uri> Put(Stream stream, TimeSpan? timeToLive = default, CancellationToken cancellationToken = default)
         {
             var id = NewId.NextSequentialGuid();
-            var now = _timeProvider.GetUtcNow();
+            var now = _timeProvider();
             var expiration = GetExpiration(timeToLive, now);
 
             if (expiration < now)
@@ -92,7 +91,7 @@
                         stream.Seek(0, SeekOrigin.Begin);
 
                     var bufferStream = new MemoryStream();
-                    await stream.CopyToAsync(bufferStream, cancellationToken)
+                    await stream.CopyToAsync(bufferStream, 81920, cancellationToken)
                         .ConfigureAwait(false);
 
                     var buffer = bufferStream.ToArray();
@@ -121,10 +120,9 @@
             }
         }
 
-        /// <inheritdoc />
         public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
-            var now = _timeProvider.GetUtcNow();
+            var now = _timeProvider();
             var rows = 0;
 
             await CreateCommand(
@@ -198,7 +196,7 @@
             if (uri.AbsolutePath != "claim" || string.IsNullOrWhiteSpace(uri.Query) || uri.Query.Length < 2)
                 throw new InvalidOperationException("Invalid claim urn format");
 
-            return Guid.Parse(uri.Query[1..]);
+            return Guid.Parse(uri.Query.Substring(1));
         }
 
         static Uri Pack(Guid id)

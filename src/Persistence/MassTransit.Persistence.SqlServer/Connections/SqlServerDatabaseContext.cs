@@ -44,36 +44,69 @@
 
         protected override async IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            Func<IDataReader, TSaga>? readerAdapter = CreateReaderAdapter();
-            Action<object, SqlParameterCollection>? writerAdapter = CreateWriterAdapter();
+            var readerAdapter = CreateReaderAdapter();
+            var writerAdapter = CreateWriterAdapter();
 
-            await using var command = await CreateCommand(sql, cancellationToken)
-                .ConfigureAwait(false);
+            SqlCommand? command = null;
+            SqlDataReader? reader = null;
 
-            writerAdapter(parameters, command.Parameters);
-            await OnParametersWritten(command, cancellationToken);
+            try
+            {
+                command = await CreateCommand(sql, cancellationToken)
+                    .ConfigureAwait(false);
 
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken)
-                .ConfigureAwait(false);
+                writerAdapter(parameters, command.Parameters);
+                await OnParametersWritten(command, cancellationToken);
 
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                yield return readerAdapter(reader);
+                reader = await command.ExecuteReaderAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    yield return readerAdapter(reader);
+            }
+            finally
+            {
+#if NET8_0_OR_GREATER
+                if (reader is not null)
+                    await reader.DisposeAsync().ConfigureAwait(false);
+
+                if (command is not null)
+                    await command.DisposeAsync().ConfigureAwait(false);
+#else
+                reader?.Dispose();
+                command?.Dispose();
+#endif
+            }
         }
 
         protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
-            Action<object, SqlParameterCollection>? writerAdapter = CreateWriterAdapter();
+            var writerAdapter = CreateWriterAdapter();
 
-            await using var command = await CreateCommand(sql, cancellationToken)
-                .ConfigureAwait(false);
+            SqlCommand? command = null;
 
-            writerAdapter(parameters, command.Parameters);
-            await OnParametersWritten(command, cancellationToken);
+            try
+            {
+                command = await CreateCommand(sql, cancellationToken)
+                    .ConfigureAwait(false);
 
-            var rows = await command.ExecuteNonQueryAsync(cancellationToken)
-                .ConfigureAwait(false);
+                writerAdapter(parameters, command.Parameters);
+                await OnParametersWritten(command, cancellationToken);
 
-            return rows;
+                var rows = await command.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                return rows;
+            }
+            finally
+            {
+#if NET8_0_OR_GREATER
+                if (command is not null)
+                    await command.DisposeAsync().ConfigureAwait(false);
+#else
+                command?.Dispose();
+#endif
+            }
         }
 
         protected virtual async Task<SqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
@@ -130,7 +163,7 @@
         /// </summary>
         protected virtual ValueTask OnConnectionOpened(SqlConnection connection, CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            return CompletedTask;
         }
 
         /// <summary>
@@ -139,7 +172,7 @@
         /// </summary>
         protected virtual ValueTask OnParametersWritten(SqlCommand command, CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            return CompletedTask;
         }
 
         protected static void AssignParameters(object? parameters, SqlParameterCollection collection)

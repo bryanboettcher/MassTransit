@@ -11,6 +11,12 @@ namespace MassTransit.Persistence.Integration.Saga
     public abstract class SagaDatabaseContext<TSaga>
         where TSaga : class, ISaga
     {
+#if NET8_0_OR_GREATER
+        protected static readonly ValueTask CompletedTask = ValueTask.CompletedTask;
+#else
+        protected static readonly ValueTask CompletedTask = default;
+#endif
+
         protected readonly List<SqlPropertyMapping> Mappings = new();
         protected readonly Type ModelType = typeof(TSaga);
 
@@ -44,7 +50,7 @@ namespace MassTransit.Persistence.Integration.Saga
             [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var parameters = new Dictionary<string, object?>();
-            var sql = BuildQuerySql(filterExpression, (k, v) => parameters.TryAdd(k, v));
+            var sql = BuildQuerySql(filterExpression, (k, v) => parameters[k] = v);
 
             LogContext.Debug?.Log("Querying: {sql}");
 

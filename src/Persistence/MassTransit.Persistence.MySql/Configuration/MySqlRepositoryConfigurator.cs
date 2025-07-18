@@ -23,6 +23,22 @@
         }
 
         /// <inheritdoc />
+        public IEnumerable<ValidationResult> Validate()
+        {
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                yield return this.Failure($"{nameof(ConnectionString)} must be set");
+
+            if (string.IsNullOrWhiteSpace(TableName))
+                yield return this.Failure($"{nameof(TableName)} must be set");
+
+            if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionColumnName))
+                yield return this.Failure($"{nameof(VersionColumnName)} must be set when using Optimistic concurrency");
+
+            if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionPropertyName))
+                yield return this.Failure($"{nameof(VersionPropertyName)} must be set when using Optimistic concurrency");
+        }
+
+        /// <inheritdoc />
         public string? ConnectionString { get; set; }
 
         /// <inheritdoc />
@@ -38,7 +54,7 @@
         public string? VersionPropertyName { get; set; }
 
         /// <inheritdoc />
-        public string? TableName { get; set; }
+        public string TableName { get; set; }
 
         /// <inheritdoc />
         public string IdentityColumnName { get; set; }
@@ -91,22 +107,6 @@
             return this;
         }
 
-        /// <inheritdoc />
-        public IEnumerable<ValidationResult> Validate()
-        {
-            if (string.IsNullOrWhiteSpace(ConnectionString))
-                yield return this.Failure($"{nameof(ConnectionString)} must be set");
-
-            if (string.IsNullOrWhiteSpace(TableName))
-                yield return this.Failure($"{nameof(TableName)} must be set");
-
-            if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionColumnName))
-                yield return this.Failure($"{nameof(VersionColumnName)} must be set when using Optimistic concurrency");
-
-            if (ConcurrencyMode == ConcurrencyMode.Optimistic && string.IsNullOrWhiteSpace(VersionPropertyName))
-                yield return this.Failure($"{nameof(VersionPropertyName)} must be set when using Optimistic concurrency");
-        }
-
         public void Configure(ICustomRepositoryConfigurator<TSaga> sagaConfigurator)
         {
             (sagaConfigurator as CustomRepositoryConfigurator<TSaga>)?
@@ -117,13 +117,16 @@
 
         Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
         {
-            ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
-            ArgumentException.ThrowIfNullOrEmpty(TableName);
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new ArgumentException(nameof(ConnectionString));
+
+            if (string.IsNullOrEmpty(TableName))
+                throw new ArgumentException(nameof(TableName));
 
             return ConcurrencyMode == ConcurrencyMode.Optimistic
-                ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName,
+                ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticMySqlDatabaseContext<TSaga>(ConnectionString!, TableName!, IdentityColumnName,
                     VersionColumnName!, VersionPropertyName!))
-                : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticMySqlDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName,
+                : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticMySqlDatabaseContext<TSaga>(ConnectionString!, TableName!, IdentityColumnName,
                     IsolationLevel));
         }
 

@@ -6,6 +6,12 @@
 
     public static class MySqlDataReaderExtensions
     {
+#if !NET8_0_OR_GREATER
+        public static bool IsDBNull(this MySqlDataReader reader, string columnName)
+        {
+            return reader.IsDBNull(reader.GetOrdinal(columnName));
+        }
+#endif
         public static Guid? GetGuidOrNull(this MySqlDataReader reader, string columnName)
         {
             return reader.IsDBNull(columnName) ? null : reader.GetGuid(columnName);

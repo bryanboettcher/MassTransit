@@ -44,43 +44,65 @@
 
         protected override async IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            Func<IDataReader, TSaga>? readerAdapter = CreateReaderAdapter();
-            Action<object, NpgsqlParameterCollection>? writerAdapter = CreateWriterAdapter();
+            var readerAdapter = CreateReaderAdapter();
+            var writerAdapter = CreateWriterAdapter();
 
-            Connection = await CreateConnection(cancellationToken)
-                .ConfigureAwait(false);
+            NpgsqlDataReader? reader = null;
+            NpgsqlCommand? command = null;
+            try
+            {
+                Connection = await CreateConnection(cancellationToken)
+                    .ConfigureAwait(false);
 
-            await using var command = await CreateCommand(sql, cancellationToken)
-                .ConfigureAwait(false);
+                command = await CreateCommand(sql, cancellationToken)
+                    .ConfigureAwait(false);
 
-            writerAdapter(parameters, command.Parameters);
+                writerAdapter(parameters, command.Parameters);
 
-            await OnParametersWritten(command, cancellationToken)
-                .ConfigureAwait(false);
+                await OnParametersWritten(command, cancellationToken)
+                    .ConfigureAwait(false);
 
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken)
-                .ConfigureAwait(false);
+                reader = await command.ExecuteReaderAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
-            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                yield return readerAdapter(reader);
+                while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    yield return readerAdapter(reader);
+            }
+            finally
+            {
+                if (reader is not null)
+                    await reader.DisposeAsync().ConfigureAwait(false);
+
+                if (command is not null)
+                    await command.DisposeAsync().ConfigureAwait(false);
+            }
         }
 
         protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
-            Action<object, NpgsqlParameterCollection>? writerAdapter = CreateWriterAdapter();
+            var writerAdapter = CreateWriterAdapter();
 
-            await using var command = await CreateCommand(sql, cancellationToken)
-                .ConfigureAwait(false);
+            NpgsqlCommand? command = null;
+            try
+            {
+                command = await CreateCommand(sql, cancellationToken)
+                    .ConfigureAwait(false);
 
-            writerAdapter(parameters, command.Parameters);
+                writerAdapter(parameters, command.Parameters);
 
-            await OnParametersWritten(command, cancellationToken)
-                .ConfigureAwait(false);
+                await OnParametersWritten(command, cancellationToken)
+                    .ConfigureAwait(false);
 
-            var rows = await command.ExecuteNonQueryAsync(cancellationToken)
-                .ConfigureAwait(false);
+                var rows = await command.ExecuteNonQueryAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
-            return rows;
+                return rows;
+            }
+            finally
+            {
+                if (command is not null)
+                    await command.DisposeAsync().ConfigureAwait(false);
+            }
         }
 
         protected virtual async Task<NpgsqlCommand> CreateCommand(string sql, CancellationToken cancellationToken)
@@ -137,7 +159,7 @@
         /// </summary>
         protected virtual ValueTask OnConnectionOpened(NpgsqlConnection connection, CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            return CompletedTask;
         }
 
         /// <summary>
@@ -146,7 +168,7 @@
         /// </summary>
         protected virtual ValueTask OnParametersWritten(NpgsqlCommand command, CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            return CompletedTask;
         }
 
         protected static void AssignParameters(object? parameters, NpgsqlParameterCollection collection)

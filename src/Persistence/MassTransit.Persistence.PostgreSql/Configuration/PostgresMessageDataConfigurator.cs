@@ -6,11 +6,20 @@
     public class PostgresMessageDataConfigurator : IPostgresMessageDataConfigurator,
         ISpecification
     {
-        /// <inheritdoc />
-        public string ConnectionString { get; set; }
+        public IEnumerable<ValidationResult> Validate()
+        {
+            if (string.IsNullOrWhiteSpace(ConnectionString))
+                yield return this.Failure($"{nameof(ConnectionString)} must be set");
+
+            if (string.IsNullOrWhiteSpace(TableName))
+                yield return this.Failure($"{nameof(TableName)} must be set");
+        }
 
         /// <inheritdoc />
-        public string TableName { get; set; } = "ClaimChecks";
+        public string? ConnectionString { get; set; }
+
+        /// <inheritdoc />
+        public string TableName { get; set; } = "MessageData";
 
         /// <inheritdoc />
         public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;
@@ -34,15 +43,6 @@
         {
             IsolationLevel = isolationLevel;
             return this;
-        }
-
-        public IEnumerable<ValidationResult> Validate()
-        {
-            if (string.IsNullOrWhiteSpace(ConnectionString))
-                yield return this.Failure($"{nameof(ConnectionString)} must be set");
-
-            if (string.IsNullOrWhiteSpace(TableName))
-                yield return this.Failure($"{nameof(TableName)} must be set");
         }
     }
 }

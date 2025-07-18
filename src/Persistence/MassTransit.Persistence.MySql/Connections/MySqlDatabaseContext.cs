@@ -44,8 +44,8 @@
 
         protected override async IAsyncEnumerable<TSaga> ReadAsync(string sql, object? parameters, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            Func<IDataReader, TSaga>? readerAdapter = CreateReaderAdapter();
-            Action<object, MySqlParameterCollection>? writerAdapter = CreateWriterAdapter();
+            var readerAdapter = CreateReaderAdapter();
+            var writerAdapter = CreateWriterAdapter();
 
             await using var command = await CreateCommand(sql, cancellationToken)
                 .ConfigureAwait(false);
@@ -64,7 +64,7 @@
 
         protected override async Task<int> ExecuteAsync(string sql, object? parameters, CancellationToken cancellationToken)
         {
-            Action<object, MySqlParameterCollection>? writerAdapter = CreateWriterAdapter();
+            var writerAdapter = CreateWriterAdapter();
 
             await using var command = await CreateCommand(sql, cancellationToken)
                 .ConfigureAwait(false);
@@ -134,7 +134,7 @@
         /// </summary>
         protected virtual ValueTask OnConnectionOpened(MySqlConnection connection, CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            return CompletedTask;
         }
 
         /// <summary>
@@ -143,7 +143,7 @@
         /// </summary>
         protected virtual ValueTask OnParametersWritten(MySqlCommand command, CancellationToken cancellationToken)
         {
-            return ValueTask.CompletedTask;
+            return CompletedTask;
         }
 
         protected static void AssignParameters(object? parameters, MySqlParameterCollection collection)

@@ -53,10 +53,14 @@
             configurator.Validate().ThrowIfContainsFailure("The Sql Server configuration is invalid:");
 
             return new PostgresMessageDataRepository(
-                configurator.ConnectionString,
+                configurator.ConnectionString!,
                 configurator.TableName,
                 configurator.IsolationLevel,
-                TimeProvider.System
+#if NET8_0_OR_GREATER
+                () => TimeProvider.System.GetUtcNow()
+#else
+                () => DateTimeOffset.UtcNow
+#endif
             );
         }
     }

@@ -10,9 +10,9 @@
 
         readonly string _connectionString;
         readonly IsolationLevel _isolationLevel;
-        readonly TimeProvider _timeProvider;
+        readonly Func<DateTimeOffset> _timeProvider;
 
-        public SqlServerMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, TimeProvider timeProvider)
+        public SqlServerMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, Func<DateTimeOffset> timeProvider)
         {
             _connectionString = connectionString;
             _isolationLevel = isolationLevel;
@@ -43,7 +43,7 @@
         public async Task<Stream> Get(Uri address, CancellationToken cancellationToken = default)
         {
             var id = Unpack(address);
-            var now = _timeProvider.GetUtcNow();
+            var now = _timeProvider();
             var output = new MemoryStream();
 
             await CreateCommand(
@@ -53,7 +53,7 @@
                     command.Parameters.Add("@id", SqlDbType.UniqueIdentifier).Value = id;
                     command.Parameters.Add("@now", SqlDbType.DateTimeOffset).Value = now;
 
-                    await using var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
+                    var reader = await command.ExecuteReaderAsync(DefaultBehavior, cancellationToken)
                         .ConfigureAwait(false);
 
                     var available = await reader.ReadAsync(cancellationToken)
@@ -62,10 +62,15 @@
                     if (!available)
                         throw new KeyNotFoundException($"No claim check available at {address}");
 
-                    await reader.GetStream(0).CopyToAsync(output, cancellationToken)
+                    await reader.GetStream(0).CopyToAsync(output, 81920, cancellationToken)
                         .ConfigureAwait(false);
 
                     output.Position = 0;
+
+#if NET8_0_OR_GREATER
+                    if (reader is IAsyncDisposable ad)
+                        await ad.DisposeAsync().ConfigureAwait(false);
+#endif
                 },
                 cancellationToken
             ).ConfigureAwait(false);
@@ -77,7 +82,7 @@
         public async Task<Uri> Put(Stream stream, TimeSpan? timeToLive = default, CancellationToken cancellationToken = default)
         {
             var id = NewId.NextSequentialGuid();
-            var now = _timeProvider.GetUtcNow();
+            var now = _timeProvider();
             var expiration = GetExpiration(timeToLive, now);
 
             if (expiration < now)
@@ -114,7 +119,7 @@
 
         public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
-            var now = _timeProvider.GetUtcNow();
+            var now = _timeProvider();
             var rows = 0;
 
             await CreateCommand(
@@ -188,7 +193,7 @@
             if (uri.AbsolutePath != "claim" || string.IsNullOrWhiteSpace(uri.Query) || uri.Query.Length < 2)
                 throw new InvalidOperationException("Invalid claim urn format");
 
-            return Guid.Parse(uri.Query[1..]);
+            return Guid.Parse(uri.Query.Substring(1));
         }
 
         static Uri Pack(Guid id)

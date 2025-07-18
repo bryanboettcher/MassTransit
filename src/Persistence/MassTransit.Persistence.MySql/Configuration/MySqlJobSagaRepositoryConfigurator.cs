@@ -48,18 +48,19 @@
 
         void RegisterDependencies(IServiceCollection services)
         {
-            ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new ArgumentException(nameof(ConnectionString));
 
-            services.AddTransient<DatabaseContext<JobSaga>>(_
-                => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
+            services.AddTransient<DatabaseContext<JobSaga>>(
+                _ => new JobSagaDatabaseContext(ConnectionString!, IsolationLevel)
             );
 
-            services.AddTransient<DatabaseContext<JobTypeSaga>>(_
-                => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
+            services.AddTransient<DatabaseContext<JobTypeSaga>>(
+                _ => new JobTypeSagaDatabaseContext(ConnectionString!, IsolationLevel)
             );
 
-            services.AddTransient<DatabaseContext<JobAttemptSaga>>(_
-                => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
+            services.AddTransient<DatabaseContext<JobAttemptSaga>>(
+                _ => new JobAttemptSagaDatabaseContext(ConnectionString!, IsolationLevel)
             );
         }
     }

@@ -11,10 +11,10 @@
         /// <summary>
         /// Gets/sets the connection string.
         /// </summary>
-        string ConnectionString { get; set; }
+        string? ConnectionString { get; set; }
 
         /// <summary>
-        /// Gets/sets the table name.  Defaults to ClaimChecks.
+        /// Gets/sets the table name.  Defaults to MessageData.
         /// </summary>
         string TableName { get; set; }
 

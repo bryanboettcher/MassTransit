@@ -11,7 +11,7 @@
         /// <summary>
         /// Gets/sets the connection string used by all JobConsumer sagas.
         /// </summary>
-        string ConnectionString { get; set; }
+        string? ConnectionString { get; set; }
 
         /// <summary>
         /// Gets/sets the isolation level for transactions.

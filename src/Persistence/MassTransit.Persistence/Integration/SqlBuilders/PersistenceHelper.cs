@@ -19,7 +19,7 @@
         {
             var tableName = AttributeValue(type, "TableAttribute", "Name");
             if (!string.IsNullOrEmpty(tableName))
-                return tableName;
+                return tableName!;
 
             return type.Name + "s";
         }
@@ -36,11 +36,11 @@
             // support the Dapper.Contrib manual-mapping of keys or non-identity keys
             var keyColumn = AttributeValue(type, "KeyAttribute", "Name");
             if (!string.IsNullOrEmpty(keyColumn))
-                return keyColumn;
+                return keyColumn!;
 
             var explicitKeyColumn = AttributeValue(type, "ExplicitKeyAttribute", "Name");
             if (!string.IsNullOrEmpty(explicitKeyColumn))
-                return explicitKeyColumn;
+                return explicitKeyColumn!;
 
             if (properties.Any(p => p.Name == "CorrelationId"))
                 return "CorrelationId";
@@ -87,13 +87,21 @@
                     let columnName = GetColumnName(modelType, prop, mappings)
                     let propertyName = NormalizeName(prop.Name)
                     select (columnName, propertyName))
-                .DistinctBy(m => m.columnName, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(m => m.columnName, m => m.propertyName, StringComparer.OrdinalIgnoreCase);
+                .GroupBy(m => m.columnName, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(
+                    m => m.Key,
+                    m => m.First().propertyName,
+                    StringComparer.OrdinalIgnoreCase
+                );
         }
-
+        
         public static string NormalizeName(string original)
         {
+#if NET8_0_OR_GREATER
             return new string(original.ToLowerInvariant().Where(char.IsAsciiLetterOrDigit).ToArray());
+#else
+            return new string(original.ToLowerInvariant().Where(char.IsLetterOrDigit).ToArray());
+#endif
         }
 
         public static string? AttributeValue(Type type, string attributeName, string propertyName)

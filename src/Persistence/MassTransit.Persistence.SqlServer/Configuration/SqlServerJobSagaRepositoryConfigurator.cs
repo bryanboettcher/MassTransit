@@ -61,18 +61,19 @@
 
         void RegisterDependencies(IServiceCollection services)
         {
-            ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new ArgumentException(nameof(ConnectionString));
 
             services.AddScoped<DatabaseContext<JobSaga>>(_
-                => new JobSagaDatabaseContext(ConnectionString, IsolationLevel)
+                => new JobSagaDatabaseContext(ConnectionString!, IsolationLevel)
             );
 
             services.AddScoped<DatabaseContext<JobTypeSaga>>(_
-                => new JobTypeSagaDatabaseContext(ConnectionString, IsolationLevel)
+                => new JobTypeSagaDatabaseContext(ConnectionString!, IsolationLevel)
             );
 
             services.AddScoped<DatabaseContext<JobAttemptSaga>>(_
-                => new JobAttemptSagaDatabaseContext(ConnectionString, IsolationLevel)
+                => new JobAttemptSagaDatabaseContext(ConnectionString!, IsolationLevel)
             );
         }
     }

@@ -134,7 +134,8 @@ namespace MassTransit.Persistence.Integration.Saga
             else
                 LogContext.Debug?.Log("Loaded saga instance {correlationId}", correlationId);
 
-            return instance;
+            // might still be null, but we can't change the upstream nullability without a major impact
+            return instance!;
         }
 
         public async Task<SagaRepositoryQueryContext<TSaga>> Query(ISagaQuery<TSaga> query, CancellationToken cancellationToken = default)

@@ -44,7 +44,7 @@
 
         public IMessageDataRepository CreateMessageDataRepository(TimeProvider timeProvider)
         {
-            return new MySqlMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider);
+            return new MySqlMessageDataRepository(ConnectionString, "MessageData", IsolationLevel.RepeatableRead, timeProvider.GetUtcNow);
         }
 
         public Task<List<TSaga>> GetSagas<TSaga>()

@@ -16,8 +16,7 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
         {
             return new Adapter<TModel>().Convert;
         }
-
-
+        
         class Adapter<TModel>
         {
             IDictionary<string, int>? _columns;
@@ -58,7 +57,8 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
                 for (var fieldIndex = 0; fieldIndex < input.FieldCount; fieldIndex++)
                 {
                     var fieldName = input.GetName(fieldIndex);
-                    mappings.TryAdd(fieldName, fieldIndex);
+
+                    mappings[fieldName] = fieldIndex;
                 }
 
                 return mappings;

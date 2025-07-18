@@ -8,17 +8,17 @@
         /// <summary>
         /// Gets/sets a custom context factory for JobSagas.
         /// </summary>
-        DatabaseContextFactory<JobSaga> JobContextFactory { get; set; }
+        DatabaseContextFactory<JobSaga>? JobContextFactory { get; set; }
 
         /// <summary>
         /// Gets/sets a custom context factory for JobTypeSagas.
         /// </summary>
-        DatabaseContextFactory<JobTypeSaga> JobTypeContextFactory { get; set; }
+        DatabaseContextFactory<JobTypeSaga>? JobTypeContextFactory { get; set; }
 
         /// <summary>
         /// Gets/sets a custom context factory for JobAttemptSagas.
         /// </summary>
-        DatabaseContextFactory<JobAttemptSaga> JobAttemptContextFactory { get; set; }
+        DatabaseContextFactory<JobAttemptSaga>? JobAttemptContextFactory { get; set; }
 
         /// <summary>
         /// Set a custom context factory for JobSagas.

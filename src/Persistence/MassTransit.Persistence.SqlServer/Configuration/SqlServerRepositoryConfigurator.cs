@@ -54,7 +54,7 @@
         public string? VersionPropertyName { get; set; }
 
         /// <inheritdoc />
-        public string? TableName { get; set; }
+        public string TableName { get; set; }
 
         /// <inheritdoc />
         public string IdentityColumnName { get; set; }
@@ -118,14 +118,15 @@
 
         Task<DatabaseContext<TSaga>> ConfiguredContextFactory(IServiceProvider serviceProvider)
         {
-            ArgumentException.ThrowIfNullOrEmpty(ConnectionString);
-            ArgumentException.ThrowIfNullOrEmpty(TableName);
+            if (string.IsNullOrEmpty(ConnectionString))
+                throw new ArgumentException(nameof(ConnectionString));
+
+            if (string.IsNullOrEmpty(TableName))
+                throw new ArgumentException(nameof(TableName));
 
             return ConcurrencyMode == ConcurrencyMode.Optimistic
-                ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticSqlServerDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName,
-                    VersionColumnName!, VersionPropertyName!))
-                : Task.FromResult<DatabaseContext<TSaga>>(
-                    new PessimisticSqlServerDatabaseContext<TSaga>(ConnectionString, TableName, IdentityColumnName, IsolationLevel));
+                ? Task.FromResult<DatabaseContext<TSaga>>(new OptimisticSqlServerDatabaseContext<TSaga>(ConnectionString!, TableName!, IdentityColumnName, VersionColumnName!, VersionPropertyName!))
+                : Task.FromResult<DatabaseContext<TSaga>>(new PessimisticSqlServerDatabaseContext<TSaga>(ConnectionString!, TableName!, IdentityColumnName, IsolationLevel));
         }
 
         void RegisterServices(IServiceCollection services)

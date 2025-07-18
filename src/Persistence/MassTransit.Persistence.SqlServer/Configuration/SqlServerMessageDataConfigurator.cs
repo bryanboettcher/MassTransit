@@ -16,10 +16,10 @@
         }
 
         /// <inheritdoc />
-        public string ConnectionString { get; set; }
+        public string? ConnectionString { get; set; }
 
         /// <inheritdoc />
-        public string TableName { get; set; } = "ClaimChecks";
+        public string TableName { get; set; } = "MessageData";
 
         /// <inheritdoc />
         public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.RepeatableRead;

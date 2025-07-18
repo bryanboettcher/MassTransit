@@ -31,7 +31,7 @@
         {
             var sqlRoot = $"SELECT * FROM {TableName}";
 
-            List<SqlPredicate> predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
+            var predicates = SqlExpressionVisitor.CreateFromExpression(filterExpression, Mappings);
 
             if (predicates.Count == 0) // good luck...
                 return sqlRoot;
@@ -42,7 +42,7 @@
 
         protected override string BuildInsertSql()
         {
-            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
             properties.Remove(_versionProperty.Name);
 
@@ -56,7 +56,7 @@
 
         protected override string BuildUpdateSql()
         {
-            IDictionary<string, string> properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
+            var properties = PersistenceHelper.BuildProperties(ModelType, Mappings);
 
             properties.Remove(nameof(ISaga.CorrelationId));
             properties.Remove(_versionProperty.Name);

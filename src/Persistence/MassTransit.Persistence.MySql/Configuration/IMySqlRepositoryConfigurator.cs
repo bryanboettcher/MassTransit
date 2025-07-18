@@ -39,7 +39,7 @@
         /// Gets/sets the name of the table.  Defaults to the plural form of the saga name if
         /// unspecified, such as `class UserSaga -> table UserSagas`.
         /// </summary>
-        string? TableName { get; set; }
+        string TableName { get; set; }
 
         /// <summary>
         /// Gets/sets the primary key column name.  Defaults to `CorrelationId` if unspecified.  Respects [Key] and [ExplicitKey] attributes.
