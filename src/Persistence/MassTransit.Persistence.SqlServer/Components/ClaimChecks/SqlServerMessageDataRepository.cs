@@ -1,24 +1,12 @@
-﻿namespace MassTransit.Persistence.SqlServer.Components.ClaimChecks
+﻿namespace MassTransit.MessageData
 {
     using System.Data;
     using Microsoft.Data.SqlClient;
-
-
-    public class SqlServerMessageDataRepository : IMessageDataRepository
+    
+    public class SqlServerMessageDataRepository : SqlMessageDataRepository, IMessageDataRepository
     {
-        const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
-
-        readonly string _connectionString;
-        readonly IsolationLevel _isolationLevel;
-        readonly Func<DateTimeOffset> _timeProvider;
-
         public SqlServerMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, Func<DateTimeOffset> timeProvider)
         {
-            _connectionString = connectionString;
-            _isolationLevel = isolationLevel;
-
-            _timeProvider = timeProvider;
-
             SqlLoad = string.Format(SqlLoad, tableName);
             SqlSave = string.Format(SqlSave, tableName);
             SqlClean = string.Format(SqlClean, tableName);
@@ -43,7 +31,7 @@
         public async Task<Stream> Get(Uri address, CancellationToken cancellationToken = default)
         {
             var id = Unpack(address);
-            var now = _timeProvider();
+            var now = UtcNowProvider();
             var output = new MemoryStream();
 
             await Run(
@@ -87,7 +75,7 @@
         public async Task<Uri> Put(Stream stream, TimeSpan? timeToLive = default, CancellationToken cancellationToken = default)
         {
             var id = NewId.NextSequentialGuid();
-            var now = _timeProvider();
+            var now = UtcNowProvider();
             var expiration = GetExpiration(timeToLive, now);
 
             if (expiration < now)
@@ -127,7 +115,7 @@
 
         public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
-            var now = _timeProvider();
+            var now = UtcNowProvider();
             var rows = 0;
             
             await Run(
@@ -154,7 +142,7 @@
             SqlTransaction? transaction = null;
             try
             {
-                connection = new SqlConnection(_connectionString);
+                connection = new SqlConnection(ConnectionString);
 
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
@@ -162,7 +150,7 @@
                 if (useTransaction)
                 {
                     transaction = (SqlTransaction)await connection.BeginTransactionAsync(
-                        _isolationLevel, cancellationToken).ConfigureAwait(false);
+                        IsolationLevel, cancellationToken).ConfigureAwait(false);
                 }
 
                 command = connection.CreateCommand();

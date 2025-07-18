@@ -1,25 +1,14 @@
-﻿namespace MassTransit.Persistence.PostgreSql.Components.ClaimChecks
+﻿namespace MassTransit.MessageData
 {
     using System.Data;
     using Npgsql;
     using NpgsqlTypes;
 
 
-    public class PostgresMessageDataRepository : IMessageDataRepository
+    public class PostgresMessageDataRepository : SqlMessageDataRepository, IMessageDataRepository
     {
-        const CommandBehavior DefaultBehavior = CommandBehavior.SequentialAccess | CommandBehavior.SingleRow;
-
-        readonly string _connectionString;
-        readonly IsolationLevel _isolationLevel;
-        readonly Func<DateTimeOffset> _timeProvider;
-
         public PostgresMessageDataRepository(string connectionString, string tableName, IsolationLevel isolationLevel, Func<DateTimeOffset> timeProvider)
         {
-            _connectionString = connectionString;
-            _isolationLevel = isolationLevel;
-
-            _timeProvider = timeProvider;
-
             SqlLoad = string.Format(SqlLoad, tableName);
             SqlSave = string.Format(SqlSave, tableName);
             SqlClean = string.Format(SqlClean, tableName);
@@ -44,7 +33,7 @@
         public async Task<Stream> Get(Uri address, CancellationToken cancellationToken = default)
         {
             var id = Unpack(address);
-            var now = _timeProvider();
+            var now = UtcNowProvider();
             var output = new MemoryStream();
 
             await Run(
@@ -84,7 +73,7 @@
         public async Task<Uri> Put(Stream stream, TimeSpan? timeToLive = default, CancellationToken cancellationToken = default)
         {
             var id = NewId.NextSequentialGuid();
-            var now = _timeProvider();
+            var now = UtcNowProvider();
             var expiration = GetExpiration(timeToLive, now);
 
             if (expiration < now)
@@ -124,7 +113,7 @@
 
         public async Task<int> CleanupAsync(CancellationToken cancellationToken = default)
         {
-            var now = _timeProvider();
+            var now = UtcNowProvider();
             var rows = 0;
 
             await Run(
@@ -152,13 +141,13 @@
             NpgsqlTransaction? transaction = null;
             try
             {
-                connection = new NpgsqlConnection(_connectionString);
+                connection = new NpgsqlConnection(ConnectionString);
                 await connection.OpenAsync(cancellationToken)
                     .ConfigureAwait(false);
 
                 if (useTransaction)
                 {
-                    transaction = await connection.BeginTransactionAsync(_isolationLevel, cancellationToken)
+                    transaction = await connection.BeginTransactionAsync(IsolationLevel, cancellationToken)
                         .ConfigureAwait(false);
                 }
 
@@ -194,22 +183,6 @@
                 if (connection is not null)
                     await connection.DisposeAsync().ConfigureAwait(false);
             }
-        }
-
-        static Guid Unpack(Uri uri)
-        {
-            if (uri.Scheme != "urn")
-                throw new InvalidOperationException("URI must be a urn");
-
-            if (uri.AbsolutePath != "claim" || string.IsNullOrWhiteSpace(uri.Query) || uri.Query.Length < 2)
-                throw new InvalidOperationException("Invalid claim urn format");
-
-            return Guid.Parse(uri.Query.Substring(1));
-        }
-
-        static Uri Pack(Guid id)
-        {
-            return new Uri($"urn:claim?{id:N}");
         }
     }
 }
