@@ -1,8 +1,10 @@
 ﻿namespace MassTransit.MessageData
 {
     using System.Data;
+    using Npgsql;
+    using NpgsqlTypes;
     using Persistence.PostgreSql.Connections;
-
+    using Persistence.PostgreSql.Extensions;
 
     public class PostgresMessageDataRepository : PessimisticPostgresDatabaseContext<MessageDataSaga>,
         IMessageDataRepository
@@ -61,6 +63,41 @@
 
             return await ExecuteAsync(_removeExpired, new { now }, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        protected override Func<IDataReader, MessageDataSaga> CreateReaderAdapter() => MapFrom;
+
+        MessageDataSaga MapFrom(IDataReader reader)
+        {
+            if (reader is not NpgsqlDataReader r)
+                throw new InvalidOperationException("Invalid data reader");
+
+            var stream = new MemoryStream();
+            r.GetStream("Data").CopyTo(stream, 81920);
+
+            return new MessageDataSaga
+            {
+                CorrelationId = r.GetGuid(IdColumnName),
+                Created = r.GetDateTimeOffset("Created"),
+                Expires = r.GetDateTimeOffset("Expires"),
+                Data = stream
+            };
+        }
+
+        protected override Action<object?, NpgsqlParameterCollection> CreateWriterAdapter() => MapTo;
+
+        static void MapTo(object? parameters, NpgsqlParameterCollection collection)
+        {
+            if (parameters is MessageDataSaga { Data: not null } s)
+            {
+                collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = s.CorrelationId.ToByteArray();
+                collection.Add("@created", NpgsqlDbType.TimestampTz).Value = s.Created;
+                collection.Add("@expires", NpgsqlDbType.TimestampTz).Value = s.Expires;
+                collection.Add("@data", NpgsqlDbType.Bytea, -1).Value = s.Data;
+                return;
+            }
+
+            AssignParameters(parameters, collection);
         }
     }
 }

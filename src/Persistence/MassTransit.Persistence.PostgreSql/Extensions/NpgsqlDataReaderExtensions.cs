@@ -8,9 +8,7 @@
     {
 #if !NET8_0_OR_GREATER
         public static bool IsDBNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(reader.GetOrdinal(columnName));
-        }
+            => reader.IsDBNull(reader.GetOrdinal(columnName));
 
         public static Guid GetGuid(this NpgsqlDataReader reader, string columnName)
             => reader.GetGuid(reader.GetOrdinal(columnName));
@@ -39,73 +37,53 @@
         public static DateTime GetDateTime(this NpgsqlDataReader reader, string columnName)
             => reader.GetDateTime(reader.GetOrdinal(columnName));
 
+        public static DateTimeOffset GetDateTimeOffset(this NpgsqlDataReader reader, string columnName)
+            => reader.GetDateTime(reader.GetOrdinal(columnName));
+
         public static string GetString(this NpgsqlDataReader reader, string columnName)
             => reader.GetString(reader.GetOrdinal(columnName));
 
+        public static Stream GetStream(this NpgsqlDataReader reader, string columnName)
+            => reader.GetStream(reader.GetOrdinal(columnName));
+
 #endif
         public static Guid? GetGuidOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetGuid(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetGuid(columnName);
 
         public static string? GetStringOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetString(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetString(columnName);
 
         public static byte? GetByteOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetByte(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetByte(columnName);
 
         public static int? GetInt32OrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetInt32(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetInt32(columnName);
 
         public static long? GetInt64OrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetInt64(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetInt64(columnName);
 
         public static short? GetInt16OrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetInt16(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetInt16(columnName);
 
         public static decimal? GetDecimalOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetDecimal(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetDecimal(columnName);
 
         public static float? GetFloatOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetFloat(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetFloat(columnName);
 
         public static double? GetDoubleOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetDouble(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetDouble(columnName);
 
         public static DateTime? GetDateTimeOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetDateTime(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetDateTime(columnName);
 
         public static DateTime? GetDateTimeOffsetOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetDateTime(columnName);
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetDateTime(columnName);
 
         public static TimeSpan? GetTimeSpanOrNull(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : reader.GetTimeSpan(reader.GetOrdinal(columnName));
-        }
+            => reader.IsDBNull(columnName) ? null : reader.GetTimeSpan(reader.GetOrdinal(columnName));
 
         public static Uri? GetUri(this NpgsqlDataReader reader, string columnName)
-        {
-            return reader.IsDBNull(columnName) ? null : new Uri(reader.GetString(columnName));
-        }
+            => reader.IsDBNull(columnName) ? null : new Uri(reader.GetString(columnName));
     }
 }

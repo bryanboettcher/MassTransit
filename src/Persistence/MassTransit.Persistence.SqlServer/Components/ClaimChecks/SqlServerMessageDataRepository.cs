@@ -1,6 +1,8 @@
 ﻿namespace MassTransit.MessageData
 {
     using System.Data;
+    using Persistence.SqlServer.Extensions;
+    using Microsoft.Data.SqlClient;
     using Persistence.SqlServer.Connections;
     
     public class SqlServerMessageDataRepository : PessimisticSqlServerDatabaseContext<MessageDataSaga>, IMessageDataRepository
@@ -58,6 +60,44 @@
 
             return await ExecuteAsync(_removeExpired, new { now }, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        protected override Func<IDataReader, MessageDataSaga> CreateReaderAdapter() => MapFrom;
+
+        MessageDataSaga MapFrom(IDataReader reader)
+        {
+            if (reader is not SqlDataReader r)
+                throw new InvalidOperationException("Invalid data reader");
+
+            var stream = new MemoryStream();
+            r.GetStream("Data").CopyTo(stream, 81920);
+
+            return new MessageDataSaga
+            {
+                CorrelationId = r.GetGuid(IdColumnName),
+                Created = r.GetDateTimeOffset("Created"),
+                Expires = r.GetDateTimeOffset("Expires"),
+                Data = stream
+            };
+        }
+
+        protected override Action<object?, SqlParameterCollection> CreateWriterAdapter() => MapTo;
+
+        static void MapTo(object? parameters, SqlParameterCollection collection)
+        {
+            if (parameters is MessageDataSaga { Data: not null } s)
+            {
+                using var stream = new MemoryStream();
+                s.Data.CopyTo(stream, 81920);
+
+                collection.Add("@correlationid", SqlDbType.Binary).Value = s.CorrelationId.ToByteArray();
+                collection.Add("@created", SqlDbType.DateTime).Value = s.Created;
+                collection.Add("@expires", SqlDbType.DateTime).Value = s.Expires;
+                collection.Add("@data", SqlDbType.VarBinary, -1).Value = stream.ToArray();
+                return;
+            }
+
+            AssignParameters(parameters, collection);
         }
     }
 }

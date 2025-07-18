@@ -1,6 +1,7 @@
 ﻿namespace MassTransit.MessageData
 {
     using System.Data;
+    using MySqlConnector;
     using Persistence.MySql.Connections;
 
     public class MySqlMessageDataRepository : PessimisticMySqlDatabaseContext<MessageDataSaga>, IMessageDataRepository
@@ -58,6 +59,44 @@
 
             return await ExecuteAsync(_removeExpired, new { now }, cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        protected override Func<IDataReader, MessageDataSaga> CreateReaderAdapter() => MapFrom;
+
+        MessageDataSaga MapFrom(IDataReader reader)
+        {
+            if (reader is not MySqlDataReader r)
+                throw new InvalidOperationException("Invalid data reader");
+
+            var stream = new MemoryStream();
+            r.GetStream("Data").CopyTo(stream, 81920);
+
+            return new MessageDataSaga
+            {
+                CorrelationId = r.GetGuid(IdColumnName),
+                Created = r.GetDateTimeOffset("Created"),
+                Expires = r.GetDateTimeOffset("Expires"),
+                Data = stream
+            };
+        }
+
+        protected override Action<object?, MySqlParameterCollection> CreateWriterAdapter() => MapTo;
+
+        static void MapTo(object? parameters, MySqlParameterCollection collection)
+        {
+            if (parameters is MessageDataSaga { Data: not null } s)
+            {
+                using var stream = new MemoryStream();
+                s.Data.CopyTo(stream, 81920);
+
+                collection.Add("@correlationid", MySqlDbType.Binary).Value = s.CorrelationId.ToByteArray();
+                collection.Add("@created", MySqlDbType.DateTime).Value = s.Created;
+                collection.Add("@expires", MySqlDbType.DateTime).Value = s.Expires;
+                collection.Add("@data", MySqlDbType.LongBlob, -1).Value = stream.ToArray();
+                return;
+            }
+
+            AssignParameters(parameters, collection);
         }
     }
 }
