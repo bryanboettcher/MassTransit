@@ -25,6 +25,9 @@
             _connectionString = connectionString;
             TableName = tableName;
             IdColumnName = idColumnName;
+
+            if (idColumnName != nameof(ISaga.CorrelationId))
+                MapProperty(s => s.CorrelationId, idColumnName);
         }
 
         protected static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object?> parameterCallback)
@@ -47,13 +50,10 @@
             var readerAdapter = CreateReaderAdapter();
             var writerAdapter = CreateWriterAdapter();
 
-            NpgsqlDataReader? reader = null;
             NpgsqlCommand? command = null;
+
             try
             {
-                Connection = await CreateConnection(cancellationToken)
-                    .ConfigureAwait(false);
-
                 command = await CreateCommand(sql, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -62,7 +62,7 @@
                 await OnParametersWritten(command, cancellationToken)
                     .ConfigureAwait(false);
 
-                reader = await command.ExecuteReaderAsync(cancellationToken)
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken)
                     .ConfigureAwait(false);
 
                 while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
@@ -70,9 +70,6 @@
             }
             finally
             {
-                if (reader is not null)
-                    await reader.DisposeAsync().ConfigureAwait(false);
-
                 if (command is not null)
                     await command.DisposeAsync().ConfigureAwait(false);
             }

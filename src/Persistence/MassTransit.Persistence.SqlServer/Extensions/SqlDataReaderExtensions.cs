@@ -1,7 +1,7 @@
 ﻿namespace MassTransit.Persistence.SqlServer.Extensions
 {
     using Microsoft.Data.SqlClient;
-
+    using System.Data;
 
     public static class SqlDataReaderExtensions
     {
@@ -35,10 +35,7 @@
 
         public static DateTime GetDateTime(this SqlDataReader reader, string columnName)
             => reader.GetDateTime(reader.GetOrdinal(columnName));
-
-        public static DateTimeOffset GetDateTimeOffset(this SqlDataReader reader, string columnName)
-            => reader.GetDateTimeOffset(reader.GetOrdinal(columnName));
-
+        
         public static string GetString(this SqlDataReader reader, string columnName)
             => reader.GetString(reader.GetOrdinal(columnName));
 
@@ -83,5 +80,8 @@
 
         public static Uri? GetUri(this SqlDataReader reader, string columnName)
             => reader.IsDBNull(columnName) ? null : new Uri(reader.GetString(columnName));
+
+        public static DateTimeOffset GetDateTimeOffset(this SqlDataReader reader, string columnName)
+            => reader.GetDateTimeOffset(reader.GetOrdinal(columnName));
     }
 }

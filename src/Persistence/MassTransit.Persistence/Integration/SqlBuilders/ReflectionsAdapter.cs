@@ -26,7 +26,7 @@ namespace MassTransit.Persistence.Integration.SqlBuilders
                 _columns ??= CreateSchema(input);
 
                 var target = Activator.CreateInstance<TModel>();
-                IEnumerable<PropertyInfo> properties = typeof(TModel).GetProperties().Where(p => p.CanWrite);
+                var properties = typeof(TModel).GetProperties().Where(p => p.CanWrite);
 
                 foreach (var property in properties)
                 {

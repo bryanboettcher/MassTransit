@@ -25,6 +25,9 @@
             _connectionString = connectionString;
             TableName = tableName;
             IdColumnName = idColumnName;
+
+            if (idColumnName != nameof(ISaga.CorrelationId))
+                MapProperty(s => s.CorrelationId, idColumnName);
         }
 
         public static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object?> parameterCallback)
@@ -157,11 +160,15 @@
             }
         }
 
-        public virtual Task CommitAsync(CancellationToken cancellationToken = default)
+        public virtual async Task CommitAsync(CancellationToken cancellationToken = default)
         {
-            return Transaction is null
-                ? Task.CompletedTask
-                : Transaction.CommitAsync(cancellationToken);
+             if (Transaction is null)
+                 return;
+
+             await Transaction.CommitAsync(cancellationToken)
+                 .ConfigureAwait(false);
+
+             Transaction = null;
         }
 
         public virtual void Dispose()

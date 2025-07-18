@@ -79,7 +79,7 @@
         {
             await RunSql(Sql.Postgres_DropJobTables);
             await RunSql(Sql.Postgres_DropSagaTables);
-            //await RunSql(Sql.Postgres_DropMessageDataTables);
+            await RunSql(Sql.Postgres_DropMessageDataTables);
         }
 
         public void Connect(ICustomJobSagaRepositoryConfigurator conf)

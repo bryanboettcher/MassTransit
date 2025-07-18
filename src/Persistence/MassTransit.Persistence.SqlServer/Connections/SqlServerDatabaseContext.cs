@@ -23,9 +23,11 @@
         protected SqlServerDatabaseContext(string connectionString, string tableName, string idColumnName)
         {
             _connectionString = connectionString;
-
             TableName = tableName;
             IdColumnName = idColumnName;
+
+            if (idColumnName != nameof(ISaga.CorrelationId))
+                MapProperty(s => s.CorrelationId, idColumnName);
         }
 
         protected static string BuildQueryPredicate(List<SqlPredicate> predicates, Action<string, object?> parameterCallback)
@@ -35,6 +37,7 @@
             foreach (var p in predicates)
             {
                 var paramName = $"value{queryPredicates.Count}";
+
                 queryPredicates.Add($"[{p.Name}] {p.Operator} @{paramName}");
                 parameterCallback?.Invoke(paramName, p.Value);
             }
@@ -56,7 +59,9 @@
                     .ConfigureAwait(false);
 
                 writerAdapter(parameters, command.Parameters);
-                await OnParametersWritten(command, cancellationToken);
+
+                await OnParametersWritten(command, cancellationToken)
+                    .ConfigureAwait(false);
 
                 reader = await command.ExecuteReaderAsync(cancellationToken)
                     .ConfigureAwait(false);
@@ -66,16 +71,11 @@
             }
             finally
             {
-#if NET8_0_OR_GREATER
                 if (reader is not null)
                     await reader.DisposeAsync().ConfigureAwait(false);
 
                 if (command is not null)
                     await command.DisposeAsync().ConfigureAwait(false);
-#else
-                reader?.Dispose();
-                command?.Dispose();
-#endif
             }
         }
 
@@ -100,12 +100,8 @@
             }
             finally
             {
-#if NET8_0_OR_GREATER
                 if (command is not null)
                     await command.DisposeAsync().ConfigureAwait(false);
-#else
-                command?.Dispose();
-#endif
             }
         }
 

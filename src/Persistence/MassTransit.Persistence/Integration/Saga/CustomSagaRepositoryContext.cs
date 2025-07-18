@@ -140,7 +140,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
         public async Task<SagaRepositoryQueryContext<TSaga>> Query(ISagaQuery<TSaga> query, CancellationToken cancellationToken = default)
         {
-            IList<TSaga>? instances = await _context.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
+            var instances = await _context.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (LogContext.Debug.HasValue)

@@ -36,10 +36,7 @@
 
         public static DateTime GetDateTime(this NpgsqlDataReader reader, string columnName)
             => reader.GetDateTime(reader.GetOrdinal(columnName));
-
-        public static DateTimeOffset GetDateTimeOffset(this NpgsqlDataReader reader, string columnName)
-            => reader.GetDateTime(reader.GetOrdinal(columnName));
-
+        
         public static string GetString(this NpgsqlDataReader reader, string columnName)
             => reader.GetString(reader.GetOrdinal(columnName));
 

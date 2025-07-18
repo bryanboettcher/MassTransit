@@ -78,7 +78,7 @@
         {
             await RunSql(Sql.MySql_DropJobTables);
             await RunSql(Sql.MySql_DropSagaTables);
-            //await RunSql(Sql.MySql_DropMessageDataTables);
+            await RunSql(Sql.MySql_DropMessageDataTables);
         }
 
         public void Connect(ICustomJobSagaRepositoryConfigurator conf)

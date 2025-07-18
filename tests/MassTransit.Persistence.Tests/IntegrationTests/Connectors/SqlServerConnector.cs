@@ -78,7 +78,7 @@
         {
             await RunSql(Sql.SqlServer_DropJobTables);
             await RunSql(Sql.SqlServer_DropSagaTables);
-            //await RunSql(Sql.SqlServer_DropMessageDataTables);
+            await RunSql(Sql.SqlServer_DropMessageDataTables);
         }
 
         public void Connect(ICustomJobSagaRepositoryConfigurator conf)

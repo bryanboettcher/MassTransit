@@ -32,7 +32,7 @@
 
         public static string GetIdColumnName(Type type)
         {
-            PropertyInfo[] properties = type.GetProperties();
+            var properties = type.GetProperties();
 
             // support the Dapper.Contrib manual-mapping of keys or non-identity keys
             var keyColumn = AttributeValue(type, "KeyAttribute", "Name");

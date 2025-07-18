@@ -32,6 +32,12 @@
             transaction?.Dispose();
             return default;
         }
+
+        public static ValueTask DisposeAsync(this SqlDataReader? reader)
+        {
+            reader?.Dispose();
+            return default;
+        }
         
         public static Task CommitAsync(this SqlTransaction? transaction, CancellationToken cancellationToken = default)
         {

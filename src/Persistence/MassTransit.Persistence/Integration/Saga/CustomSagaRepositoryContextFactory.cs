@@ -45,7 +45,7 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             var cancellationToken = context.CancellationToken;
 
-            await using DatabaseContext<TSaga> databaseContext = await CreateDatabaseContext(cancellationToken)
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
 
             var repositoryContext = new CustomSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
@@ -62,10 +62,10 @@ namespace MassTransit.Persistence.Integration.Saga
         {
             var cancellationToken = context.CancellationToken;
 
-            await using DatabaseContext<TSaga> databaseContext = await CreateDatabaseContext(cancellationToken)
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
 
-            IList<TSaga>? instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
+            var instances = await databaseContext.QueryAsync(query.FilterExpression, cancellationToken).ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             var repositoryContext = new CustomSagaRepositoryContext<TSaga, T>(databaseContext, context, _factory);
@@ -81,7 +81,7 @@ namespace MassTransit.Persistence.Integration.Saga
         async Task<T> ExecuteAsyncMethod<T>(Func<CustomSagaRepositoryContext<TSaga>, Task<T>> asyncMethod, CancellationToken cancellationToken)
             where T : class
         {
-            await using DatabaseContext<TSaga> databaseContext = await CreateDatabaseContext(cancellationToken)
+            await using var databaseContext = await CreateDatabaseContext(cancellationToken)
                 .ConfigureAwait(false);
 
             var sagaRepositoryContext = new CustomSagaRepositoryContext<TSaga>(databaseContext, cancellationToken);

@@ -43,6 +43,9 @@
             var now = _timeProvider();
             var later = ClaimChecks.GetExpiration(now, timeToLive);
 
+            if (now > later)
+                throw new InvalidOperationException("TTL has already expired");
+
             var model = new MessageDataSaga
             {
                 CorrelationId = id,
@@ -54,6 +57,9 @@
             await InsertAsync(model, cancellationToken)
                 .ConfigureAwait(false);
 
+            await CommitAsync(cancellationToken)
+                .ConfigureAwait(false);
+
             return ClaimChecks.Pack(id);
         }
 
@@ -61,8 +67,13 @@
         {
             var now = _timeProvider();
 
-            return await ExecuteAsync(_removeExpired, new { now }, cancellationToken)
+            var changed = await ExecuteAsync(_removeExpired, new { now }, cancellationToken)
                 .ConfigureAwait(false);
+
+            await CommitAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return changed;
         }
 
         protected override Func<IDataReader, MessageDataSaga> CreateReaderAdapter() => MapFrom;
@@ -74,12 +85,13 @@
 
             var stream = new MemoryStream();
             r.GetStream("Data").CopyTo(stream, 81920);
+            stream.Position = 0;
 
             return new MessageDataSaga
             {
                 CorrelationId = r.GetGuid(IdColumnName),
-                Created = r.GetDateTimeOffset("Created"),
-                Expires = r.GetDateTimeOffset("Expires"),
+                Created = r.GetDateTime("Created"),
+                Expires = r.GetDateTime("Expires"),
                 Data = stream
             };
         }
@@ -90,7 +102,7 @@
         {
             if (parameters is MessageDataSaga { Data: not null } s)
             {
-                collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = s.CorrelationId.ToByteArray();
+                collection.Add("@correlationid", NpgsqlDbType.Uuid).Value = s.CorrelationId;
                 collection.Add("@created", NpgsqlDbType.TimestampTz).Value = s.Created;
                 collection.Add("@expires", NpgsqlDbType.TimestampTz).Value = s.Expires;
                 collection.Add("@data", NpgsqlDbType.Bytea, -1).Value = s.Data;

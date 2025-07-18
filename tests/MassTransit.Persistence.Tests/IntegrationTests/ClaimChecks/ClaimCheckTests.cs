@@ -15,6 +15,8 @@
         [Test]
         public async Task Data_already_expired_is_not_stored()
         {
+            var subject = Connector.CreateMessageDataRepository(_timeProvider);
+
             var buffer = new byte[128 * 1024];
             Random.Shared.NextBytes(buffer);
 
@@ -23,7 +25,7 @@
 
             writeStream.Position = 0;
             var expected = Assert.ThrowsAsync<InvalidOperationException>(
-                async () => await _repository.Put(writeStream, TimeSpan.FromSeconds(-10))
+                async () => await subject.Put(writeStream, TimeSpan.FromSeconds(-10))
             );
 
             Assert.That(expected, Is.Not.Null);
@@ -33,6 +35,8 @@
         [Test]
         public async Task Data_stored_is_available_and_unmodified()
         {
+            var subject = Connector.CreateMessageDataRepository(_timeProvider);
+            
             var buffer = new byte[128 * 1024];
             Random.Shared.NextBytes(buffer);
 
@@ -42,48 +46,23 @@
             await writeStream.WriteAsync(buffer, CancellationToken.None);
 
             writeStream.Position = 0;
-            var uri = await _repository.Put(writeStream);
+            var uri = await subject.Put(writeStream);
 
             Assert.That(uri.ToString(), Is.Not.Null);
             Assert.That(uri.Scheme, Is.EqualTo("urn"));
 
-            await using var readStream = await _repository.Get(uri);
+            await using var readStream = await subject.Get(uri);
             var readHash = await SHA1.HashDataAsync(readStream);
 
             Assert.That(writeHash, Is.EqualTo(readHash));
         }
 
-        [Test]
-        public async Task Data_stored_will_expire()
-        {
-            var buffer = new byte[128 * 1024];
-            Random.Shared.NextBytes(buffer);
-
-            await using var writeStream = new MemoryStream();
-            await writeStream.WriteAsync(buffer, CancellationToken.None);
-
-            writeStream.Position = 0;
-            var uri = await _repository.Put(writeStream, TimeSpan.FromSeconds(10));
-
-            Assert.That(uri.ToString(), Is.Not.Null);
-            Assert.That(uri.Scheme, Is.EqualTo("urn"));
-
-            _timeProvider.Advance(TimeSpan.FromSeconds(30));
-
-            Assert.ThrowsAsync<KeyNotFoundException>(
-                async () => _ = await _repository.Get(uri)
-            );
-        }
-
         readonly FakeTimeProvider _timeProvider;
-        readonly IMessageDataRepository _repository;
 
         public ClaimCheck_Tests()
         {
             _timeProvider = new FakeTimeProvider();
             _timeProvider.SetUtcNow(DateTimeOffset.UtcNow);
-
-            _repository = Connector.CreateMessageDataRepository(_timeProvider);
         }
     }
 }

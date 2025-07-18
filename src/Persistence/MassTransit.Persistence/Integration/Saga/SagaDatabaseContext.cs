@@ -26,7 +26,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
             LogContext.Debug?.Log("Loading: {sql}", sql, correlationId);
 
-            ConfiguredCancelableAsyncEnumerable<TSaga> results = ReadAsync(
+            var results = ReadAsync(
                 sql,
                 new { correlationId },
                 cancellationToken
@@ -54,7 +54,7 @@ namespace MassTransit.Persistence.Integration.Saga
 
             LogContext.Debug?.Log("Querying: {sql}");
 
-            ConfiguredCancelableAsyncEnumerable<TSaga> results = ReadAsync(
+            var results = ReadAsync(
                 sql,
                 parameters,
                 cancellationToken
